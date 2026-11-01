@@ -7,9 +7,9 @@ body:
     attributes:
       label: Which part is this for?
       options:
-        - Command line (example-cli)
+        - Command line (kodalo-cli)
         - API
-        - UI window (example-ui)
+        - UI window (kodalo-ui)
         - Not sure
     validations:
       required: true

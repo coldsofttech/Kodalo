@@ -21,13 +21,13 @@ def base_url() -> Iterator[str]:
     port = _free_port()
     env = {
         **os.environ,
-        "EXAMPLE_API_PORT": str(port),
-        "EXAMPLE_API_HOST": "127.0.0.1",
-        "EXAMPLE_API_AUTH_MODE": "none",
+        "KODALO_API_PORT": str(port),
+        "KODALO_API_HOST": "127.0.0.1",
+        "KODALO_API_AUTH_MODE": "none",
         # The contract test reads the OpenAPI document from the running server.
-        "EXAMPLE_API_DOCS_ENABLED": "true",
+        "KODALO_API_DOCS_ENABLED": "true",
     }
-    process = subprocess.Popen([sys.executable, "-m", "example_api"], env=env)
+    process = subprocess.Popen([sys.executable, "-m", "kodalo_api"], env=env)
     url = f"http://127.0.0.1:{port}"
     try:
         deadline = time.monotonic() + 30

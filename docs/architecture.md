@@ -29,11 +29,11 @@ flowchart LR
 ## Source layout
 
 ```text
-src/example_package/   typed library: all the logic, never prints or exits
-src/example_cli/       Typer + Rich command line over the library
-src/example_api/       FastAPI app over the library: routers, schemas, errors, settings
-src/example_ui/        Cornea Shell wiring and the `example-ui` command
-src/example_ui/ui/     React + Vite frontend (JavaScript); `dist/` is built, not committed
+src/kodalo_package/   typed library: all the logic, never prints or exits
+src/kodalo_cli/       Typer + Rich command line over the library
+src/kodalo_api/       FastAPI app over the library: routers, schemas, errors, settings
+src/kodalo_ui/        Cornea Shell wiring and the `kodalo-ui` command
+src/kodalo_ui/ui/     React + Vite frontend (JavaScript); `dist/` is built, not committed
 installer/               PyInstaller specs, NSIS scripts, nfpm config and pinned tool versions
 scripts/                 repository settings, OpenAPI export, installer build and manifest generation
 tests/<component>/     pytest unit tests with coverage (80% minimum), one folder each for core, cli, api and ui
@@ -48,30 +48,30 @@ The version lives in one place, `__version__` in the package, and Hatchling read
 
 ```mermaid
 flowchart LR
-    U[User] --> C[example_cli]
-    C -->|calls| L[example_package]
+    U[User] --> C[kodalo_cli]
+    C -->|calls| L[kodalo_package]
     C --> O[Rich consoles]
 ```
 
-- `example_cli` parses arguments with Typer, calls `example_package`, and writes all output through the shared Rich consoles: data to stdout, messages and errors to stderr.
-- `example_package` holds the logic. It raises exceptions instead of printing or exiting, so other front ends can reuse it.
-- The console script `example-cli` and `python -m example_cli` both enter through `example_cli.cli:app`. Both packages ship in one wheel and share the version in `example_package.__version__`.
+- `kodalo_cli` parses arguments with Typer, calls `kodalo_package`, and writes all output through the shared Rich consoles: data to stdout, messages and errors to stderr.
+- `kodalo_package` holds the logic. It raises exceptions instead of printing or exiting, so other front ends can reuse it.
+- The console script `kodalo-cli` and `python -m kodalo_cli` both enter through `kodalo_cli.cli:app`. Both packages ship in one wheel and share the version in `kodalo_package.__version__`.
 
 ## UI and API layers
 
 ```mermaid
 flowchart LR
     W[Window: React] -->|fetch| S[Cornea Shell]
-    S -->|mounts| A[example_api]
-    S -->|actions| U[example_ui]
+    S -->|mounts| A[kodalo_api]
+    S -->|actions| U[kodalo_ui]
     B[Browser, other client] -->|HTTP| A
-    A -->|calls| L[example_package]
+    A -->|calls| L[kodalo_package]
     U -->|calls| L
 ```
 
-- `example_api` validates input, calls `example_package` and shapes responses. It runs on its own on any system, or is mounted inside Cornea.
-- `example_ui` only wires Cornea to the API and the library, and holds the `example-ui` entry point. It is the one place there that shows output and sets exit codes.
-- `example_package` and `example_api` never import `example_ui`, and `example_package` never imports `example_api`. The Windows-only dependency (`cornea-shell`) is imported lazily.
+- `kodalo_api` validates input, calls `kodalo_package` and shapes responses. It runs on its own on any system, or is mounted inside Cornea.
+- `kodalo_ui` only wires Cornea to the API and the library, and holds the `kodalo-ui` entry point. It is the one place there that shows output and sets exit codes.
+- `kodalo_package` and `kodalo_api` never import `kodalo_ui`, and `kodalo_package` never imports `kodalo_api`. The Windows-only dependency (`cornea-shell`) is imported lazily.
 
 ## Workflows
 
