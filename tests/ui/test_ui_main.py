@@ -1,7 +1,7 @@
 import pytest
 
-from kodalo_ui import __main__ as ui_main
-from kodalo_ui.app import UiUnavailableError
+from kodalo.ui import __main__ as ui_main
+from kodalo.ui.app import UiUnavailableError
 
 
 class Recorder:

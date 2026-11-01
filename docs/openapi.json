@@ -1,13 +1,129 @@
 {
   "components": {
     "schemas": {
-      "GreetingCreate": {
+      "BrandColors": {
+        "additionalProperties": false,
+        "properties": {
+          "background": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "background_alt": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "primary": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "primary_alt": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "secondary": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "secondary_alt": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "text": {
+            "$ref": "#/components/schemas/ColorPair"
+          },
+          "text_alt": {
+            "$ref": "#/components/schemas/ColorPair"
+          }
+        },
+        "required": [
+          "background",
+          "primary",
+          "secondary",
+          "text",
+          "background_alt",
+          "primary_alt",
+          "secondary_alt",
+          "text_alt"
+        ],
+        "title": "BrandColors",
+        "type": "object"
+      },
+      "BrandCreate": {
+        "description": "Give a ``palette`` to start from a starter palette, or full ``data``; not both.",
+        "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrandData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "examples": [
+              "Main"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "palette": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Starter palette key.",
+            "examples": [
+              "midnight"
+            ],
+            "title": "Palette"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "BrandCreate",
+        "type": "object"
+      },
+      "BrandData": {
+        "additionalProperties": false,
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
+          },
+          "fonts": {
+            "$ref": "#/components/schemas/BrandFonts"
+          },
+          "layout": {
+            "$ref": "#/components/schemas/Layout"
+          },
+          "logo": {
+            "$ref": "#/components/schemas/Logo"
+          },
+          "schema_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Schema Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "colors",
+          "fonts"
+        ],
+        "title": "BrandData",
+        "type": "object"
+      },
+      "BrandDuplicate": {
         "properties": {
           "name": {
             "examples": [
-              "Ada"
+              "Main copy"
             ],
-            "maxLength": 100,
+            "maxLength": 64,
+            "minLength": 1,
             "title": "Name",
             "type": "string"
           }
@@ -15,42 +131,159 @@
         "required": [
           "name"
         ],
-        "title": "GreetingCreate",
+        "title": "BrandDuplicate",
         "type": "object"
       },
-      "GreetingResponse": {
+      "BrandExport": {
+        "description": "A self-contained brand file: the profile and its logos.",
         "properties": {
-          "id": {
-            "title": "Id",
-            "type": "integer"
+          "data": {
+            "$ref": "#/components/schemas/BrandData"
           },
-          "message": {
-            "examples": [
-              "Hello, Ada!"
-            ],
-            "title": "Message",
+          "format": {
+            "const": "kodalo-brand",
+            "default": "kodalo-brand",
+            "title": "Format",
             "type": "string"
           },
+          "logos": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/LogoPayload"
+            },
+            "description": "Logo files by the names data refers to.",
+            "maxProperties": 2,
+            "title": "Logos",
+            "type": "object"
+          },
           "name": {
+            "examples": [
+              "Main"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
             "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "data"
+        ],
+        "title": "BrandExport",
+        "type": "object"
+      },
+      "BrandFonts": {
+        "additionalProperties": false,
+        "properties": {
+          "body": {
+            "$ref": "#/components/schemas/FontRef"
+          },
+          "body_alt": {
+            "$ref": "#/components/schemas/FontRef"
+          },
+          "heading": {
+            "$ref": "#/components/schemas/FontRef"
+          },
+          "heading_alt": {
+            "$ref": "#/components/schemas/FontRef"
+          },
+          "mono": {
+            "$ref": "#/components/schemas/FontRef"
+          },
+          "mono_alt": {
+            "$ref": "#/components/schemas/FontRef"
+          }
+        },
+        "required": [
+          "heading",
+          "heading_alt",
+          "body",
+          "body_alt",
+          "mono",
+          "mono_alt"
+        ],
+        "title": "BrandFonts",
+        "type": "object"
+      },
+      "BrandResponse": {
+        "description": "A stored brand profile.",
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Created At",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BrandData"
+          },
+          "id": {
+            "examples": [
+              "5b0c9f0e-3c0e-4f43-9d0b-2d8f6a4c1e11"
+            ],
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_default": {
+            "description": "Whether this is the default profile.",
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "name": {
+            "examples": [
+              "Main"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Updated At",
             "type": "string"
           }
         },
         "required": [
           "id",
           "name",
-          "message"
+          "is_default",
+          "data",
+          "created_at",
+          "updated_at"
         ],
-        "title": "GreetingResponse",
+        "title": "BrandResponse",
         "type": "object"
       },
-      "GreetingUpdate": {
-        "description": "Fields left out are not changed.",
+      "BrandUpdate": {
+        "description": "Fields left out are not changed. ``data`` replaces all brand data.",
         "properties": {
+          "data": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrandData"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "name": {
             "anyOf": [
               {
-                "maxLength": 100,
+                "maxLength": 64,
+                "minLength": 1,
                 "type": "string"
               },
               {
@@ -58,12 +291,296 @@
               }
             ],
             "examples": [
-              "Grace"
+              "Renamed"
             ],
             "title": "Name"
           }
         },
-        "title": "GreetingUpdate",
+        "title": "BrandUpdate",
+        "type": "object"
+      },
+      "Canvas": {
+        "additionalProperties": false,
+        "properties": {
+          "height": {
+            "default": 1350,
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "preset": {
+            "default": "instagram_portrait",
+            "enum": [
+              "instagram_portrait",
+              "instagram_square",
+              "instagram_story",
+              "linkedin_landscape",
+              "x_landscape",
+              "custom"
+            ],
+            "title": "Preset",
+            "type": "string"
+          },
+          "width": {
+            "default": 1080,
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "title": "Canvas",
+        "type": "object"
+      },
+      "CanvasPresetResponse": {
+        "properties": {
+          "height": {
+            "examples": [
+              1350
+            ],
+            "title": "Height",
+            "type": "integer"
+          },
+          "key": {
+            "examples": [
+              "instagram_portrait"
+            ],
+            "maxLength": 32,
+            "title": "Key",
+            "type": "string"
+          },
+          "width": {
+            "examples": [
+              1080
+            ],
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "key",
+          "width",
+          "height"
+        ],
+        "title": "CanvasPresetResponse",
+        "type": "object"
+      },
+      "ColorPair": {
+        "additionalProperties": false,
+        "properties": {
+          "dark": {
+            "maxLength": 7,
+            "minLength": 7,
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Dark",
+            "type": "string"
+          },
+          "light": {
+            "maxLength": 7,
+            "minLength": 7,
+            "pattern": "^#[0-9a-fA-F]{6}$",
+            "title": "Light",
+            "type": "string"
+          }
+        },
+        "required": [
+          "light",
+          "dark"
+        ],
+        "title": "ColorPair",
+        "type": "object"
+      },
+      "ContrastItem": {
+        "properties": {
+          "color": {
+            "examples": [
+              "text"
+            ],
+            "maxLength": 32,
+            "title": "Color",
+            "type": "string"
+          },
+          "minimum": {
+            "description": "The ratio this pair needs.",
+            "examples": [
+              4.5
+            ],
+            "title": "Minimum",
+            "type": "number"
+          },
+          "mode": {
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "on": {
+            "examples": [
+              "background"
+            ],
+            "maxLength": 32,
+            "title": "On",
+            "type": "string"
+          },
+          "passes": {
+            "title": "Passes",
+            "type": "boolean"
+          },
+          "ratio": {
+            "description": "WCAG contrast ratio, 1 to 21.",
+            "examples": [
+              7.4
+            ],
+            "title": "Ratio",
+            "type": "number"
+          }
+        },
+        "required": [
+          "color",
+          "on",
+          "mode",
+          "ratio",
+          "minimum",
+          "passes"
+        ],
+        "title": "ContrastItem",
+        "type": "object"
+      },
+      "ContrastRequest": {
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
+          }
+        },
+        "required": [
+          "colors"
+        ],
+        "title": "ContrastRequest",
+        "type": "object"
+      },
+      "DoctorCheck": {
+        "properties": {
+          "detail": {
+            "examples": [
+              "3.11.9 (requires 3.11+)"
+            ],
+            "maxLength": 512,
+            "title": "Detail",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Python"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "required": {
+            "description": "A failed required check makes the diagnosis fail.",
+            "title": "Required",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "ok",
+          "detail",
+          "required"
+        ],
+        "title": "DoctorCheck",
+        "type": "object"
+      },
+      "DoctorResponse": {
+        "properties": {
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/DoctorCheck"
+            },
+            "title": "Checks",
+            "type": "array"
+          },
+          "healthy": {
+            "description": "Whether every required check passed.",
+            "title": "Healthy",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "healthy",
+          "checks"
+        ],
+        "title": "DoctorResponse",
+        "type": "object"
+      },
+      "FontRef": {
+        "additionalProperties": false,
+        "properties": {
+          "family": {
+            "maxLength": 100,
+            "minLength": 1,
+            "pattern": "^[\\w .+&()-]+$",
+            "title": "Family",
+            "type": "string"
+          },
+          "source": {
+            "default": "bundled",
+            "enum": [
+              "bundled",
+              "system"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family"
+        ],
+        "title": "FontRef",
+        "type": "object"
+      },
+      "FontResponse": {
+        "properties": {
+          "category": {
+            "enum": [
+              "sans",
+              "serif",
+              "display",
+              "mono"
+            ],
+            "title": "Category",
+            "type": "string"
+          },
+          "family": {
+            "examples": [
+              "Inter"
+            ],
+            "maxLength": 100,
+            "title": "Family",
+            "type": "string"
+          },
+          "source": {
+            "enum": [
+              "bundled",
+              "system"
+            ],
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "family",
+          "category",
+          "source"
+        ],
+        "title": "FontResponse",
         "type": "object"
       },
       "HTTPValidationError": {
@@ -91,20 +608,188 @@
         "title": "HealthResponse",
         "type": "object"
       },
-      "HelloResponse": {
+      "Layout": {
+        "additionalProperties": false,
         "properties": {
-          "message": {
-            "examples": [
-              "Hello, Ada!"
+          "align": {
+            "default": "left",
+            "enum": [
+              "left",
+              "center"
             ],
-            "title": "Message",
+            "title": "Align",
+            "type": "string"
+          },
+          "canvas": {
+            "$ref": "#/components/schemas/Canvas"
+          },
+          "corner_radius": {
+            "default": 24,
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Corner Radius",
+            "type": "integer"
+          },
+          "density": {
+            "default": "regular",
+            "enum": [
+              "compact",
+              "regular",
+              "spacious"
+            ],
+            "title": "Density",
+            "type": "string"
+          },
+          "footer_text": {
+            "default": "",
+            "maxLength": 120,
+            "pattern": "^[^\\x00-\\x1f]*$",
+            "title": "Footer Text",
+            "type": "string"
+          },
+          "margin_bottom": {
+            "default": 96,
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Bottom",
+            "type": "integer"
+          },
+          "margin_side": {
+            "default": 80,
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Side",
+            "type": "integer"
+          },
+          "margin_top": {
+            "default": 96,
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Top",
+            "type": "integer"
+          },
+          "slide_numbers": {
+            "default": true,
+            "title": "Slide Numbers",
+            "type": "boolean"
+          }
+        },
+        "title": "Layout",
+        "type": "object"
+      },
+      "Logo": {
+        "additionalProperties": false,
+        "description": "File names refer to files held by the logo store, never to paths.",
+        "properties": {
+          "dark_file": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dark File"
+          },
+          "file": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "File"
+          },
+          "padding": {
+            "default": 48,
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Padding",
+            "type": "integer"
+          },
+          "position": {
+            "default": "top_left",
+            "enum": [
+              "top_left",
+              "top_center",
+              "top_right",
+              "bottom_left",
+              "bottom_center",
+              "bottom_right"
+            ],
+            "title": "Position",
+            "type": "string"
+          },
+          "show_on": {
+            "default": "all",
+            "enum": [
+              "all",
+              "first",
+              "last"
+            ],
+            "title": "Show On",
+            "type": "string"
+          },
+          "size_percent": {
+            "default": 14,
+            "maximum": 60.0,
+            "minimum": 5.0,
+            "title": "Size Percent",
+            "type": "integer"
+          }
+        },
+        "title": "Logo",
+        "type": "object"
+      },
+      "LogoPayload": {
+        "properties": {
+          "content_base64": {
+            "description": "The logo file, base64 encoded.",
+            "maxLength": 2796210,
+            "title": "Content Base64",
             "type": "string"
           }
         },
         "required": [
-          "message"
+          "content_base64"
         ],
-        "title": "HelloResponse",
+        "title": "LogoPayload",
+        "type": "object"
+      },
+      "PaletteResponse": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/BrandData",
+            "description": "Complete brand data to start a new profile from."
+          },
+          "key": {
+            "examples": [
+              "midnight"
+            ],
+            "maxLength": 32,
+            "title": "Key",
+            "type": "string"
+          },
+          "title": {
+            "examples": [
+              "Midnight"
+            ],
+            "maxLength": 64,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "title",
+          "data"
+        ],
+        "title": "PaletteResponse",
         "type": "object"
       },
       "ReadyResponse": {
@@ -117,6 +802,7 @@
           },
           "version": {
             "description": "Version of the running service.",
+            "maxLength": 32,
             "title": "Version",
             "type": "string"
           }
@@ -166,76 +852,52 @@
         ],
         "title": "ValidationError",
         "type": "object"
-      },
-      "WhoAmIResponse": {
-        "properties": {
-          "method": {
-            "description": "How the caller was authenticated.",
-            "title": "Method",
-            "type": "string"
-          },
-          "subject": {
-            "description": "Identity of the caller.",
-            "title": "Subject",
-            "type": "string"
-          }
-        },
-        "required": [
-          "subject",
-          "method"
-        ],
-        "title": "WhoAmIResponse",
-        "type": "object"
-      }
-    },
-    "securitySchemes": {
-      "APIKeyHeader": {
-        "in": "header",
-        "name": "X-API-Key",
-        "type": "apiKey"
       }
     }
   },
   "info": {
-    "description": "Example HTTP API built on **kodalo_package**.",
+    "description": "HTTP API for Kodalo brand profiles, built on **kodalo.core**.",
     "title": "kodalo-api",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
-    "/api/v1/greetings": {
+    "/api/v1/brands": {
       "get": {
-        "description": "Return every stored greeting.",
-        "operationId": "list_greetings_api_v1_greetings_get",
+        "description": "Return every profile, sorted by name.",
+        "operationId": "list_brands_api_v1_brands_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/GreetingResponse"
+                    "$ref": "#/components/schemas/BrandResponse"
                   },
-                  "title": "Response List Greetings Api V1 Greetings Get",
+                  "title": "Response List Brands Api V1 Brands Get",
                   "type": "array"
                 }
               }
             },
             "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
           }
         },
-        "summary": "List greetings",
+        "summary": "List brand profiles",
         "tags": [
           "v1"
         ]
       },
       "post": {
-        "description": "Store a greeting for ``name``.",
-        "operationId": "create_greeting_api_v1_greetings_post",
+        "description": "Create a profile from a starter palette, or from full data. The first one is the default.",
+        "operationId": "create_brand_api_v1_brands_post",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/GreetingCreate"
+                "$ref": "#/components/schemas/BrandCreate"
               }
             }
           },
@@ -246,37 +908,152 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/GreetingResponse"
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "409": {
+            "description": "Another brand profile uses that name."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Create a brand profile",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/contrast": {
+      "post": {
+        "description": "Check colors that may not be saved yet. Nothing is changed or stored.",
+        "operationId": "check_contrast_api_v1_brands_contrast_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContrastRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ContrastItem"
+                  },
+                  "title": "Response Check Contrast Api V1 Brands Contrast Post",
+                  "type": "array"
                 }
               }
             },
             "description": "Successful Response"
           },
           "422": {
-            "description": "Invalid name."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
           }
         },
-        "summary": "Create a greeting",
+        "summary": "Check contrast of colors",
         "tags": [
           "v1"
         ]
       }
     },
-    "/api/v1/greetings/{greeting_id}": {
-      "delete": {
-        "description": "Remove a greeting.",
-        "operationId": "delete_greeting_api_v1_greetings__greeting_id__delete",
+    "/api/v1/brands/import": {
+      "post": {
+        "description": "Add a profile from an exported file. A name already in use gets a number added.",
+        "operationId": "import_brand_api_v1_brands_import_post",
         "parameters": [
           {
-            "description": "Greeting id.",
+            "description": "Name for the profile. Default: the file's.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Name for the profile. Default: the file's.",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Import a brand profile",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/{brand_id}": {
+      "delete": {
+        "description": "Remove a profile and its logo files. If it was the default, another becomes the default.",
+        "operationId": "delete_brand_api_v1_brands__brand_id__delete",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
             "in": "path",
-            "name": "greeting_id",
+            "name": "brand_id",
             "required": true,
             "schema": {
-              "description": "Greeting id.",
-              "minimum": 1,
-              "title": "Greeting Id",
-              "type": "integer"
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
             }
           }
         ],
@@ -285,7 +1062,7 @@
             "description": "Successful Response"
           },
           "404": {
-            "description": "Greeting not found."
+            "description": "No brand profile has that id."
           },
           "422": {
             "content": {
@@ -296,174 +1073,28 @@
               }
             },
             "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
           }
         },
-        "summary": "Delete a greeting",
+        "summary": "Delete a brand profile",
         "tags": [
           "v1"
         ]
       },
       "get": {
-        "description": "Return one greeting.",
-        "operationId": "get_greeting_api_v1_greetings__greeting_id__get",
+        "operationId": "get_brand_api_v1_brands__brand_id__get",
         "parameters": [
           {
-            "description": "Greeting id.",
+            "description": "Brand profile id.",
             "in": "path",
-            "name": "greeting_id",
+            "name": "brand_id",
             "required": true,
             "schema": {
-              "description": "Greeting id.",
-              "minimum": 1,
-              "title": "Greeting Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GreetingResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "404": {
-            "description": "Greeting not found."
-          },
-          "422": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            },
-            "description": "Validation Error"
-          }
-        },
-        "summary": "Get a greeting",
-        "tags": [
-          "v1"
-        ]
-      },
-      "patch": {
-        "description": "Change only the fields that are sent.",
-        "operationId": "update_greeting_api_v1_greetings__greeting_id__patch",
-        "parameters": [
-          {
-            "description": "Greeting id.",
-            "in": "path",
-            "name": "greeting_id",
-            "required": true,
-            "schema": {
-              "description": "Greeting id.",
-              "minimum": 1,
-              "title": "Greeting Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GreetingUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GreetingResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "404": {
-            "description": "Greeting not found."
-          },
-          "422": {
-            "description": "Invalid name."
-          }
-        },
-        "summary": "Update a greeting",
-        "tags": [
-          "v1"
-        ]
-      },
-      "put": {
-        "description": "Replace the name, and so the message, of a greeting.",
-        "operationId": "replace_greeting_api_v1_greetings__greeting_id__put",
-        "parameters": [
-          {
-            "description": "Greeting id.",
-            "in": "path",
-            "name": "greeting_id",
-            "required": true,
-            "schema": {
-              "description": "Greeting id.",
-              "minimum": 1,
-              "title": "Greeting Id",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/GreetingCreate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/GreetingResponse"
-                }
-              }
-            },
-            "description": "Successful Response"
-          },
-          "404": {
-            "description": "Greeting not found."
-          },
-          "422": {
-            "description": "Invalid name."
-          }
-        },
-        "summary": "Replace a greeting",
-        "tags": [
-          "v1"
-        ]
-      }
-    },
-    "/api/v1/hello/{name}": {
-      "get": {
-        "description": "Return a greeting without storing it.",
-        "operationId": "hello_api_v1_hello__name__get",
-        "parameters": [
-          {
-            "description": "Who to greet.",
-            "in": "path",
-            "name": "name",
-            "required": true,
-            "schema": {
-              "description": "Who to greet.",
-              "title": "Name",
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
               "type": "string"
             }
           }
@@ -473,47 +1104,572 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/HelloResponse"
+                  "$ref": "#/components/schemas/BrandResponse"
                 }
               }
             },
             "description": "Successful Response"
           },
+          "404": {
+            "description": "No brand profile has that id."
+          },
           "422": {
-            "description": "Invalid name."
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
           }
         },
-        "summary": "Greet someone",
+        "summary": "Get a brand profile",
         "tags": [
           "v1"
         ]
-      }
-    },
-    "/api/v1/whoami": {
-      "get": {
-        "description": "Return the authenticated caller. Protected unless authentication is switched off.",
-        "operationId": "whoami_api_v1_whoami_get",
+      },
+      "patch": {
+        "description": "Rename a profile and/or replace its brand data. Fields left out are not changed.",
+        "operationId": "update_brand_api_v1_brands__brand_id__patch",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandUpdate"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/WhoAmIResponse"
+                  "$ref": "#/components/schemas/BrandResponse"
                 }
               }
             },
             "description": "Successful Response"
           },
-          "401": {
-            "description": "Authentication failed."
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "409": {
+            "description": "Another brand profile uses that name."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
           }
         },
-        "security": [
+        "summary": "Update a brand profile",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/{brand_id}/default": {
+      "post": {
+        "operationId": "set_default_brand_api_v1_brands__brand_id__default_post",
+        "parameters": [
           {
-            "APIKeyHeader": []
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
           }
         ],
-        "summary": "Show the caller",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Make a brand profile the default",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/{brand_id}/duplicate": {
+      "post": {
+        "description": "Copy a profile, including its logo files, under a new name.",
+        "operationId": "duplicate_brand_api_v1_brands__brand_id__duplicate_post",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BrandDuplicate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "409": {
+            "description": "Another brand profile uses that name."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Duplicate a brand profile",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/{brand_id}/export": {
+      "get": {
+        "description": "Return the profile and its logos as one file that `import` accepts.",
+        "operationId": "export_brand_api_v1_brands__brand_id__export_get",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Export a brand profile",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/{brand_id}/logo": {
+      "delete": {
+        "operationId": "remove_logo_api_v1_brands__brand_id__logo_delete",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which logo: the main one, or the one used in dark mode.",
+            "in": "query",
+            "name": "variant",
+            "required": false,
+            "schema": {
+              "default": "light",
+              "description": "Which logo: the main one, or the one used in dark mode.",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "title": "Variant",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Remove a logo",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "description": "Return the logo file, safe to show in an image tag. 404 if the profile has none.",
+        "operationId": "get_logo_api_v1_brands__brand_id__logo_get",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which logo: the main one, or the one used in dark mode.",
+            "in": "query",
+            "name": "variant",
+            "required": false,
+            "schema": {
+              "default": "light",
+              "description": "Which logo: the main one, or the one used in dark mode.",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "title": "Variant",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/png": {},
+              "image/svg+xml": {}
+            },
+            "description": "The logo file."
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a logo",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Store the request body as the profile's logo. SVG files with scripts are refused.",
+        "operationId": "set_logo_api_v1_brands__brand_id__logo_put",
+        "parameters": [
+          {
+            "description": "Brand profile id.",
+            "in": "path",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "Brand profile id.",
+              "maxLength": 64,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which logo: the main one, or the one used in dark mode.",
+            "in": "query",
+            "name": "variant",
+            "required": false,
+            "schema": {
+              "default": "light",
+              "description": "Which logo: the main one, or the one used in dark mode.",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "title": "Variant",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "image/png": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            },
+            "image/svg+xml": {
+              "schema": {
+                "format": "binary",
+                "type": "string"
+              }
+            }
+          },
+          "description": "The logo file, a PNG or an SVG of at most 2 MB.",
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BrandResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "413": {
+            "description": "The file is larger than 2 MB."
+          },
+          "415": {
+            "description": "Send image/png or image/svg+xml."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set a logo",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/canvas-presets": {
+      "get": {
+        "description": "Return the canvas sizes a layout can use. ``custom`` allows any size.",
+        "operationId": "list_canvas_presets_api_v1_canvas_presets_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CanvasPresetResponse"
+                  },
+                  "title": "Response List Canvas Presets Api V1 Canvas Presets Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List canvas presets",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/doctor": {
+      "get": {
+        "description": "Run the same checks as `kodalo doctor`: versions, libraries, data folder and database.",
+        "operationId": "doctor_api_v1_doctor_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DoctorResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Diagnose the installation",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/fonts": {
+      "get": {
+        "description": "Return the bundled fonts first, then the fonts installed on this computer.",
+        "operationId": "list_fonts_api_v1_fonts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FontResponse"
+                  },
+                  "title": "Response List Fonts Api V1 Fonts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List fonts",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes": {
+      "get": {
+        "description": "Return the starter palettes, each with complete brand data to begin a profile from.",
+        "operationId": "list_palettes_api_v1_palettes_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/PaletteResponse"
+                  },
+                  "title": "Response List Palettes Api V1 Palettes Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List starter palettes",
         "tags": [
           "v1"
         ]

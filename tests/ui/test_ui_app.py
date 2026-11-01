@@ -9,8 +9,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from kodalo_package import __version__
-from kodalo_ui import app as ui_app
+from kodalo.core import __version__
+from kodalo.ui import app as ui_app
 
 
 class FakeShell:
@@ -123,21 +123,9 @@ def test_api_router_is_mounted_under_cornea_prefix() -> None:
     app = FastAPI()
     app.include_router(ui_app.api_router(), prefix="/api")
 
-    response = TestClient(app).get("/api/v1/hello/Ada")
+    response = TestClient(app).get("/api/v1/palettes")
 
-    assert response.json() == {"message": "Hello, Ada!"}
-
-
-def test_api_router_leaves_authentication_to_cornea(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("KODALO_API_AUTH_MODE", "api_key")
-    monkeypatch.setenv("KODALO_API_API_KEYS", '["s3cret"]')
-    app = FastAPI()
-    app.include_router(ui_app.api_router(), prefix="/api")
-
-    response = TestClient(app).get("/api/v1/whoami")
-
-    assert response.status_code == 200
-    assert response.json()["method"] == "none"
+    assert response.json()[0]["key"] == "midnight"
 
 
 def test_run_without_callback_just_runs(shell_on_windows: type[FakeShell]) -> None:

@@ -1,6 +1,6 @@
 # Security
 
-How the API and the UI window protect requests. To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+How the UI window and its API protect requests. To report a vulnerability, see [SECURITY.md](../SECURITY.md).
 
 ## Under the UI window
 
@@ -11,19 +11,19 @@ Cornea's `SecurityMiddleware` guards every mounted route, so the API adds no tok
 - a one-time start-up token is exchanged for an `HttpOnly`, `SameSite=Strict` session cookie
 - responses carry a strict content security policy and other protective headers
 
-`kodalo_ui` therefore mounts the routes with API-key checks switched off. Never expose these routes any other way.
+`kodalo.ui` therefore mounts the routes without any token of its own. The API has no standalone mode: it is never started on its own, has no API key and no settings file, and must not be exposed any other way.
 
-## Standalone API
+The API itself still:
 
-When run alone (`python -m kodalo_api`), Cornea is absent, so the API protects itself:
-
-- **API key:** protected routes need an `X-API-Key` header matching `KODALO_API_API_KEYS`. The app will not start without a key unless `KODALO_API_AUTH_MODE=none`, which is for local development only. Keys are compared in constant time and never logged.
-- **Headers:** `nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: no-referrer`, a restrictive CSP, `Cache-Control: no-store` on `/api/` and HSTS over HTTPS.
-- **Body limit:** requests declaring more than `KODALO_API_MAX_BODY_BYTES` get `413`. Also set a limit at your reverse proxy, since chunked bodies have no declared size.
-- **Docs hidden:** `/docs`, `/redoc` and `/openapi.json` are off unless `KODALO_API_DOCS_ENABLED=true`.
-- **Errors:** a `500` never shows details; they go to the log with the request ID.
-- **Not included:** HTTPS, rate limiting, JWT and multi-user authentication, a database. Add them, or put the API behind a proxy, before exposing it publicly.
+- limits request bodies to 1 MiB (logo uploads to 2 MB) and answers `413` above that
+- serves no interactive docs
+- never shows details of a `500`; they go to the log with the request ID
+- sends its own protective headers when it is not hosted under Cornea (tests), and Cornea's own when it is
 
 ## Supply chain
 
 Dependabot covers Python, npm and Actions. `audit.yml` checks locked dependencies weekly, dependency review blocks vulnerable additions, and the lock files are committed.
+
+## Logo files
+
+Brand logos are user-supplied files, so they are treated as untrusted. Only PNG and SVG are accepted, up to 2 MB, and every file is stored under a random name inside the data folder; a name or path from a request never reaches the file system. SVG files are refused when they contain scripts, event handlers, `foreignObject`, `use`, entities or a DOCTYPE, links that point outside the file, or styles that load anything from outside it. When a logo is served, the response carries `X-Content-Type-Options: nosniff` and a content security policy with `default-src 'none'` and `sandbox`, so it can be shown as an image but never run.

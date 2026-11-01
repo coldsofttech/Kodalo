@@ -16,7 +16,7 @@ pyproject.toml         metadata, dependencies and tool configuration
 uv.lock                locked dependencies (commit this file)
 ```
 
-The example names are `kodalo_package` (library), `kodalo_cli` (command line package), `kodalo_api`, `kodalo_ui`, and the commands `kodalo-cli` and `kodalo-ui`. After creating a repo from this template, run the **Init** workflow with a short lowercase `name` (for example `acme`) and a display `title` (for example "Acme Studio"). It opens a pull request that:
+The example names are `kodalo_package` (library), `kodalo_cli` (command line package), `kodalo_api`, `kodalo_ui`, and the commands `kodalo` and `kodalo-ui`. After creating a repo from this template, run the **Init** workflow with a short lowercase `name` (for example `acme`) and a display `title` (for example "Acme Studio"). It opens a pull request that:
 
 - replaces the owner and repository name;
 - renames the packages (`acme_package`, `acme_cli`, `acme_api`, `acme_ui`), the commands (`acme-cli`, `acme-ui`), the settings prefix (`ACME_API_`) and the app id, and replaces "Kodalo" with your title;
@@ -70,7 +70,6 @@ npm run format             # Prettier
 Other useful commands:
 
 ```bash
-uv run python -m kodalo_api              # run the API on its own (see api.md)
 uv run python scripts/export_openapi.py   # regenerate docs/openapi.json
 uv run python -m kodalo_ui --no-window   # serve the UI for a browser
 ```

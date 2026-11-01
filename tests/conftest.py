@@ -1,9 +1,9 @@
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
-from kodalo_api.config import get_settings
-from kodalo_api.routers.v1 import get_store
+from kodalo.api import deps
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -14,12 +14,8 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _fresh_state(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
-    """Give every test new settings and an empty greeting store, with no API key needed."""
-    monkeypatch.setenv("KODALO_API_AUTH_MODE", "none")
-    monkeypatch.delenv("KODALO_API_API_KEYS", raising=False)
-    get_settings.cache_clear()
-    get_store.cache_clear()
+def _fresh_state(tmp_path: Path) -> Iterator[None]:
+    """Give every API test its own empty data folder."""
+    deps.configure(tmp_path / "api-data")
     yield
-    get_settings.cache_clear()
-    get_store.cache_clear()
+    deps.configure(None)

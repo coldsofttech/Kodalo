@@ -2,7 +2,7 @@
 #
 # Two executables in one folder, sharing one lib/ (the Python runtime and every dependency):
 #
-#   kodalo-cli.exe   the command line (console)
+#   kodalo.exe   the command line (console)
 #   kodalo-ui.exe    the desktop window (no console); the React frontend (kodalo_ui/ui/dist)
 #                     is frozen into lib/
 #

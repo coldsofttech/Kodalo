@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "Kodalo"
 dynamic = ["version"]
-description = "Python tool with a command line, an HTTP API and a native Windows UI."
+description = "Local-first Windows app that turns GitHub repositories into accurate, on-brand Instagram content."
 keywords = ["cli", "api", "ui"]
 readme = "README.md"
 requires-python = ">=3.11"
@@ -27,12 +27,15 @@ classifiers = [
 # published to PyPI (the installers and the source tree carry them), so their libraries are
 # dependency groups below.
 dependencies = [
+  "alembic>=1.13",
+  "pydantic>=2.9",
   "rich>=13.9",
+  "sqlalchemy>=2.0",
   "typer>=0.15",
 ]
 
 [project.scripts]
-kodalo-cli = "kodalo_cli.cli:run"
+kodalo = "kodalo.cli.cli:run"
 
 [project.urls]
 Homepage = "https://github.com/coldsofttech/Kodalo"
@@ -40,13 +43,11 @@ Issues = "https://github.com/coldsofttech/Kodalo/issues"
 Changelog = "https://github.com/coldsofttech/Kodalo/blob/main/CHANGELOG.md"
 
 [dependency-groups]
-# The HTTP API (src/kodalo_api): run on its own with `python -m kodalo_api`, and mounted by the window.
+# The HTTP API (src/kodalo/api): only the window uses it, mounted under Cornea.
 api = [
   "fastapi>=0.162.0",
-  "pydantic-settings>=2.16.2",
-  "uvicorn>=0.54.0",
 ]
-# The Windows window (src/kodalo_ui).
+# The Windows window (src/kodalo/ui).
 ui = [
   "cornea-shell>=0.1.0 ; sys_platform == 'win32'",
 ]
@@ -74,30 +75,34 @@ installer = [
 # it has no script: ui is its executable name and ui-target the function it runs. api is the API
 # package.
 [tool.installer]
-cli = "kodalo-cli"
+cli = "kodalo"
 ui = "kodalo-ui"
-ui-target = "kodalo_ui.__main__:main"
-api = "kodalo_api"
+ui-target = "kodalo.ui.__main__:main"
+api = "kodalo.api"
 
 [tool.hatch.version]
-path = "src/kodalo_package/__init__.py"
+path = "src/kodalo/core/__init__.py"
 
-# `uv build` publishes the core library and the command line only. The API and the window ship in
-# the Windows installers instead. The wheel is built from the sdist, so both
-# list the same two packages.
+# `uv build` publishes the core library and the command line only. The API and the window
+# (kodalo.api and kodalo.ui) ship in the Windows installers instead, so both are excluded. The wheel
+# is built from the sdist, so both list the same exclusions.
 [tool.hatch.build.targets.sdist]
 include = [
-  "src/kodalo_package",
-  "src/kodalo_cli",
+  "src/kodalo",
   "/README.md",
   "/LICENSE",
   "/CHANGELOG.md",
 ]
+exclude = [
+  "src/kodalo/api",
+  "src/kodalo/ui",
+]
 
 [tool.hatch.build.targets.wheel]
-packages = [
-  "src/kodalo_package",
-  "src/kodalo_cli",
+packages = ["src/kodalo"]
+exclude = [
+  "src/kodalo/api",
+  "src/kodalo/ui",
 ]
 
 [tool.ruff]
@@ -120,7 +125,7 @@ files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-m 'not integration' --strict-markers --cov=kodalo_package --cov=kodalo_cli --cov=kodalo_api --cov=kodalo_ui --cov-report=term-missing --cov-fail-under=80"
+addopts = "-m 'not integration' --strict-markers --cov=kodalo.core --cov=kodalo.cli --cov=kodalo.api --cov=kodalo.ui --cov-report=term-missing --cov-fail-under=80"
 markers = ["integration: slower end-to-end tests, run in CI but not by default or in pre-commit"]
 
 [tool.coverage.run]

@@ -6,11 +6,11 @@ from pathlib import Path
 
 import pytest
 
-import kodalo_package
+import kodalo.core
 from tests.frozen import locate, skip_if_blocked
 
 # cli.spec builds the command line alone; ui.spec builds it again beside the window.
-FOLDERS = ["kodalo-cli", "kodalo-ui"]
+FOLDERS = ["kodalo", "kodalo-ui"]
 
 
 def _run(exe: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
@@ -30,26 +30,24 @@ def _run(exe: Path, *arguments: str) -> subprocess.CompletedProcess[str]:
 
 @pytest.mark.parametrize("folder", FOLDERS)
 def test_reports_its_version(folder: str) -> None:
-    result = _run(locate(folder, "kodalo-cli"), "--version")
+    result = _run(locate(folder, "kodalo"), "--version")
 
     assert result.returncode == 0
-    assert kodalo_package.__version__ in result.stdout
+    assert kodalo.core.__version__ in result.stdout
 
 
 @pytest.mark.parametrize("folder", FOLDERS)
-def test_runs_a_command(folder: str) -> None:
-    exe = locate(folder, "kodalo-cli")
+def test_runs_a_command(folder: str, tmp_path: Path) -> None:
+    exe = locate(folder, "kodalo")
 
-    greeting = _run(exe, "hello", "Ada")
-    details = _run(exe, "info", "--json")
+    details = _run(exe, "--data-dir", str(tmp_path), "doctor", "--json")
 
-    assert greeting.stdout.strip() == "Hello, Ada!"
-    assert json.loads(details.stdout)["version"] == kodalo_package.__version__
+    assert json.loads(details.stdout)["healthy"] is True
 
 
 @pytest.mark.parametrize("folder", FOLDERS)
-def test_reports_errors_with_a_failing_exit_code(folder: str) -> None:
-    result = _run(locate(folder, "kodalo-cli"), "hello", " ")
+def test_reports_errors_with_a_failing_exit_code(folder: str, tmp_path: Path) -> None:
+    result = _run(locate(folder, "kodalo"), "--data-dir", str(tmp_path), "brand", "show", "x")
 
     assert result.returncode == 1
-    assert "empty" in result.stderr
+    assert "No brand named" in result.stderr

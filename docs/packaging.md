@@ -6,8 +6,8 @@ How the installers are built. For publishing them, see [releasing](releasing.md)
 
 | Product | Contents | Windows | Linux |
 | --- | --- | --- | --- |
-| CLI | `kodalo-cli` | `kodalo-cli-<version>-setup.exe`, and a portable `…-windows-x64.zip` | `.deb` and `.rpm` |
-| UI | `kodalo-ui` (window) and `kodalo-cli` | `kodalo-ui-<version>-setup.exe` | none (the window needs Windows) |
+| CLI | `kodalo` | `kodalo-<version>-setup.exe`, and a portable `…-windows-x64.zip` | `.deb` and `.rpm` |
+| UI | `kodalo-ui` (window) and `kodalo` | `kodalo-ui-<version>-setup.exe` | none (the window needs Windows) |
 
 macOS gets no installer. Install the PyPI package, or use Homebrew once it is switched on.
 
@@ -47,8 +47,8 @@ Results are in `dist/installer/`; the PyInstaller folders are in `build/installe
 
 Both specs make one-folder builds (no one-file build), with an executable per program and one shared `lib/`.
 
-- `cli.spec` builds `kodalo-cli` alone, on any OS, with none of the window's libraries (about 37 MB).
-- `ui.spec` (Windows only) builds `kodalo-cli` and `kodalo-ui` side by side (about 69 MB). The window has no console, and the built frontend is frozen into `lib/`.
+- `cli.spec` builds `kodalo` alone, on any OS, with none of the window's libraries (about 37 MB).
+- `ui.spec` (Windows only) builds `kodalo` and `kodalo-ui` side by side (about 69 MB). The window has no console, and the built frontend is frozen into `lib/`.
 - `common.py` holds what they share. The entry scripts are generated from the `[project.scripts]` targets.
 
 The Windows executables carry the icon and file properties (name, version, description), also taken from the project.
@@ -59,7 +59,7 @@ The Windows executables carry the icon and file properties (name, version, descr
 
 - **Who it is for:** the default is a per-user install (`%LOCALAPPDATA%\Programs\<name>`). The mode page offers all users (`Program Files`), which asks for administrator rights. An administrator sees one prompt at start.
 - **License:** a license page shows the `LICENSE` file when it is passed in.
-- **Start Menu:** `Programs\<app name>` holds a shortcut and an uninstall shortcut. The CLI's shortcut opens a prompt where `kodalo-cli` works. The UI setup also offers a desktop shortcut.
+- **Start Menu:** `Programs\<app name>` holds a shortcut and an uninstall shortcut. The CLI's shortcut opens a prompt where `kodalo` works. The UI setup also offers a desktop shortcut.
 - **PATH (CLI only):** a component, on by default, edits the registry through `path.ps1` and is removed again on uninstall. The UI setup never touches PATH.
 - **Uninstall:** removes only what setup installed, so a folder chosen by hand keeps anything else in it. Settings and data stay unless the user opts in.
 - **Upgrades:** a newer setup with the same GUID replaces the old install and clears the old `lib/` first.
@@ -67,7 +67,7 @@ The Windows executables carry the icon and file properties (name, version, descr
 Silent use, for scripts and for winget:
 
 ```text
-kodalo-cli-<version>-setup.exe /S [/allusers | /currentuser] [/NOPATH] [/D=C:\folder]
+kodalo-<version>-setup.exe /S [/allusers | /currentuser] [/NOPATH] [/D=C:\folder]
 kodalo-ui-<version>-setup.exe  /S [/allusers | /currentuser] [/DESKTOP] [/D=C:\folder]
 uninstall.exe /S [/PURGE]
 ```

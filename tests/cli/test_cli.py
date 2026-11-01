@@ -1,12 +1,14 @@
 import json
 import re
+import sqlite3
 import sys
+from pathlib import Path
 
 import pytest
 from typer.testing import CliRunner
 
-import kodalo_package
-from kodalo_cli.cli import app, run
+import kodalo.core
+from kodalo.cli.cli import app, run
 
 runner = CliRunner()
 
@@ -22,7 +24,7 @@ def test_help_lists_commands_and_options() -> None:
     result = runner.invoke(app, ["--help"])
 
     assert result.exit_code == 0
-    for text in ("hello", "info", "--version", "--verbose", "--quiet", "--no-color"):
+    for text in ("brand", "doctor", "--version", "--verbose", "--quiet", "--no-color"):
         assert text in plain(result.output)
 
 
@@ -30,94 +32,78 @@ def test_version() -> None:
     result = runner.invoke(app, ["--version"])
 
     assert result.exit_code == 0
-    assert kodalo_package.__version__ in result.output
-
-
-def test_hello_default_name() -> None:
-    result = runner.invoke(app, ["hello"])
-
-    assert result.exit_code == 0
-    assert "Hello, world!" in result.output
-
-
-def test_hello_with_name() -> None:
-    result = runner.invoke(app, ["hello", "Ada"])
-
-    assert result.exit_code == 0
-    assert "Hello, Ada!" in result.output
-
-
-def test_hello_quiet_suppresses_output() -> None:
-    result = runner.invoke(app, ["--quiet", "hello", "Ada"])
-
-    assert result.exit_code == 0
-    assert "Hello" not in result.output
-
-
-def test_hello_verbose_adds_detail() -> None:
-    result = runner.invoke(app, ["--verbose", "hello", "Ada"])
-
-    assert result.exit_code == 0
-    assert "Greeting 'Ada'" in result.output
-
-
-def test_hello_empty_name_fails() -> None:
-    result = runner.invoke(app, ["hello", " "])
-
-    assert result.exit_code == 1
-    assert "must not be empty" in result.output
+    assert kodalo.core.__version__ in result.output
 
 
 def test_verbose_and_quiet_conflict() -> None:
-    result = runner.invoke(app, ["--verbose", "--quiet", "hello"])
+    result = runner.invoke(app, ["--verbose", "--quiet", "doctor"])
 
     assert result.exit_code == 2
 
 
-def test_info_shows_version() -> None:
-    result = runner.invoke(app, ["info"])
+def test_doctor_shows_version(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "doctor"])
 
     assert result.exit_code == 0
-    assert kodalo_package.__version__ in result.output
+    assert kodalo.core.__version__ in result.output
+    assert "Python" in result.output
 
 
 def test_no_color_flag_is_accepted() -> None:
-    result = runner.invoke(app, ["--no-color", "hello", "Ada"])
+    result = runner.invoke(app, ["--no-color", "doctor"])
 
     assert result.exit_code == 0
-    assert "Hello, Ada!" in result.output
+    assert kodalo.core.__version__ in result.output
 
 
-def test_hello_json() -> None:
-    result = runner.invoke(app, ["hello", "Ada", "--json"])
+def test_doctor_json(tmp_path: Path) -> None:
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "doctor", "--json"])
 
+    payload = json.loads(result.output)
     assert result.exit_code == 0
-    assert json.loads(result.output) == {"message": "Hello, Ada!"}
+    assert payload["healthy"] is True
+    versions = {c["name"]: c["detail"] for c in payload["checks"]}
+    assert versions["Kodalo"] == kodalo.core.__version__
 
 
-def test_info_json() -> None:
-    result = runner.invoke(app, ["info", "--json"])
+def test_doctor_reports_brand_profiles(tmp_path: Path) -> None:
+    runner.invoke(app, ["--data-dir", str(tmp_path), "brand", "create", "Main"])
 
-    assert result.exit_code == 0
-    assert json.loads(result.output)["version"] == kodalo_package.__version__
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "doctor", "--json"])
 
-
-def test_quiet_from_environment() -> None:
-    result = runner.invoke(app, ["hello", "Ada"], env={"KODALO_CLI_QUIET": "1"})
-
-    assert result.exit_code == 0
-    assert "Hello" not in result.output
+    details = {c["name"]: c["detail"] for c in json.loads(result.output)["checks"]}
+    assert details["Brand profiles"] == "1 (default: Main)"
+    assert "up to date" in details["Database"]
 
 
-def _boom(name: str) -> str:
+def test_doctor_fails_for_a_database_from_a_newer_version(tmp_path: Path) -> None:
+    runner.invoke(app, ["--data-dir", str(tmp_path), "brand", "create", "Main"])
+    with sqlite3.connect(tmp_path / "kodalo.db") as connection:
+        connection.execute("UPDATE schema_migrations SET version_num = '9999'")
+
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "doctor"])
+
+    assert result.exit_code == 1
+    assert "FAIL" in result.output
+
+
+def test_doctor_fails_for_a_file_that_is_not_a_database(tmp_path: Path) -> None:
+    (tmp_path / "kodalo.db").write_text("not a database", encoding="utf-8")
+
+    result = runner.invoke(app, ["--data-dir", str(tmp_path), "doctor"])
+
+    assert result.exit_code == 1
+
+
+def _boom(*_: object) -> list[object]:
     raise RuntimeError("boom")
 
 
 def test_unexpected_error_is_short_by_default(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(sys, "argv", ["kodalo-cli", "hello", "Ada"])
-    monkeypatch.setattr("kodalo_cli.cli.greet", _boom)
+    monkeypatch.setattr(sys, "argv", ["kodalo", "doctor"])
+    monkeypatch.setattr("kodalo.cli.cli.run_checks", _boom)
 
     with pytest.raises(SystemExit) as exit_info:
         run()
@@ -132,8 +118,8 @@ def test_unexpected_error_is_short_by_default(
 def test_unexpected_error_shows_traceback_with_verbose(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
-    monkeypatch.setattr(sys, "argv", ["kodalo-cli", "--verbose", "hello", "Ada"])
-    monkeypatch.setattr("kodalo_cli.cli.greet", _boom)
+    monkeypatch.setattr(sys, "argv", ["kodalo", "--verbose", "doctor"])
+    monkeypatch.setattr("kodalo.cli.cli.run_checks", _boom)
 
     with pytest.raises(SystemExit):
         run()

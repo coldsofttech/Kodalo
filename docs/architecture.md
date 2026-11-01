@@ -1,8 +1,77 @@
 # Architecture
 
-How the pieces of this template fit together. For day-to-day commands, see [development](development.md). For one-time repository settings, see [repository setup](repo-setup.md).
+How Kodalo is put together: the product design first, then the repository, checks and release flow. For day-to-day commands, see [development](development.md). For one-time repository settings, see [repository setup](repo-setup.md).
 
-## Overview
+## Product design
+
+Kodalo is a local-first Windows application that turns GitHub repositories, or product details entered by hand, into reviewed Instagram content. It owns the product knowledge, content history, review workflow and user experience; the AI model is replaceable. Nothing is published without explicit approval, and the catalog, history and export work without any AI provider.
+
+### Pipeline
+
+Work runs as a sequence of stages. Each stage has a typed input and output, is validated against a versioned JSON Schema (`schema_version`) before the next stage starts, and runs either in code or through the selected AI provider.
+
+```mermaid
+flowchart LR
+    A[Analyze] --> B[Extract] --> C[Verify] --> D[Strategize] --> E[Write] --> F[Design] --> G[Check]
+```
+
+| Stage | Output | Runs in |
+| --- | --- | --- |
+| Analyze | Repository facts: languages, structure, manifests, tooling | Code |
+| Extract | Purpose, installation, use cases and raw capabilities, with quoted evidence | Provider |
+| Verify | Merged features with a status (`verified`, `partially_verified`, `documented_only`, `planned`) and claim flags | Code and provider |
+| Strategize | Strategy, three angles with hooks, five post ideas and a `claims_to_avoid` list | Provider |
+| Write | Slide script or single-image copy, caption, alt text and hashtags | Provider |
+| Design | One HTML file per slide (1080x1350) and a manifest, from templates and the brand profile | Code |
+| Check | Claim tracing, contrast, text fit, length limits and duplicate detection | Code |
+
+Platform-neutral stages (analyze to strategize) do not depend on Instagram. Platform-specific copy and design modules plug in after them, so other platforms can be added later.
+
+### Principles
+
+- **Deterministic work stays in code.** Counting, measuring text fit, checking contrast, matching claims to evidence and confirming that copy matches approved claims never go to a model.
+- **Stages are separable and re-runnable.** Each output is stored with a hash of its inputs, so unchanged stages are not re-run, a failed run resumes from the failed stage, and an edit re-runs only the stages after it.
+- **Limits line up between stages.** For example, the hook length matches the slide headline length, so no stage produces output the next one cannot use.
+- **Honest output.** Copy contains only claims the strategy approved, and missing images stay labelled placeholders instead of invented screenshots.
+- **Audit trail.** Every stage records its inputs, settings, model, token use and result.
+
+The stage contracts were prototyped as six Claude skills in `.claude/skills/`; their outputs for one repository are kept as fixtures in `tests/fixtures/sweepito/`.
+
+### Modules
+
+| Module | Role |
+| --- | --- |
+| Repository adapter | GitHub access, file discovery and scanning, with size caps and rate-limit handling |
+| Catalog | Products, tools, features, evidence and origin (repository, inferred, user-added); rescans keep user edits |
+| Settings | Layered values: built-in defaults, global, product, run. A product group is `inherit`, `override` or `own` |
+| Brand profiles | Named, reusable colors, fonts, logo and layout, with contrast checks |
+| AI providers | One adapter interface: structured generation against a schema, capability report, connection test, token usage and typed errors |
+| Stage runner | Prompts, schema validation, caching by input hash, retries, resume and dry-run estimates |
+| Content registry | Every draft, approval and publication, with exact and near-duplicate detection |
+| Renderer | HTML to PNG with text-fit measurement (renderer choice is still open) |
+| Credential store | Windows secure credential storage; secrets never reach the database, exports or logs |
+
+All of this lives in `kodalo_package`; the command line, API and window only call it.
+
+### Providers
+
+The first release supports the Gemini API, the Claude Code CLI and OpenAI-compatible APIs. Ollama and LM Studio follow later. Connections are configured once, globally, and products choose among them. Credentials are never held at product level. The app never switches silently to a provider that could cost money, and a local-only mode limits stages to local connections.
+
+### Data
+
+SQLite is the local source of truth. The first migration creates `settings`, `brand_profiles`, `provider_settings`, `repositories`, `tools`, `features` and `feature_evidence`; `stage_runs`, the content tables, `marketing_angles` and `publishing_records` arrive in later migrations with the steps that need them. Rows use UUID4 text ids, UTC ISO-8601 timestamps and CHECK-limited status columns. The database file lives in the per-user data folder (`%LOCALAPPDATA%\Kodalo\kodalo.db`); core takes the folder as a path, and generated files will use a user-configurable data folder.
+
+The code is in `kodalo.core.storage`: SQLAlchemy models, hand-written Alembic migrations kept as package data, and a `Database` handle that migrates on open. The Alembic version table is `schema_migrations`. A copy of the file is kept as `kodalo.db.bak` before any migration, restored if the migration fails, and a database written by a newer version is refused untouched. A test compares the migrated schema with the models so they cannot drift. SQLAlchemy and Alembic are runtime dependencies of the core library: they give typed models and a standard migration tool for a schema that will keep growing. The installer build must include the migration files and Alembic's dynamic imports.
+
+### Brand profiles
+
+`kodalo.core.brand` holds named brand profiles. Each profile has colors (background, primary, secondary and text, each with a light and a dark value, plus an `_alt` set used as accents inside a slide), fonts (heading, body and mono, each with an alternative), a logo and a layout (canvas, margins, corner radius, slide numbers, footer, alignment, density). The data is validated Pydantic models, stored as JSON in `brand_profiles.data_json` with a data version; exactly one profile can be the default, enforced by a partial unique index. Fonts come from a bundled open-licence list plus the fonts installed on Windows. Logo files are PNG or SVG, kept under random names in `<data folder>/brand/logos`; SVG files that contain scripts, external links or entities are rejected. Contrast is checked in code and only reported. A profile can be exported to a JSON file with its logos embedded and imported again.
+
+### Content status
+
+Content moves through `draft`, `ready_for_review`, `approved`, `rejected`, `needs_changes`, `publishing`, `published` and `publish_failed`. Approval is bound to the exact copy and asset version and is invalidated by any change. The first release exports images and captions for manual posting; publishing through the Instagram API is a later, separate adapter.
+
+## Repository and checks
 
 A change moves through three layers of checks before it reaches `main`, and a release moves through one more before it reaches PyPI.
 
@@ -55,7 +124,7 @@ flowchart LR
 
 - `kodalo_cli` parses arguments with Typer, calls `kodalo_package`, and writes all output through the shared Rich consoles: data to stdout, messages and errors to stderr.
 - `kodalo_package` holds the logic. It raises exceptions instead of printing or exiting, so other front ends can reuse it.
-- The console script `kodalo-cli` and `python -m kodalo_cli` both enter through `kodalo_cli.cli:app`. Both packages ship in one wheel and share the version in `kodalo_package.__version__`.
+- The console script `kodalo` and `python -m kodalo_cli` both enter through `kodalo_cli.cli:app`. Both packages ship in one wheel and share the version in `kodalo_package.__version__`.
 
 ## UI and API layers
 
@@ -104,7 +173,3 @@ Repository admins can bypass through a pull request so a solo maintainer is not 
 1. Bump `__version__` and update `CHANGELOG.md` in a pull request.
 2. After merge, publish a GitHub release tagged `v<version>`.
 3. `release.yml` builds the sdist and wheel (the core library and the command line only; the API and the window ship in the installers) in one job, then a second job in the `pypi` environment publishes them using OpenID Connect. No API token is stored, and only the publish job gets the `id-token` permission.
-
-## Template lifecycle
-
-GitHub copies files, not settings. A new repo therefore needs these steps: run **Init** with a name and title, which replaces the owner and repository name and renames the example packages and commands ([development](development.md)); replace the icon; run the settings script to apply protections and the ruleset; and optionally switch on signing and the package-manager channels ([releasing](releasing.md)).

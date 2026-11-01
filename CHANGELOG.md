@@ -3,3 +3,9 @@
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
+
+### Added
+
+- Brand profiles (colors, fonts, logo and layout) can be created and managed with `kodalo brand`.
+- The Kodalo window lets you create and edit brands (colors, fonts, logo, layout) with a live preview, and has an About page that checks your installation.
+- Local database that stores your products and settings on your computer and updates itself safely when Kodalo is upgraded.

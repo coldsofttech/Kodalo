@@ -1,4 +1,4 @@
-; NSIS installer for the desktop app (kodalo-ui, with kodalo-cli beside it). Windows only; see
+; NSIS installer for the desktop app (kodalo-ui, with kodalo beside it). Windows only; see
 ; common.nsh for the options.
 ;
 ;   makensis /DAPP_NAME="Kodalo" /DAPP_VERSION=0.1.0 /DSOURCE_DIR=..\..\build\installer\kodalo-ui \
@@ -9,7 +9,7 @@
 ; older install. Generate a new one for your project (python -c "import uuid; print(uuid.uuid4())").
 !define GUID "{522F0731-6C8B-4F27-922D-E7F7701FFA99}"
 !define MAIN_EXE "kodalo-ui.exe"
-!define EXTRA_EXE "kodalo-cli.exe"
+!define EXTRA_EXE "kodalo.exe"
 !define HAS_DESKTOP
 
 !include "common.nsh"

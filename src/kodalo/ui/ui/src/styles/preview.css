@@ -1,0 +1,245 @@
+/* The live preview. Sizes are written in canvas pixels and scaled by --u (one canvas pixel in
+   container width), so a slide keeps the proportions of the real canvas at any width. The brand
+   values arrive as CSS custom properties set by preview.jsx. */
+.preview {
+  position: sticky;
+  top: 1rem;
+  max-height: calc(100vh - 3rem);
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.preview-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+}
+
+.preview-head h2 {
+  margin: 0;
+}
+
+.segmented {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  overflow: hidden;
+}
+
+.segmented button {
+  background: none;
+  border: 0;
+  font: inherit;
+  color: inherit;
+  padding: 0.3rem 0.9rem;
+  cursor: pointer;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--accent-text);
+}
+
+/* Wide screens stack the slides in a column; narrow ones lay them out in a row. */
+.preview-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  padding-bottom: 0.5rem;
+}
+
+.slide-figure {
+  margin: 0;
+}
+
+.slide-figure figcaption {
+  color: var(--muted);
+  font-size: 0.85rem;
+  margin-top: 0.35rem;
+}
+
+.slide-frame {
+  container-type: inline-size;
+  width: 100%;
+}
+
+@media (max-width: 1100px) {
+  .preview-strip {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+
+  .slide-figure {
+    flex: none;
+    width: 15rem;
+  }
+}
+
+.slide {
+  --u: calc(100cqw / var(--canvas-w, 1080));
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  aspect-ratio: var(--canvas-w, 1080) / var(--canvas-h, 1350);
+  overflow: hidden;
+  background: var(--b-background);
+  color: var(--b-text);
+  font-family: var(--f-body);
+  font-size: calc(var(--u) * 38);
+  line-height: 1.35;
+  text-align: var(--align, left);
+  padding: calc(var(--u) * var(--m-top, 96)) calc(var(--u) * var(--m-side, 80))
+    calc(var(--u) * var(--m-bottom, 96));
+  border-radius: calc(var(--u) * var(--radius, 24));
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.slide-alt {
+  background: var(--b-background-alt);
+  color: var(--b-text-alt);
+}
+
+.slide-body {
+  display: grid;
+  gap: calc(var(--u) * var(--gap, 30));
+  align-content: center;
+  flex: 1;
+}
+
+.slide p,
+.slide h3,
+.slide ul,
+.slide pre {
+  margin: 0;
+}
+
+.slide-title {
+  font-family: var(--f-heading);
+  font-size: calc(var(--u) * 80);
+  line-height: 1.1;
+  color: var(--b-primary);
+}
+
+.slide-alt .slide-title {
+  font-family: var(--f-heading-alt);
+  color: var(--b-text-alt);
+}
+
+.slide-eyebrow {
+  justify-self: start;
+  font-size: calc(var(--u) * 28);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  background: var(--b-background-alt);
+  color: var(--b-secondary-alt);
+  border-radius: calc(var(--u) * var(--radius, 24));
+  padding: calc(var(--u) * 8) calc(var(--u) * 24);
+}
+
+.slide em {
+  font-style: normal;
+  font-weight: 600;
+  background: var(--b-background-alt);
+  color: var(--b-primary-alt);
+  border-radius: calc(var(--u) * 8);
+  padding: 0 calc(var(--u) * 10);
+}
+
+.slide strong {
+  font-family: var(--f-body-alt);
+  color: var(--b-secondary);
+}
+
+.slide-list {
+  display: grid;
+  gap: calc(var(--u) * 20);
+  padding-left: calc(var(--u) * 40);
+}
+
+.slide-code {
+  font-family: var(--f-mono);
+  font-size: calc(var(--u) * 32);
+  background: var(--b-background-alt);
+  color: var(--b-text-alt);
+  border-radius: calc(var(--u) * var(--radius, 24));
+  padding: calc(var(--u) * 36);
+  text-align: left;
+  white-space: pre-wrap;
+}
+
+.code-prompt {
+  color: var(--b-primary-alt);
+}
+
+.code-alt {
+  font-family: var(--f-mono-alt);
+  color: var(--b-secondary-alt);
+}
+
+.slide-quote {
+  font-family: var(--f-heading-alt);
+  font-size: calc(var(--u) * 68);
+  line-height: 1.15;
+  color: var(--b-primary-alt);
+}
+
+.slide-pill {
+  justify-self: start;
+  font-weight: 600;
+  background: var(--b-primary);
+  color: var(--b-background);
+  border-radius: 999px;
+  padding: calc(var(--u) * 14) calc(var(--u) * 44);
+}
+
+.slide-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: calc(var(--u) * 24);
+  font-size: calc(var(--u) * 26);
+  opacity: 0.8;
+  min-height: calc(var(--u) * 30);
+}
+
+.slide-logo {
+  position: absolute;
+  width: calc(var(--u) * var(--canvas-w, 1080) * var(--logo-size, 14) / 100);
+  height: auto;
+  max-height: 30%;
+  object-fit: contain;
+}
+
+.logo-top_left {
+  top: calc(var(--u) * var(--logo-pad, 48));
+  left: calc(var(--u) * var(--logo-pad, 48));
+}
+
+.logo-top_center {
+  top: calc(var(--u) * var(--logo-pad, 48));
+  left: 50%;
+  translate: -50% 0;
+}
+
+.logo-top_right {
+  top: calc(var(--u) * var(--logo-pad, 48));
+  right: calc(var(--u) * var(--logo-pad, 48));
+}
+
+.logo-bottom_left {
+  bottom: calc(var(--u) * var(--logo-pad, 48));
+  left: calc(var(--u) * var(--logo-pad, 48));
+}
+
+.logo-bottom_center {
+  bottom: calc(var(--u) * var(--logo-pad, 48));
+  left: 50%;
+  translate: -50% 0;
+}
+
+.logo-bottom_right {
+  bottom: calc(var(--u) * var(--logo-pad, 48));
+  right: calc(var(--u) * var(--logo-pad, 48));
+}

@@ -15,38 +15,22 @@
 [![NSIS](https://img.shields.io/badge/NSIS-Windows%20setup-blue)](https://nsis.sourceforge.io/)
 [![nfpm](https://img.shields.io/badge/nfpm-deb%20%26%20rpm-blue)](https://nfpm.goreleaser.com/)
 
-A ready-to-use starting point for public Python tools that come with a command line, an HTTP API and a desktop window. The window runs a React app on Windows, hosted by [Cornea Shell](https://github.com/coldsofttech/CorneaShell). It also includes automated testing, linting, one-step releases to PyPI, and the community and security files a public repository needs.
+Kodalo turns your GitHub repositories into accurate, on-brand Instagram posts. It runs on your Windows desktop, keeps your products and content history on your own computer, and lets you choose your own AI provider. Nothing is posted without your approval.
 
-## What you get
+> Kodalo is under development and not released yet.
 
-- A command line with `--help`, `--version`, `--verbose`, `--quiet`, `--no-color` and shell completion
-- A desktop window (Windows) with an example React app that talks to Python, started with `kodalo-ui`
-- An HTTP API you can also run on its own, on any system
-- A separate typed library, so your logic is reused by the command line, the API and the window
-- Fast, reproducible setup with [uv](https://docs.astral.sh/uv/)
-- Linting, formatting and type checking before every commit and in CI
-- Automated tests on Python 3.11 to 3.15 (Ubuntu) and 3.11 (Windows and macOS)
-- Publishing to PyPI when you create a GitHub release, with no stored tokens
-- Contribution, conduct, support and security-reporting guidelines
-- Issue forms, a pull request template and automated dependency updates
+## What it will do
 
-## Getting started
-
-1. Click **Use this template** on GitHub and create your new repository.
-2. Run the **Init** workflow from the Actions tab, giving it a short lowercase name (for example `acme`) and a display title, and merge the pull request it opens. This fills in your owner and repository name and renames the example packages and commands to yours. See the [development guide](docs/development.md).
-3. Replace the example React app, API routes, window action and icon with your own.
-4. Add your contact details in `CODE_OF_CONDUCT.md`, delete `.github/workflows/init.yml`, and replace this description.
-5. Apply the repository protections by following the [setup guide](docs/repo-setup.md). Before your first release, work through the checklist in the [releasing guide](docs/releasing.md).
-6. Install dependencies and commit checks:
-
-   ```bash
-   uv sync
-   uv run pre-commit install --hook-type pre-commit --hook-type post-commit
-   ```
+- Read a GitHub repository, or a product you describe yourself, and list its features for you to review
+- Write single-image posts and carousels, with every claim traced back to the repository
+- Keep your brand colors, fonts and logo consistent across posts
+- Warn you before you repeat a feature or angle you have already promoted
+- Export finished images and captions for you to post
+- Work with Gemini, Claude Code or any OpenAI-compatible provider, using your own credentials
 
 ## Installation
 
-The Python package gives you the command line (`kodalo-cli`). Requires Python 3.11 or newer. The recommended way to install a tool is in its own isolated environment:
+The Python package gives you the command line (`kodalo`). Requires Python 3.11 or newer. The recommended way to install a tool is in its own isolated environment:
 
 ```bash
 uv tool install Kodalo
@@ -70,17 +54,11 @@ The window needs Windows 10 or 11 with the Microsoft Edge WebView2 runtime, whic
 
 ## Usage
 
-```console
-$ kodalo-cli hello Ada
-Hello, Ada!
-$ kodalo-ui
-```
+`kodalo-ui` opens the app window, where you set up your brand: colors for light and dark posts, fonts, a logo and the layout, with a live preview of sample slides. `kodalo-ui --no-window` prints an address you can open in a browser instead. On other systems it explains that the window needs Windows; the command line and the API work everywhere. `kodalo --help` lists the commands.
 
-`kodalo-ui` opens the app window. `kodalo-ui --no-window` prints an address you can open in a browser instead. On other systems it explains that the window needs Windows; the command line and the API work everywhere.
+The repository, catalog and post workflow is still being built, so the available commands are limited for now.
 
 See the [CLI reference](docs/cli.md) for every command, option and exit code, and the [API guide](docs/api.md) to run the API on its own.
-
-> After renaming the commands, update the examples above. Once you have written your tool's real behavior, replace this example with a short walkthrough.
 
 ## Development
 
