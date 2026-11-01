@@ -56,16 +56,16 @@ These apply on top of the rules above.
     `-m integration`.
 
 12. **Dependencies and releases**: `uv build` publishes the core library and the command line only
-    (`example_package` and `example_cli`), so runtime `dependencies` stay minimal: Typer and Rich;
+    (`kodalo_package` and `kodalo_cli`), so runtime `dependencies` stay minimal: Typer and Rich;
     justify any other new one. The API's libraries (FastAPI, uvicorn, pydantic-settings) and the
     window's (`cornea-shell`, with the `sys_platform == 'win32'` marker) are dependency groups
-    (`api`, `ui`), never runtime dependencies, and `example_api` and `example_ui` stay out of the
+    (`api`, `ui`), never runtime dependencies, and `kodalo_api` and `kodalo_ui` stay out of the
     wheel and sdist. Don't change the version or publish; releases are cut by the maintainer
     through a GitHub release.
 
-13. **CLI layering**: `src/example_cli/` only parses input and shows output; business logic belongs
-    in `src/example_package/`, which must never print or exit. Use Typer for commands and the
-    shared Rich consoles in `example_cli/output.py` for all output (data to stdout, messages and
+13. **CLI layering**: `src/kodalo_cli/` only parses input and shows output; business logic belongs
+    in `src/kodalo_package/`, which must never print or exit. Use Typer for commands and the
+    shared Rich consoles in `kodalo_cli/output.py` for all output (data to stdout, messages and
     errors to stderr), never `print`. Unexpected errors are handled by `run()`: a short message, a traceback only
     with `--verbose`, and never local variables.
 
@@ -76,10 +76,10 @@ These apply on top of the rules above.
 
 ## FastAPI conventions
 
-These apply to `src/example_api/`, on top of the rules above.
+These apply to `src/kodalo_api/`, on top of the rules above.
 
-15. **API layering**: `src/example_api/` validates input, authenticates and shapes responses; logic
-    stays in `src/example_package/`, which never imports `example_api` or `example_ui`. `fastapi`,
+15. **API layering**: `src/kodalo_api/` validates input, authenticates and shapes responses; logic
+    stays in `src/kodalo_package/`, which never imports `kodalo_api` or `kodalo_ui`. `fastapi`,
     `uvicorn` and `pydantic-settings` belong to the `api` dependency group. Update `docs/api.md` and
     regenerate `docs/openapi.json` (`uv run python scripts/export_openapi.py`) whenever routes or
     schemas change.
@@ -87,7 +87,7 @@ These apply to `src/example_api/`, on top of the rules above.
 16. **Structure and handlers**: `create_app()` in `main.py` builds the app (no module-level app), with
     one router file per API version in `routers/` mounted under `/api/v1` and the probes
     (`/health`, `/ready`) at the root. Settings, errors, logging, security and auth each keep their
-    own module. Handlers stay thin: validate, call `example_package`, return a schema. Use plain
+    own module. Handlers stay thin: validate, call `kodalo_package`, return a schema. Use plain
     `def` for anything that may block (it runs in a worker thread) and `async def` only when
     everything inside is awaited.
 
@@ -100,7 +100,7 @@ These apply to `src/example_api/`, on top of the rules above.
 
 18. **Dependencies and settings**: use `Annotated[..., Depends(...)]` for settings, auth and shared
     objects such as the store, and add no new global state; tests reset the cached ones in
-    `tests/conftest.py`. Add settings to `config.py` with the `EXAMPLE_API_` prefix, read them
+    `tests/conftest.py`. Add settings to `config.py` with the `KODALO_API_` prefix, read them
     through `get_settings()` and never `os.environ` elsewhere, and document each in `.env.example`
     and `docs/api.md`.
 
@@ -110,22 +110,22 @@ These apply to `src/example_api/`, on top of the rules above.
     Schemathesis test in `tests/api/integration/`, covering every status code a route declares.
 
 20. **Standalone API and security**: the API must refuse to start without an API key unless
-    `EXAMPLE_API_AUTH_MODE=none` is set, never log secrets or return error details from 500s, and
+    `KODALO_API_AUTH_MODE=none` is set, never log secrets or return error details from 500s, and
     keep its docs hidden by default. Under Cornea, authentication is Cornea's; do not add a second
     token. Keep `docs/security.md` in step with any change here.
 
 ## React and Vite conventions
 
-These apply to `src/example_ui/` and its frontend in `src/example_ui/ui/`, on top of the rules above.
+These apply to `src/kodalo_ui/` and its frontend in `src/kodalo_ui/ui/`, on top of the rules above.
 
-21. **UI layering**: `src/example_ui/app.py` only wires Cornea Shell to `example_api` and
-    `example_package`; it holds no business logic and never prints or exits. Only
-    `example_ui/__main__.py` shows output and sets exit codes. Import `cornea` lazily, since it is
+21. **UI layering**: `src/kodalo_ui/app.py` only wires Cornea Shell to `kodalo_api` and
+    `kodalo_package`; it holds no business logic and never prints or exits. Only
+    `kodalo_ui/__main__.py` shows output and sets exit codes. Import `cornea` lazily, since it is
     Windows only. The frontend is JavaScript (no TypeScript) and reaches Python only through `fetch`
     and the Cornea bridge. Update `docs/ui.md` when routes or actions change.
 
 22. **Frontend tooling**: Node (version in `.nvmrc`) with `npm ci` and a committed
-    `package-lock.json`; add packages with `npm install` in `src/example_ui/ui/`, never edit the lock
+    `package-lock.json`; add packages with `npm install` in `src/kodalo_ui/ui/`, never edit the lock
     file by hand. Keep `dist/` and `node_modules/` out of git. Verify frontend changes with
     `npm run lint`, `npm test` and `npm run build`, scoped to that folder. ESLint and Prettier
     (`.prettierrc.json`) decide formatting; do not hand-format or disable a rule without a comment

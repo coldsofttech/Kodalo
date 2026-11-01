@@ -1,30 +1,30 @@
 # API
 
-`example_api` is a FastAPI app over `example_package`. It runs on its own on any system, and the same routes are mounted inside the UI window (see [UI](ui.md)). Routes only validate input, call the library and shape the response; logic stays in `example_package`.
+`kodalo_api` is a FastAPI app over `kodalo_package`. It runs on its own on any system, and the same routes are mounted inside the UI window (see [UI](ui.md)). Routes only validate input, call the library and shape the response; logic stays in `kodalo_package`.
 
 ## Running it
 
 ```bash
-cp .env.example .env              # set EXAMPLE_API_API_KEYS, or EXAMPLE_API_AUTH_MODE=none
-uv run python -m example_api      # http://127.0.0.1:8000
+cp .env.example .env              # set KODALO_API_API_KEYS, or KODALO_API_AUTH_MODE=none
+uv run python -m kodalo_api      # http://127.0.0.1:8000
 ```
 
 The app refuses to start without an API key unless authentication is switched off. This is on purpose, so the API is never open by accident. See [security](security.md).
 
 ## Settings
 
-Read from `EXAMPLE_API_*` environment variables or a `.env` file. List values are JSON.
+Read from `KODALO_API_*` environment variables or a `.env` file. List values are JSON.
 
 | Variable | Default | Purpose |
 | --- | --- | --- |
-| `EXAMPLE_API_HOST` | `127.0.0.1` | Address to listen on |
-| `EXAMPLE_API_PORT` | `8000` | Port to listen on |
-| `EXAMPLE_API_LOG_LEVEL` | `info` | Log level |
-| `EXAMPLE_API_AUTH_MODE` | `api_key` | `api_key`, or `none` for local development |
-| `EXAMPLE_API_API_KEYS` | none | Accepted keys, sent in the `X-API-Key` header |
-| `EXAMPLE_API_DOCS_ENABLED` | `false` | Serve `/docs`, `/redoc` and `/openapi.json` |
-| `EXAMPLE_API_MAX_BODY_BYTES` | `1048576` | Largest request body |
-| `EXAMPLE_API_CORS_ORIGINS` | none | Origins allowed by CORS |
+| `KODALO_API_HOST` | `127.0.0.1` | Address to listen on |
+| `KODALO_API_PORT` | `8000` | Port to listen on |
+| `KODALO_API_LOG_LEVEL` | `info` | Log level |
+| `KODALO_API_AUTH_MODE` | `api_key` | `api_key`, or `none` for local development |
+| `KODALO_API_API_KEYS` | none | Accepted keys, sent in the `X-API-Key` header |
+| `KODALO_API_DOCS_ENABLED` | `false` | Serve `/docs`, `/redoc` and `/openapi.json` |
+| `KODALO_API_MAX_BODY_BYTES` | `1048576` | Largest request body |
+| `KODALO_API_CORS_ORIGINS` | none | Origins allowed by CORS |
 
 ## Endpoints
 

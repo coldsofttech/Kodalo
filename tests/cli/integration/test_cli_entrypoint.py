@@ -2,7 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-import example_package
+import kodalo_package
 
 
 def _run(*command: str) -> subprocess.CompletedProcess[str]:
@@ -10,15 +10,15 @@ def _run(*command: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_module_entrypoint() -> None:
-    result = _run(sys.executable, "-m", "example_cli", "--version")
+    result = _run(sys.executable, "-m", "kodalo_cli", "--version")
 
     assert result.returncode == 0
-    assert example_package.__version__ in result.stdout
+    assert kodalo_package.__version__ in result.stdout
 
 
 def test_console_script() -> None:
     script = Path(sys.executable).parent / (
-        "example-cli.exe" if sys.platform == "win32" else "example-cli"
+        "kodalo-cli.exe" if sys.platform == "win32" else "kodalo-cli"
     )
 
     result = _run(str(script), "hello", "Ada")
@@ -28,7 +28,7 @@ def test_console_script() -> None:
 
 
 def test_errors_go_to_stderr() -> None:
-    result = _run(sys.executable, "-m", "example_cli", "hello", " ")
+    result = _run(sys.executable, "-m", "kodalo_cli", "hello", " ")
 
     assert result.returncode == 1
     assert "must not be empty" in result.stderr
