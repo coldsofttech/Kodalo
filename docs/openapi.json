@@ -583,6 +583,110 @@
         "title": "FontResponse",
         "type": "object"
       },
+      "GitHubCheckResponse": {
+        "description": "Whether the chosen way of reaching GitHub works.",
+        "properties": {
+          "detail": {
+            "examples": [
+              "The GitHub CLI is installed and signed in."
+            ],
+            "maxLength": 256,
+            "title": "Detail",
+            "type": "string"
+          },
+          "mode": {
+            "enum": [
+              "local_folder",
+              "gh_cli",
+              "web_fetch"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "ok": {
+            "description": "Whether the chosen way works.",
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "mode",
+          "ok",
+          "detail"
+        ],
+        "title": "GitHubCheckResponse",
+        "type": "object"
+      },
+      "GitHubSettingsResponse": {
+        "description": "How Kodalo reaches GitHub.",
+        "properties": {
+          "local_folder": {
+            "description": "Folder holding your repositories. Used by the local_folder mode.",
+            "examples": [
+              "C:/Users/me/code"
+            ],
+            "maxLength": 1024,
+            "title": "Local Folder",
+            "type": "string"
+          },
+          "mode": {
+            "description": "The chosen way to reach GitHub.",
+            "enum": [
+              "local_folder",
+              "gh_cli",
+              "web_fetch"
+            ],
+            "examples": [
+              "gh_cli"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode",
+          "local_folder"
+        ],
+        "title": "GitHubSettingsResponse",
+        "type": "object"
+      },
+      "GitHubSettingsUpdate": {
+        "description": "``local_folder`` left out keeps the saved folder.",
+        "properties": {
+          "local_folder": {
+            "anyOf": [
+              {
+                "maxLength": 1024,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "C:/Users/me/code"
+            ],
+            "title": "Local Folder"
+          },
+          "mode": {
+            "enum": [
+              "local_folder",
+              "gh_cli",
+              "web_fetch"
+            ],
+            "examples": [
+              "gh_cli"
+            ],
+            "title": "Mode",
+            "type": "string"
+          }
+        },
+        "required": [
+          "mode"
+        ],
+        "title": "GitHubSettingsUpdate",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1670,6 +1774,92 @@
           }
         },
         "summary": "List starter palettes",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/github": {
+      "get": {
+        "description": "Return how Kodalo reaches GitHub. The default is the gh CLI.",
+        "operationId": "get_github_settings_api_v1_settings_github_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get GitHub connectivity",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Choose the way to reach GitHub: a local folder, the gh CLI or the web.",
+        "operationId": "set_github_settings_api_v1_settings_github_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GitHubSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set GitHub connectivity",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/github/check": {
+      "post": {
+        "description": "Try the saved way of reaching GitHub once. A failure is reported in the body.",
+        "operationId": "check_github_settings_api_v1_settings_github_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GitHubCheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Check GitHub connectivity",
         "tags": [
           "v1"
         ]

@@ -39,6 +39,7 @@ uv run python -m kodalo.ui --dev           # Vite with hot reload (needs Node)
 ## Screens
 
 - **Brands** is the first screen. With no brand yet it shows a welcome page (choose a starter palette, name the brand, or import a file). Otherwise it shows the list of brands, the editor and a live preview. The editor has four tabs: Colors (light and dark values, with a contrast check), Fonts, Logo and Layout. Edits are a draft: the preview follows every change, and nothing is written until you press Save (Discard throws the draft away, and leaving with unsaved changes asks first). Logo uploads and removals are the exception: the file is stored on the server, so they are saved straight away.
+- **Settings** has GitHub connectivity: choose the GitHub CLI (default), a local folder or web fetch, save it, and test the saved choice (`/api/v1/settings/github`).
 - **About** explains the product and has a button that runs the `doctor` checks (`GET /api/v1/doctor`) and shows the result.
 
 ## The preview

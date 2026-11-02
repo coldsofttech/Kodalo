@@ -138,6 +138,7 @@ export const DOCTOR = {
 export function createBackend(initial = []) {
   const state = {
     brands: initial,
+    github: { mode: 'gh_cli', local_folder: '' },
     contrast: /** @type {any[]} */ (NO_FAILURES),
     doctor: /** @type {any} */ (DOCTOR),
     counter: 0,
@@ -155,6 +156,11 @@ export function createBackend(initial = []) {
     const parts = url.pathname.replace('/api/v1/', '').split('/');
     if (url.pathname === '/api/bridge/app_info') {
       return { available: true, result: { name: 'Kodalo', version: '1.2.3' } };
+    }
+    if (parts[0] === 'settings') {
+      if (parts[2] === 'check') return { mode: state.github.mode, ok: true, detail: 'Works.' };
+      if (method === 'PUT') state.github = { local_folder: '', ...body };
+      return state.github;
     }
     if (parts[0] === 'palettes') return PALETTES;
     if (parts[0] === 'fonts') return FONTS;

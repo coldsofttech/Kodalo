@@ -112,3 +112,10 @@ export async function appInfo() {
   if (!body?.available) throw new ApiError(body?.reason || 'Not available here', 0);
   return body.result;
 }
+
+const GITHUB_SETTINGS = '/api/v1/settings/github';
+
+export const getGithubSettings = () => request(GITHUB_SETTINGS);
+/** @param {{ mode: string, local_folder?: string }} body */
+export const saveGithubSettings = (body) => request(GITHUB_SETTINGS, { method: 'PUT', json: body });
+export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });

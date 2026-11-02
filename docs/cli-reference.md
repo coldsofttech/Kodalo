@@ -23,6 +23,7 @@ $ kodalo [OPTIONS] COMMAND [ARGS]...
 
 * `doctor`: Diagnose the installation and the local data.
 * `brand`: Manage brand profiles: colors, fonts, logo...
+* `settings`: Change Kodalo&#x27;s settings.
 
 ## `kodalo doctor`
 
@@ -383,4 +384,92 @@ $ kodalo brand logo remove [OPTIONS] {name}
 **Options**:
 
 * `--dark`: Remove the dark-mode logo.
+* `--help`: Show this message and exit.
+
+## `kodalo settings`
+
+Change Kodalo&#x27;s settings.
+
+**Usage**:
+
+```console
+$ kodalo settings [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `github`: Choose how Kodalo reaches GitHub: a local...
+
+### `kodalo settings github`
+
+Choose how Kodalo reaches GitHub: a local folder, the gh CLI or the web.
+
+**Usage**:
+
+```console
+$ kodalo settings github [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `show`: Show the current GitHub connectivity setting.
+* `set`: Choose the way to reach GitHub.
+* `check`: Check that the chosen way works.
+
+#### `kodalo settings github show`
+
+Show the current GitHub connectivity setting.
+
+**Usage**:
+
+```console
+$ kodalo settings github show [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings github set`
+
+Choose the way to reach GitHub.
+
+**Usage**:
+
+```console
+$ kodalo settings github set [OPTIONS] {mode}
+```
+
+**Arguments**:
+
+* `mode`: One of: local_folder, gh_cli, web_fetch.  [required]
+
+**Options**:
+
+* `--folder <str>`: Folder holding your repositories (for local_folder).
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings github check`
+
+Check that the chosen way works. Exits with 1 when it does not.
+
+**Usage**:
+
+```console
+$ kodalo settings github check [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
 * `--help`: Show this message and exit.

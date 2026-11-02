@@ -9,6 +9,8 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | Method and path | Purpose |
 | --- | --- |
 | `GET /health`, `GET /ready` | Liveness and readiness probes, no authentication |
+| `GET`, `PUT /api/v1/settings/github` | Read or choose how Kodalo reaches GitHub (`gh_cli` by default, `local_folder`, `web_fetch`) |
+| `POST /api/v1/settings/github/check` | Try the saved way once; a failure is reported in the body, not as an error |
 | `GET /api/v1/palettes` | Starter palettes, each with complete brand data to begin from |
 | `GET /api/v1/fonts` | Bundled fonts first, then fonts installed on this computer |
 | `GET /api/v1/canvas-presets` | Canvas sizes a layout can use |

@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import AboutPage from './pages/About.jsx';
 import BrandsPage from './pages/Brands.jsx';
+import SettingsPage from './pages/Settings.jsx';
 
 const PAGES = [
   ['brands', 'Brands'],
+  ['settings', 'Settings'],
   ['about', 'About'],
 ];
 
@@ -28,9 +30,12 @@ export default function App() {
         </ul>
       </nav>
       <main className="content">
-        {/* Both pages stay mounted, so switching never loses unsaved edits. */}
+        {/* All pages stay mounted, so switching never loses unsaved edits. */}
         <div hidden={page !== 'brands'}>
           <BrandsPage />
+        </div>
+        <div hidden={page !== 'settings'}>
+          <SettingsPage />
         </div>
         <div hidden={page !== 'about'}>
           <AboutPage />

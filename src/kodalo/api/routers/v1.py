@@ -7,7 +7,7 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Depends, HTTPException, Path, Query, Request, Response, status
 from fastapi.concurrency import run_in_threadpool
 
-from kodalo.api.deps import data_dir, get_brand_service
+from kodalo.api.deps import data_dir, get_brand_service, get_github_connectivity
 from kodalo.api.schemas import (
     BrandCreate,
     BrandDuplicate,
@@ -20,6 +20,9 @@ from kodalo.api.schemas import (
     DoctorCheck,
     DoctorResponse,
     FontResponse,
+    GitHubCheckResponse,
+    GitHubSettingsResponse,
+    GitHubSettingsUpdate,
     PaletteResponse,
 )
 from kodalo.core.brand import (
@@ -36,11 +39,17 @@ from kodalo.core.brand import (
 )
 from kodalo.core.brand.logos import MAX_LOGO_BYTES
 from kodalo.core.doctor import passed, run_checks
+from kodalo.core.github import (
+    GitHubConnectivity,
+    GitHubInvalidError,
+    check_connection,
+)
 
 # Cornea has already authenticated the caller by the time a request reaches these routes.
 router = APIRouter(tags=["v1"])
 
 Service = Annotated[BrandService, Depends(get_brand_service)]
+GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
 BrandPath = Annotated[str, Path(max_length=64, description="Brand profile id.")]
 Variant = Annotated[
     Literal["light", "dark"],
@@ -96,6 +105,30 @@ def doctor() -> DoctorResponse:
     """Run the same checks as `kodalo doctor`: versions, libraries, data folder and database."""
     checks = run_checks(data_dir())
     return DoctorResponse(healthy=passed(checks), checks=[DoctorCheck.from_core(c) for c in checks])
+
+
+# Settings -----------------------------------------------------------------------------------
+
+
+@router.get("/settings/github", summary="Get GitHub connectivity", responses=COMMON)
+def get_github_settings(github: GitHub) -> GitHubSettingsResponse:
+    """Return how Kodalo reaches GitHub. The default is the gh CLI."""
+    return GitHubSettingsResponse.from_core(github.get())
+
+
+@router.put("/settings/github", summary="Set GitHub connectivity", responses=COMMON | INVALID)
+def set_github_settings(body: GitHubSettingsUpdate, github: GitHub) -> GitHubSettingsResponse:
+    """Choose the way to reach GitHub: a local folder, the gh CLI or the web."""
+    try:
+        return GitHubSettingsResponse.from_core(github.save(body.mode, body.local_folder))
+    except GitHubInvalidError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+
+
+@router.post("/settings/github/check", summary="Check GitHub connectivity", responses=COMMON)
+def check_github_settings(github: GitHub) -> GitHubCheckResponse:
+    """Try the saved way of reaching GitHub once. A failure is reported in the body."""
+    return GitHubCheckResponse.from_core(check_connection(github.get()))
 
 
 # Reference data -----------------------------------------------------------------------------

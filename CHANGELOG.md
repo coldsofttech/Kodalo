@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- GitHub connectivity setting: choose the GitHub CLI (default), a local folder or web fetch, with `kodalo settings github` or in the new Settings screen.
 - Brand profiles (colors, fonts, logo and layout) can be created and managed with `kodalo brand`.
 - The Kodalo window lets you create and edit brands (colors, fonts, logo, layout) with a live preview, and has an About page that checks your installation.
 - Local database that stores your products and settings on your computer and updates itself safely when Kodalo is upgraded.

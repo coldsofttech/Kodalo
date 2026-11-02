@@ -41,6 +41,16 @@ CI fails if the file is out of date.
 
 Check the installation and the local data without changing anything: the Kodalo and Python versions, the platform, the required libraries, the data folder, the database (its version, or that it is not created yet), the number of brand profiles and the fonts available. Each line is `ok`, `warn` (optional) or `FAIL` (required). Exits with 1 if a required check fails, for example a database written by a newer Kodalo. Add `--json` for `{"healthy": ..., "checks": [...]}`.
 
+### `settings github`
+
+Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this computer), `gh_cli` (the GitHub CLI, the default) or `web_fetch` (public repositories over the internet, no sign-in). The choice is stored in the local database.
+
+| Command | What it does |
+| --- | --- |
+| `settings github show` | Show the current mode and folder. `--json` for machine-readable output. |
+| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). |
+| `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
+
 ### `brand`
 
 Manage brand profiles. Every command takes the profile by name (any case) or by id. Messages go to stderr and `--quiet` hides them; data goes to stdout.

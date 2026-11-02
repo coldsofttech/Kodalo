@@ -7,6 +7,7 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from kodalo.core.brand import BrandService
+from kodalo.core.github import GitHubConnectivity
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -19,6 +20,7 @@ class Services:
 
     database: Database
     brands: BrandService
+    github: GitHubConnectivity
 
 
 def data_dir() -> Path:
@@ -30,7 +32,7 @@ def data_dir() -> Path:
 def _services() -> Services:
     folder = data_dir()
     database = Database.open(database_path(folder))
-    return Services(database, BrandService(database, folder))
+    return Services(database, BrandService(database, folder), GitHubConnectivity(database))
 
 
 def get_brand_service() -> BrandService:
@@ -39,6 +41,14 @@ def get_brand_service() -> BrandService:
         return _services().brands
     except StorageError as error:
         # Storage messages are written for users and never contain internals.
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_github_connectivity() -> GitHubConnectivity:
+    """Return the GitHub connectivity setting, opening the database on first use."""
+    try:
+        return _services().github
+    except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 

@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, model_validator
 from kodalo.core.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo, Palette
 from kodalo.core.brand.logos import MAX_LOGO_BYTES
 from kodalo.core.doctor import Check
+from kodalo.core.github import ConnectionCheck, GitHubSettings
 
 
 class HealthResponse(BaseModel):
@@ -149,3 +150,40 @@ class DoctorCheck(BaseModel):
 class DoctorResponse(BaseModel):
     healthy: bool = Field(description="Whether every required check passed.")
     checks: list[DoctorCheck]
+
+
+GitHubMode = Literal["local_folder", "gh_cli", "web_fetch"]
+
+
+class GitHubSettingsResponse(BaseModel):
+    """How Kodalo reaches GitHub."""
+
+    mode: GitHubMode = Field(description="The chosen way to reach GitHub.", examples=["gh_cli"])
+    local_folder: str = Field(
+        max_length=1024,
+        description="Folder holding your repositories. Used by the local_folder mode.",
+        examples=["C:/Users/me/code"],
+    )
+
+    @classmethod
+    def from_core(cls, settings: GitHubSettings) -> Self:
+        return cls(mode=settings.mode, local_folder=settings.local_folder)
+
+
+class GitHubSettingsUpdate(BaseModel):
+    """``local_folder`` left out keeps the saved folder."""
+
+    mode: GitHubMode = Field(examples=["gh_cli"])
+    local_folder: str | None = Field(default=None, max_length=1024, examples=["C:/Users/me/code"])
+
+
+class GitHubCheckResponse(BaseModel):
+    """Whether the chosen way of reaching GitHub works."""
+
+    mode: GitHubMode
+    ok: bool = Field(description="Whether the chosen way works.")
+    detail: str = Field(max_length=256, examples=["The GitHub CLI is installed and signed in."])
+
+    @classmethod
+    def from_core(cls, check: ConnectionCheck) -> Self:
+        return cls(mode=check.mode, ok=check.ok, detail=check.detail)
