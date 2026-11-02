@@ -3,12 +3,13 @@
 import base64
 import binascii
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeVar
 
 from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
+from kodalo.core.brand.catalogue import FontCatalogue
 from kodalo.core.brand.contrast import ContrastResult, check_colors
 from kodalo.core.brand.errors import (
     BrandInvalidError,
@@ -16,14 +17,35 @@ from kodalo.core.brand.errors import (
     BrandNotFoundError,
 )
 from kodalo.core.brand.logos import LogoStore
-from kodalo.core.brand.models import Brand, BrandData, ProfileName
-from kodalo.core.brand.palettes import starter_brand
+from kodalo.core.brand.models import (
+    Brand,
+    BrandColors,
+    BrandData,
+    BrandFonts,
+    ColorPair,
+    FontRef,
+    Logo,
+    ProfileName,
+)
+from kodalo.core.brand.palettes import default_fonts
+from kodalo.core.canvas import Canvas, CanvasService
+from kodalo.core.layout import Layout, LayoutError, LayoutService
+from kodalo.core.palette import PaletteError, PaletteService
 from kodalo.core.storage import Database
-from kodalo.core.storage.models import BrandProfile
+from kodalo.core.storage.models import (
+    BrandColorsRow,
+    BrandFontsRow,
+    BrandLogoRow,
+    BrandProfile,
+    LayoutRow,
+)
 
 EXPORT_FORMAT = "kodalo-brand"
 EXPORT_VERSION = 1
 _NAME = TypeAdapter(ProfileName)
+_Row = TypeVar("_Row")
+_COLOR_NAMES = tuple(BrandColors.model_fields)
+_FONT_NAMES = tuple(BrandFonts.model_fields)
 
 
 def _problems(error: ValidationError) -> list[str]:
@@ -40,6 +62,15 @@ def _clean_name(name: str) -> str:
         raise BrandInvalidError("A brand name must be 1 to 64 characters.") from None
 
 
+def _fill(existing: _Row | None, model: type[_Row], values: dict[str, Any]) -> _Row:
+    """Update ``existing`` in place, or build a new row, from column values."""
+    if existing is None:
+        return model(**values)
+    for key, value in values.items():
+        setattr(existing, key, value)
+    return existing
+
+
 def _logo_names(data: BrandData) -> set[str]:
     return {name for name in (data.logo.file, data.logo.dark_file) if name}
 
@@ -50,6 +81,10 @@ class BrandService:
     def __init__(self, database: Database, data_dir: Path) -> None:
         self._database = database
         self.logos = LogoStore(data_dir)
+        self.canvases = CanvasService(database)
+        self.layouts = LayoutService(database, self.canvases)
+        self.fonts = FontCatalogue(database)
+        self.palettes = PaletteService(database)
 
     # Reading
 
@@ -77,17 +112,26 @@ class BrandService:
             row = session.scalars(select(BrandProfile).where(BrandProfile.is_default)).first()
             return self._brand(row) if row else None
 
+    def starter(self, palette: str | None = None) -> BrandData:
+        """Return complete brand data for a new profile, from a palette (default: Midnight)."""
+        try:
+            found = self.palettes.find(palette or "midnight")
+        except PaletteError as error:
+            raise BrandInvalidError(str(error)) from None
+        return BrandData(colors=found.colors.model_copy(deep=True), fonts=default_fonts())
+
     # Changing
 
     def create(self, name: str, data: BrandData | None = None) -> Brand:
         """Add a profile. The first profile becomes the default."""
         name = _clean_name(name)
-        data = data or starter_brand()
+        data = self._with_layout(data or self.starter())
         self._check_logos(data)
         with self._database.session() as session:
             self._check_name(session, name)
             first = session.scalars(select(BrandProfile.id)).first() is None
-            row = BrandProfile(name=name, is_default=first, data_json=data.model_dump_json())
+            row = BrandProfile(name=name, is_default=first)
+            self._write(session, row, data)
             session.add(row)
             session.flush()
             return self._brand(row)
@@ -97,6 +141,7 @@ class BrandService:
     ) -> Brand:
         """Rename a profile and/or replace its data. Logo files no longer used are removed."""
         if data is not None:
+            data = self._with_layout(data)
             self._check_logos(data)
         with self._database.session() as session:
             row = self._row(session, brand_id)
@@ -106,7 +151,7 @@ class BrandService:
                 self._check_name(session, name, ignore=brand_id)
                 row.name = name
             if data is not None:
-                row.data_json = data.model_dump_json()
+                self._write(session, row, data)
             session.flush()
             current = _logo_names(self._data(row))
             brand = self._brand(row)
@@ -199,7 +244,8 @@ class BrandService:
             "format": EXPORT_FORMAT,
             "version": EXPORT_VERSION,
             "name": brand.name,
-            "data": brand.data.model_dump(mode="json"),
+            "data": brand.data.model_dump(mode="json", exclude={"layout_id"}),
+            "layout": self.layouts.export_layout(brand.layout.id),
             "logos": logos,
         }
 
@@ -209,8 +255,20 @@ class BrandService:
             raise BrandInvalidError("This is not a Kodalo brand file.")
         if payload.get("version") != EXPORT_VERSION:
             raise BrandInvalidError("This brand file was made by a different version of Kodalo.")
+        raw_data = payload.get("data")
+        layout_entry = payload.get("layout")
+        if isinstance(raw_data, dict):
+            raw_data = dict(raw_data)  # the caller's payload is left as it was
+            legacy = raw_data.pop("layout", None)  # files made before shared layouts
+            if isinstance(legacy, dict):
+                legacy = dict(legacy)
+            if layout_entry is None and isinstance(legacy, dict):
+                legacy.pop("canvas_id", None)
+                layout_entry = {**legacy, "canvas": legacy.get("canvas") or payload.get("canvas")}
+        if layout_entry is None and payload.get("canvas") is not None:
+            layout_entry = {"canvas": payload["canvas"]}
         try:
-            data = BrandData.model_validate(payload.get("data"))
+            data = BrandData.model_validate(raw_data)
         except ValidationError as error:
             raise BrandInvalidError("The brand file is not valid.", _problems(error)) from None
         raw_logos = payload.get("logos")
@@ -219,6 +277,9 @@ class BrandService:
         try:
             for old in _logo_names(data):
                 stored[old] = self._import_logo(files.get(old))
+            if layout_entry is not None:
+                name_for = name or str(payload.get("name") or "Imported")
+                data.layout_id = self._import_layout(layout_entry, f"{name_for} layout")
             data.logo.file = stored.get(data.logo.file or "")
             data.logo.dark_file = stored.get(data.logo.dark_file or "")
             return self.create(
@@ -230,6 +291,24 @@ class BrandService:
             raise
 
     # Helpers
+
+    def _with_layout(self, data: BrandData) -> BrandData:
+        """Return ``data`` with its layout given as an id; a layout name is accepted too."""
+        try:
+            layout = self.layouts.find(data.layout_id)
+        except LayoutError:
+            raise BrandInvalidError("The brand refers to a layout that does not exist.") from None
+        if layout.id == data.layout_id:
+            return data
+        data = data.model_copy(deep=True)
+        data.layout_id = layout.id
+        return data
+
+    def _import_layout(self, entry: object, default_name: str) -> str:
+        try:
+            return self.layouts.ensure(entry, default_name)
+        except LayoutError as error:
+            raise BrandInvalidError(f"The layout in the brand file is not valid: {error}") from None
 
     def _import_logo(self, entry: object) -> str:
         encoded = entry.get("content_base64") if isinstance(entry, dict) else None
@@ -274,14 +353,95 @@ class BrandService:
 
     @staticmethod
     def _data(row: BrandProfile) -> BrandData:
-        return BrandData.model_validate_json(row.data_json)
+        colors, fonts, logo = row.colors, row.fonts, row.logo
+        if colors is None or fonts is None or logo is None or row.layout_id is None:
+            raise BrandInvalidError("The brand is incomplete in the database.")
+        return BrandData(
+            colors=BrandColors(
+                **{
+                    name: ColorPair(
+                        light=getattr(colors, f"{name}_light"),
+                        dark=getattr(colors, f"{name}_dark"),
+                    )
+                    for name in _COLOR_NAMES
+                }
+            ),
+            fonts=BrandFonts(
+                **{
+                    name: FontRef(
+                        family=getattr(fonts, name).family,
+                        source=getattr(fonts, name).source,
+                    )
+                    for name in _FONT_NAMES
+                }
+            ),
+            logo=Logo(
+                file=logo.file,
+                dark_file=logo.dark_file,
+                position=logo.position,  # type: ignore[arg-type]
+                size_percent=logo.size_percent,
+                padding=logo.padding,
+                show_on=logo.show_on,  # type: ignore[arg-type]
+            ),
+            layout_id=row.layout_id,
+        )
+
+    def _write(self, session: Session, row: BrandProfile, data: BrandData) -> None:
+        """Store ``data`` in the profile's colors, fonts and logo rows and link its layout."""
+        color_values = {
+            f"{name}_{tone}": getattr(getattr(data.colors, name), tone)
+            for name in _COLOR_NAMES
+            for tone in ("light", "dark")
+        }
+        font_values = {
+            name: self.fonts.row_for(session, getattr(data.fonts, name)) for name in _FONT_NAMES
+        }
+        row.colors = _fill(row.colors, BrandColorsRow, color_values)
+        row.fonts = _fill(row.fonts, BrandFontsRow, font_values)
+        row.logo = _fill(row.logo, BrandLogoRow, data.logo.model_dump())
+        row.layout = session.get_one(LayoutRow, data.layout_id)
+
+    @staticmethod
+    def _layout_info(row: BrandProfile) -> tuple[Layout, Canvas]:
+        if row.layout is None:
+            raise BrandInvalidError("The brand is incomplete in the database.")
+        lay, canvas = row.layout, row.layout.canvas
+        layout = Layout(
+            id=lay.id,
+            name=lay.name,
+            type=lay.type,  # type: ignore[arg-type]
+            canvas_id=lay.canvas_id,
+            margin_top=lay.margin_top,
+            margin_side=lay.margin_side,
+            margin_bottom=lay.margin_bottom,
+            corner_radius=lay.corner_radius,
+            slide_numbers=lay.slide_numbers,
+            footer_text=lay.footer_text,
+            align=lay.align,  # type: ignore[arg-type]
+            density=lay.density,  # type: ignore[arg-type]
+            slides_count=lay.slides_count,
+            created_at=lay.created_at,
+            updated_at=lay.updated_at,
+        )
+        return layout, Canvas(
+            id=canvas.id,
+            name=canvas.name,
+            width=canvas.width,
+            height=canvas.height,
+            type=canvas.type,  # type: ignore[arg-type]
+            created_at=canvas.created_at,
+            updated_at=canvas.updated_at,
+        )
 
     def _brand(self, row: BrandProfile) -> Brand:
+        layout, canvas = self._layout_info(row)
         return Brand(
             id=row.id,
             name=row.name,
             is_default=row.is_default,
             data=self._data(row),
+            layout=layout,
+            canvas=canvas,
             created_at=row.created_at,
             updated_at=row.updated_at,
         )

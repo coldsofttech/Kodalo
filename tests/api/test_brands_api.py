@@ -62,11 +62,11 @@ def test_errors_are_problem_json(client: TestClient) -> None:
 def test_update_name_and_data(client: TestClient) -> None:
     brand = create(client)
     data = brand["data"]
-    data["layout"]["footer_text"] = "@kodalo"
+    data["logo"]["padding"] = 60
     updated = client.patch(f"{BRANDS}/{brand['id']}", json={"name": "Renamed", "data": data})
     assert updated.status_code == 200
     assert updated.json()["name"] == "Renamed"
-    assert updated.json()["data"]["layout"]["footer_text"] == "@kodalo"
+    assert updated.json()["data"]["logo"]["padding"] == 60
     unchanged = client.patch(f"{BRANDS}/{brand['id']}", json={})
     assert unchanged.json()["name"] == "Renamed"
 
@@ -214,14 +214,12 @@ def test_contrast(client: TestClient) -> None:
 
 def test_reference_data(client: TestClient) -> None:
     palettes = client.get("/api/v1/palettes").json()
-    assert [p["key"] for p in palettes] == ["midnight", "paper", "graphite"]
+    assert [p["name"] for p in palettes] == ["Graphite", "Midnight", "Paper"]
     assert palettes[0]["data"]["fonts"]["body"]["family"] == "Inter"
-    fonts = client.get("/api/v1/fonts").json()
+    fonts = client.get("/api/v1/brands/fonts").json()
     assert fonts[0] == {"family": "Inter", "category": "sans", "source": "bundled"}
-    presets = {
-        p["key"]: (p["width"], p["height"]) for p in client.get("/api/v1/canvas-presets").json()
-    }
-    assert presets["instagram_portrait"] == (1080, 1350)
+    canvases = {c["id"]: (c["width"], c["height"]) for c in client.get("/api/v1/canvases").json()}
+    assert canvases["system-instagram_portrait"] == (1080, 1350)
 
 
 def test_doctor(client: TestClient) -> None:

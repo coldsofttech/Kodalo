@@ -7,7 +7,7 @@ import typer
 from rich.table import Table
 from rich.text import Text
 
-from kodalo.cli import brand, output, settings
+from kodalo.cli import brand, output, settings, studio
 from kodalo.cli.state import State, get_state
 from kodalo.core import __version__
 from kodalo.core.doctor import passed, run_checks
@@ -24,6 +24,7 @@ app = typer.Typer(
 JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 app.add_typer(brand.app, name="brand")
 app.add_typer(settings.app, name="settings")
+app.add_typer(studio.app, name="studio")
 
 
 def _show_version(value: bool) -> None:

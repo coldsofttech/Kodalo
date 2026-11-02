@@ -49,10 +49,10 @@ def test_invalid_names(service: BrandService, name: str) -> None:
 def test_update_renames_and_replaces_data(service: BrandService) -> None:
     brand = service.create("Main")
     data = brand.data.model_copy(deep=True)
-    data.layout.footer_text = "@kodalo"
+    data.logo.padding = 60
     updated = service.update(brand.id, name="Renamed", data=data)
     assert updated.name == "Renamed"
-    assert service.get(brand.id).data.layout.footer_text == "@kodalo"
+    assert service.get(brand.id).data.logo.padding == 60
     service.create("Other")
     with pytest.raises(BrandNameTakenError):
         service.update(brand.id, name="other")

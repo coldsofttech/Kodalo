@@ -5,7 +5,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from kodalo.core.brand.errors import BrandInvalidError
-from kodalo.core.brand.models import CANVAS_SIZES, BrandData
+from kodalo.core.brand.models import BrandData
 
 # Logo files are set by uploading a file, never by typing a name.
 _READ_ONLY = {"schema_version", "logo.file", "logo.dark_file"}
@@ -46,7 +46,7 @@ def set_value(data: BrandData, path: str, raw: str) -> BrandData:
     """Return a copy of ``data`` with the value at ``path`` replaced by ``raw``.
 
     The text is converted to the type of the current value and the whole brand is validated
-    again. Choosing a canvas preset also sets its width and height.
+    again.
     """
     if path in _READ_ONLY:
         raise BrandInvalidError(f"{path} cannot be set this way.")
@@ -58,8 +58,6 @@ def set_value(data: BrandData, path: str, raw: str) -> BrandData:
     if not isinstance(node, dict) or leaf not in node or isinstance(node[leaf], dict):
         raise BrandInvalidError(f"Unknown setting: {path}")
     node[leaf] = _convert(raw, node[leaf], path)
-    if path == "layout.canvas.preset" and raw in CANVAS_SIZES:
-        node["width"], node["height"] = CANVAS_SIZES[raw]
     try:
         return BrandData.model_validate(tree)
     except ValidationError as error:

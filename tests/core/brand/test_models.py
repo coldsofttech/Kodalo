@@ -4,18 +4,17 @@ from pydantic import ValidationError
 from kodalo.core.brand import (
     STARTER_PALETTES,
     BrandData,
-    Canvas,
     ColorPair,
     FontRef,
-    Layout,
     Logo,
     starter_brand,
 )
+from kodalo.core.layout import LayoutSettings
 
 
 def test_starter_brand_is_valid_and_normalised() -> None:
     data = starter_brand()
-    assert data.layout.canvas.width == 1080
+    assert data.layout_id == "system-default"
     assert ColorPair(light="#ABCDEF", dark="#000000").light == "#abcdef"
 
 
@@ -38,18 +37,22 @@ def test_unknown_keys_are_rejected() -> None:
         BrandData.model_validate(payload)
 
 
-def test_canvas_preset_must_match_its_size() -> None:
-    assert Canvas(preset="instagram_square", width=1080, height=1080)
+def test_brand_refers_to_a_layout_by_id() -> None:
+    data = starter_brand()
+    data.layout_id = "user-1"
+    assert data.layout_id == "user-1"
     with pytest.raises(ValidationError):
-        Canvas(preset="instagram_square", width=1080, height=1350)
-    assert Canvas(preset="custom", width=900, height=900).width == 900
+        data.layout_id = ""
 
 
 def test_layout_and_logo_limits() -> None:
     with pytest.raises(ValidationError):
-        Layout(margin_side=-1)
+        LayoutSettings(margin_side=-1)
     with pytest.raises(ValidationError):
-        Layout(footer_text="line\nbreak")
+        LayoutSettings(footer_text="line\nbreak")
+    with pytest.raises(ValidationError):
+        LayoutSettings(slides_count=0)
+    assert LayoutSettings().slides_count == 6
     with pytest.raises(ValidationError):
         Logo(size_percent=90)
 

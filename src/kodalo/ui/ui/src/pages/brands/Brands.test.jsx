@@ -3,10 +3,10 @@ import { axe } from 'vitest-axe';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BrandsPage from './Brands.jsx';
-import { createBackend, makeBrand, mockApi, setChecked, typeInto } from '../testing.js';
+import { createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
 
 const saveJson = vi.fn();
-vi.mock('../download.js', async (importOriginal) => ({
+vi.mock('../../download.js', async (importOriginal) => ({
   ...(await importOriginal()),
   saveJson: (...args) => saveJson(...args),
 }));
@@ -38,7 +38,10 @@ describe('BrandsPage: first run', () => {
     await userEvent.click(screen.getByText('Create brand'));
 
     expect(await screen.findByRole('heading', { name: 'Preview' })).toBeInTheDocument();
-    expect(sent('POST', '/api/v1/brands')[0].body).toEqual({ name: 'Acme', palette: 'paper' });
+    expect(sent('POST', '/api/v1/brands')[0].body).toEqual({
+      name: 'Acme',
+      palette: 'system-paper',
+    });
     expect(await field('Brand name')).toHaveProperty('value', 'Acme');
   });
 
@@ -218,27 +221,32 @@ describe('BrandsPage: editing', () => {
     expect(screen.getByRole('option', { name: 'Gone Font (not installed)' })).toBeInTheDocument();
   });
 
-  it('edits the layout, including a custom canvas', async () => {
+  it('chooses a shared layout and previews it', async () => {
     start();
     await userEvent.click(await screen.findByRole('tab', { name: 'Layout' }));
-    await userEvent.selectOptions(screen.getByLabelText('Canvas'), 'instagram_square');
-    typeInto(screen.getByLabelText('Side margin'), '120');
-    typeInto(screen.getByLabelText('Footer text'), '@kodalo');
-    setChecked(screen.getByLabelText('Show slide numbers'), false);
-    await userEvent.selectOptions(screen.getByLabelText('Text alignment'), 'center');
-    await userEvent.selectOptions(screen.getByLabelText('Spacing'), 'spacious');
+    const select = screen.getByRole('combobox', { name: 'Layout' });
+    expect(select).toHaveProperty('value', 'system-default');
+    expect(screen.getByText('Instagram portrait (1080 x 1350)')).toBeInTheDocument();
+    expect(screen.getByText('6')).toBeInTheDocument();
 
+    await userEvent.selectOptions(select, 'system-compact');
     const strip = document.querySelector('.preview-strip');
-    expect(strip.style.getPropertyValue('--canvas-h')).toBe('1080');
-    expect(strip.style.getPropertyValue('--m-side')).toBe('120');
-    expect(screen.queryByText('1/5')).not.toBeInTheDocument();
-    expect(screen.getAllByText('@kodalo').length).toBeGreaterThan(0);
+    expect(strip.style.getPropertyValue('--align')).toBe('center');
+    expect(screen.getByText('1/4')).toBeInTheDocument();
+    expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Save'));
+    await waitFor(() =>
+      expect(sent('PATCH', '/brands/b1')[0].body.data.layout_id).toBe('system-compact'),
+    );
+  });
 
-    await userEvent.selectOptions(screen.getByLabelText('Canvas'), 'custom');
-    typeInto(screen.getByLabelText('Width (pixels)'), '900');
-    await waitFor(() => expect(strip.style.getPropertyValue('--canvas-w')).toBe('900'));
-    typeInto(screen.getByLabelText('Width (pixels)'), '99999');
-    await waitFor(() => expect(strip.style.getPropertyValue('--canvas-w')).toBe('4000'));
+  it('saves the colors of a brand as a palette', async () => {
+    start();
+    typeInto(await field('Palette name'), 'Ocean');
+    await userEvent.click(screen.getByText('Save palette'));
+    expect(await screen.findByText('Saved the palette "Ocean".')).toBeInTheDocument();
+    expect(sent('POST', '/api/v1/palettes')[0].body.name).toBe('Ocean');
+    expect(backend.state.palettes.map((p) => p.name)).toContain('Ocean');
   });
 
   it('uploads and removes a logo straight away', async () => {

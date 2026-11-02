@@ -33,15 +33,6 @@ export const LOGO_POSITIONS = [
   ['bottom_right', 'Bottom right'],
 ];
 
-export const CANVAS_LABELS = {
-  instagram_portrait: 'Instagram portrait',
-  instagram_square: 'Instagram square',
-  instagram_story: 'Instagram story',
-  linkedin_landscape: 'LinkedIn landscape',
-  x_landscape: 'X landscape',
-  custom: 'Custom size',
-};
-
 /** The hex pattern the API accepts. */
 export const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -73,14 +64,16 @@ export const fontStack = (font, generic) => `"${font.family}", ${generic}`;
  * its container width, so every slide keeps the proportions of the real canvas at any size.
  * @param {any} data brand data
  * @param {'light' | 'dark'} mode
+ * @param {any} layout the layout the brand uses (margins, corner radius, text, slide count)
+ * @param {{ width: number, height: number }} canvas the canvas of that layout
  * @returns {Record<string, string>}
  */
-export function previewVariables(data, mode) {
-  const { colors, fonts, layout } = data;
+export function previewVariables(data, mode, layout, canvas) {
+  const { colors, fonts } = data;
   /** @type {Record<string, string>} */
   const vars = {
-    '--canvas-w': String(layout.canvas.width),
-    '--canvas-h': String(layout.canvas.height),
+    '--canvas-w': String(canvas.width),
+    '--canvas-h': String(canvas.height),
     '--m-top': String(layout.margin_top),
     '--m-side': String(layout.margin_side),
     '--m-bottom': String(layout.margin_bottom),

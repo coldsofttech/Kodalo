@@ -15,15 +15,15 @@ const CAPTIONS = {
   cta: 'Call to action',
 };
 
-/** @param {{ brand: any, data: any, mode: 'light' | 'dark', kind: string, index: number, total: number }} props */
-function Slide({ brand, data, mode, kind, index, total }) {
-  const { layout, logo } = data;
+/** @param {{ brand: any, data: any, layout: any, mode: 'light' | 'dark', kind: string, index: number, total: number, isLast: boolean }} props */
+function Slide({ brand, data, layout, mode, kind, index, total, isLast }) {
+  const { logo } = data;
   const logoInfo = logoFor(data, mode);
   const showLogo =
     logoInfo.present &&
     (logo.show_on === 'all' ||
       (logo.show_on === 'first' && index === 0) ||
-      (logo.show_on === 'last' && index === total - 1));
+      (logo.show_on === 'last' && isLast));
   const alt = kind === 'quote' || kind === 'cta';
   return (
     <figure className="slide-figure">
@@ -104,11 +104,11 @@ function Slide({ brand, data, mode, kind, index, total }) {
   );
 }
 
-/** @param {{ brand: any, data: any }} props */
-export default function Preview({ brand, data }) {
+/** @param {{ brand: any, data: any, layout: any, canvas: { width: number, height: number } }} props */
+export default function Preview({ brand, data, layout, canvas }) {
   const [mode, setMode] = useState(/** @type {'light' | 'dark'} */ ('light'));
   const root = useRef(/** @type {HTMLDivElement | null} */ (null));
-  const variables = previewVariables(data, mode);
+  const variables = previewVariables(data, mode, layout, canvas);
   const signature = JSON.stringify(variables);
   useEffect(() => {
     const element = root.current;
@@ -142,10 +142,12 @@ export default function Preview({ brand, data }) {
             key={kind}
             brand={brand}
             data={data}
+            layout={layout}
             mode={mode}
             kind={kind}
             index={index}
-            total={SLIDES.length}
+            total={layout.slides_count}
+            isLast={index === SLIDES.length - 1}
           />
         ))}
       </div>

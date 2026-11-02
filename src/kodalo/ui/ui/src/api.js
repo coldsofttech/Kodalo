@@ -101,9 +101,73 @@ export const logoUrl = (
   /** @type {string} */ version,
 ) => `${BRANDS}/${id}/logo?variant=${variant}&v=${encodeURIComponent(version)}`;
 
-export const listPalettes = () => request('/api/v1/palettes');
-export const listFonts = () => request('/api/v1/fonts');
-export const listCanvasPresets = () => request('/api/v1/canvas-presets');
+const PALETTES = '/api/v1/palettes';
+
+export const listPalettes = () => request(PALETTES);
+/** @param {{ name: string, colors: object }} body */
+export const createPalette = (body) => request(PALETTES, { method: 'POST', json: body });
+/** @param {string} id @param {{ name?: string, colors?: object }} body */
+export const updatePalette = (id, body) =>
+  request(`${PALETTES}/${id}`, { method: 'PATCH', json: body });
+/** @param {string} id @param {string} name */
+export const duplicatePalette = (id, name) =>
+  request(`${PALETTES}/${id}/duplicate`, { method: 'POST', json: { name } });
+/** @param {string} id */
+export const deletePalette = (id) => request(`${PALETTES}/${id}`, { method: 'DELETE' });
+/** @param {string} id */
+export const exportPalette = (id) => request(`${PALETTES}/${id}/export`);
+/** @param {object} body @param {string} [name] */
+export const importPalette = (body, name) =>
+  request(`${PALETTES}/import${name ? `?name=${encodeURIComponent(name)}` : ''}`, {
+    method: 'POST',
+    json: body,
+  });
+
+const LAYOUTS = '/api/v1/layouts';
+
+export const listLayouts = () => request(LAYOUTS);
+/** @param {{ name: string, settings?: object }} body */
+export const createLayout = (body) => request(LAYOUTS, { method: 'POST', json: body });
+/** @param {string} id @param {Record<string, unknown>} body */
+export const updateLayout = (id, body) =>
+  request(`${LAYOUTS}/${id}`, { method: 'PATCH', json: body });
+/** @param {string} id @param {string} name */
+export const duplicateLayout = (id, name) =>
+  request(`${LAYOUTS}/${id}/duplicate`, { method: 'POST', json: { name } });
+/** @param {string} id */
+export const deleteLayout = (id) => request(`${LAYOUTS}/${id}`, { method: 'DELETE' });
+/** @param {string} id */
+export const exportLayout = (id) => request(`${LAYOUTS}/${id}/export`);
+/** @param {object} body @param {string} [name] */
+export const importLayout = (body, name) =>
+  request(`${LAYOUTS}/import${name ? `?name=${encodeURIComponent(name)}` : ''}`, {
+    method: 'POST',
+    json: body,
+  });
+export const listFonts = () => request('/api/v1/brands/fonts');
+
+const CANVASES = '/api/v1/canvases';
+
+export const listCanvases = () => request(CANVASES);
+/** @param {{ name: string, width: number, height: number }} body */
+export const createCanvas = (body) => request(CANVASES, { method: 'POST', json: body });
+/** @param {string} id @param {{ name?: string, width?: number, height?: number }} body */
+export const updateCanvas = (id, body) =>
+  request(`${CANVASES}/${id}`, { method: 'PATCH', json: body });
+/** @param {string} id @param {string} name */
+export const duplicateCanvas = (id, name) =>
+  request(`${CANVASES}/${id}/duplicate`, { method: 'POST', json: { name } });
+/** @param {string} id */
+export const deleteCanvas = (id) => request(`${CANVASES}/${id}`, { method: 'DELETE' });
+/** @param {string} id */
+export const exportCanvas = (id) => request(`${CANVASES}/${id}/export`);
+/** @param {object} body @param {string} [name] */
+export const importCanvas = (body, name) =>
+  request(`${CANVASES}/import${name ? `?name=${encodeURIComponent(name)}` : ''}`, {
+    method: 'POST',
+    json: body,
+  });
+
 export const getDoctor = () => request('/api/v1/doctor');
 
 /** Native action registered in Python: returns the app name and version. */
@@ -118,4 +182,10 @@ const GITHUB_SETTINGS = '/api/v1/settings/github';
 export const getGithubSettings = () => request(GITHUB_SETTINGS);
 /** @param {{ mode: string, local_folder?: string }} body */
 export const saveGithubSettings = (body) => request(GITHUB_SETTINGS, { method: 'PUT', json: body });
+/** @param {string} source */
+export const checkStudioSource = (source) =>
+  request('/api/v1/studio/source', { method: 'POST', json: { source } });
+/** @param {{ source: string, refresh?: boolean, details?: object }} body */
+export const readRepository = (body) =>
+  request('/api/v1/studio/repositories', { method: 'POST', json: body });
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });

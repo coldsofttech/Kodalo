@@ -30,6 +30,22 @@ describe('App', () => {
     expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited');
   });
 
+  it.each(['Canvases', 'Palettes', 'Layouts'])(
+    'opens %s from the sub-menu under Brands',
+    async (label) => {
+      const backend = createBackend([makeBrand('b1', 'Main', true)]);
+      mockApi(backend.handler);
+      render(<App />);
+      const nav = screen.getByRole('navigation', { name: 'Main' });
+      await userEvent.click(within(nav).getByRole('button', { name: label }));
+      expect(screen.getByRole('heading', { name: label })).toBeVisible();
+      expect(within(nav).getByRole('button', { name: label })).toHaveAttribute(
+        'aria-current',
+        'page',
+      );
+    },
+  );
+
   it('has no accessibility violations', async () => {
     const backend = createBackend([makeBrand('b1', 'Main', true)]);
     mockApi(backend.handler);

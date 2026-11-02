@@ -8,11 +8,11 @@ const MODES = [
   ['web_fetch', 'Web fetch'],
 ];
 
-const HINTS = {
-  gh_cli: 'Uses the gh command on this computer. It must be installed and signed in.',
-  local_folder: 'Reads repositories you already have in a folder on this computer.',
-  web_fetch: 'Reads public repositories over the internet, without signing in.',
-};
+const HINTS = new Map([
+  ['gh_cli', 'Uses the gh command on this computer. It must be installed and signed in.'],
+  ['local_folder', 'Reads repositories you already have in a folder on this computer.'],
+  ['web_fetch', 'Reads public repositories over the internet, without signing in.'],
+]);
 
 export default function SettingsPage() {
   const [mode, setMode] = useState('gh_cli');
@@ -78,7 +78,7 @@ export default function SettingsPage() {
           </option>
         ))}
       </Select>
-      <p className="hint">{HINTS[/** @type {keyof typeof HINTS} */ (mode)]}</p>
+      <p className="hint">{HINTS.get(mode)}</p>
       {mode === 'local_folder' ? (
         <TextField label="Folder" value={folder} onChange={setFolder} maxLength={1024} />
       ) : null}

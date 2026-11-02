@@ -1,5 +1,6 @@
 """Shared objects handed to route handlers with ``Depends``."""
 
+import threading
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -8,10 +9,14 @@ from fastapi import HTTPException, status
 
 from kodalo.core.brand import BrandService
 from kodalo.core.github import GitHubConnectivity
+from kodalo.core.repo import RepoService
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
 _data_dir: Path | None = None
+# The window sends several requests at once on start. Without this lock each could open (and
+# migrate) the database at the same time, and the migrations would trip over one another.
+_open_lock = threading.Lock()
 
 
 @dataclass(frozen=True)
@@ -21,6 +26,7 @@ class Services:
     database: Database
     brands: BrandService
     github: GitHubConnectivity
+    repos: RepoService
 
 
 def data_dir() -> Path:
@@ -29,10 +35,20 @@ def data_dir() -> Path:
 
 
 @lru_cache
-def _services() -> Services:
+def _build_services() -> Services:
     folder = data_dir()
     database = Database.open(database_path(folder))
-    return Services(database, BrandService(database, folder), GitHubConnectivity(database))
+    return Services(
+        database,
+        BrandService(database, folder),
+        GitHubConnectivity(database),
+        RepoService(database),
+    )
+
+
+def _services() -> Services:
+    with _open_lock:
+        return _build_services()
 
 
 def get_brand_service() -> BrandService:
@@ -52,11 +68,20 @@ def get_github_connectivity() -> GitHubConnectivity:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 
+def get_repo_service() -> RepoService:
+    """Return the repository service, opening the database on first use."""
+    try:
+        return _services().repos
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
 def reset_services() -> None:
     """Close the database and forget it, so the next request opens it again."""
-    if _services.cache_info().currsize:
-        _services().database.close()
-    _services.cache_clear()
+    with _open_lock:
+        if _build_services.cache_info().currsize:
+            _build_services().database.close()
+        _build_services.cache_clear()
 
 
 def configure(data_dir: Path | None) -> None:

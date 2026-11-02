@@ -31,7 +31,7 @@ function paint(/** @type {string} */ color) {
  */
 export default function NewBrand({ palettes, busy, onCreate, firstRun = false }) {
   const [name, setName] = useState(firstRun ? 'My brand' : '');
-  const [palette, setPalette] = useState('midnight');
+  const [palette, setPalette] = useState('system-midnight');
   const ready = name.trim().length > 0 && !busy;
   return (
     <form
@@ -46,17 +46,17 @@ export default function NewBrand({ palettes, busy, onCreate, firstRun = false })
         <div className="palette-cards">
           {palettes.map((item) => (
             <label
-              key={item.key}
-              className={`palette-card${palette === item.key ? ' selected' : ''}`}
+              key={item.id}
+              className={`palette-card${palette === item.id ? ' selected' : ''}`}
             >
               <input
                 type="radio"
                 name="palette"
-                value={item.key}
-                checked={palette === item.key}
-                onChange={() => setPalette(item.key)}
+                value={item.id}
+                checked={palette === item.id}
+                onChange={() => setPalette(item.id)}
               />
-              <span className="palette-title">{item.title}</span>
+              <span className="palette-title">{item.name}</span>
               <Swatches palette={item} />
             </label>
           ))}

@@ -125,7 +125,7 @@ def test_api_router_is_mounted_under_cornea_prefix() -> None:
 
     response = TestClient(app).get("/api/v1/palettes")
 
-    assert response.json()[0]["key"] == "midnight"
+    assert response.json()[0]["name"] == "Graphite"
 
 
 def test_run_without_callback_just_runs(shell_on_windows: type[FakeShell]) -> None:

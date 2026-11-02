@@ -54,7 +54,7 @@ The window needs Windows 10 or 11 with the Microsoft Edge WebView2 runtime, whic
 
 ## Usage
 
-`kodalo-ui` opens the app window, where you set up your brand: colors for light and dark posts, fonts, a logo and the layout, with a live preview of sample slides. `kodalo-ui --no-window` prints an address you can open in a browser instead. On other systems it explains that the window needs Windows; the command line and the API work everywhere. Under Settings you choose how Kodalo reaches GitHub: the GitHub CLI (the default), a folder of repositories on your computer, or the web for public repositories. `kodalo --help` lists the commands.
+`kodalo-ui` opens the app window, where you set up your brand: colors for light and dark posts, fonts, a logo and the layout, with a live preview of sample slides. Under Brands you can also keep your own palettes, layouts (slide size, margins, text and number of slides) and canvases, and reuse them across brands. `kodalo-ui --no-window` prints an address you can open in a browser instead. On other systems it explains that the window needs Windows; the command line and the API work everywhere. Studio is where a post starts: enter a repository folder or GitHub address and press Next, and Kodalo reads and remembers the repository's details, languages and files. Refresh reads it again. Under Settings you choose how Kodalo reaches GitHub: the GitHub CLI (the default), a folder of repositories on your computer, or the web for public repositories. `kodalo --help` lists the commands.
 
 The repository, catalog and post workflow is still being built, so the available commands are limited for now.
 

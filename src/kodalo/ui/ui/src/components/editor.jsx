@@ -2,8 +2,8 @@
 // reports changes up; nothing here talks to Python except the contrast check and logo upload.
 import { useEffect, useRef, useState } from 'react';
 import { checkContrast, logoUrl, removeLogo, uploadLogo } from '../api.js';
-import { CANVAS_LABELS, COLOR_ROWS, FONT_ROWS, HEX, LOGO_POSITIONS } from '../brand.js';
-import { Button, NumberField, Select, Switch, TextField } from './controls.jsx';
+import { COLOR_ROWS, FONT_ROWS, HEX, LOGO_POSITIONS } from '../brand.js';
+import { Button, NumberField, Select, TextField } from './controls.jsx';
 
 /** @param {{ value: string, onChange: (value: string) => void, label: string }} props */
 function HexField({ value, onChange, label }) {
@@ -288,106 +288,44 @@ export function LogoPanel({ brand, data, onChange, onStored, onError }) {
   );
 }
 
-/** @param {{ data: any, presets: any[], onChange: (path: string, value: unknown) => void }} props */
-export function LayoutPanel({ data, presets, onChange }) {
-  const { layout } = data;
-  const canvas = layout.canvas;
-  function choosePreset(/** @type {string} */ key) {
-    const preset = presets.find((item) => item.key === key);
-    onChange('layout.canvas', {
-      preset: key,
-      width: preset ? preset.width : canvas.width,
-      height: preset ? preset.height : canvas.height,
-    });
-  }
+/** @param {{ data: any, layouts: any[], canvases: any[], onChange: (path: string, value: unknown) => void }} props */
+export function LayoutPanel({ data, layouts, canvases, onChange }) {
+  const layout = layouts.find((item) => item.id === data.layout_id);
+  const canvas = canvases.find((item) => item.id === layout?.canvas_id);
   return (
     <div className="panel">
-      <Select label="Canvas" value={canvas.preset} onChange={choosePreset}>
-        {presets.map((preset) => (
-          <option key={preset.key} value={preset.key}>
-            {CANVAS_LABELS[/** @type {keyof typeof CANVAS_LABELS} */ (preset.key)] ?? preset.key} (
-            {preset.width} x {preset.height})
+      <Select label="Layout" value={data.layout_id} onChange={(id) => onChange('layout_id', id)}>
+        {layouts.map((item) => (
+          <option key={item.id} value={item.id}>
+            {item.name} ({item.slides_count} slides)
           </option>
         ))}
-        <option value="custom">{CANVAS_LABELS.custom}</option>
       </Select>
-      {canvas.preset === 'custom' ? (
-        <div className="row">
-          <NumberField
-            label="Width (pixels)"
-            value={canvas.width}
-            min={200}
-            max={4000}
-            onChange={(v) => onChange('layout.canvas.width', v)}
-          />
-          <NumberField
-            label="Height (pixels)"
-            value={canvas.height}
-            min={200}
-            max={4000}
-            onChange={(v) => onChange('layout.canvas.height', v)}
-          />
-        </div>
+      {layout ? (
+        <dl className="summary" aria-label="Layout details">
+          <dt>Canvas</dt>
+          <dd>
+            {canvas ? `${canvas.name} (${canvas.width} x ${canvas.height})` : layout.canvas_id}
+          </dd>
+          <dt>Slides</dt>
+          <dd>{layout.slides_count}</dd>
+          <dt>Margins</dt>
+          <dd>
+            top {layout.margin_top}, sides {layout.margin_side}, bottom {layout.margin_bottom}
+          </dd>
+          <dt>Corner radius</dt>
+          <dd>{layout.corner_radius}</dd>
+          <dt>Text</dt>
+          <dd>
+            {layout.align}, {layout.density}
+            {layout.slide_numbers ? ', slide numbers' : ''}
+            {layout.footer_text ? `, footer "${layout.footer_text}"` : ''}
+          </dd>
+        </dl>
       ) : null}
-      <div className="row">
-        <NumberField
-          label="Top margin"
-          value={layout.margin_top}
-          min={0}
-          max={400}
-          onChange={(v) => onChange('layout.margin_top', v)}
-        />
-        <NumberField
-          label="Side margin"
-          value={layout.margin_side}
-          min={0}
-          max={400}
-          onChange={(v) => onChange('layout.margin_side', v)}
-        />
-        <NumberField
-          label="Bottom margin"
-          value={layout.margin_bottom}
-          min={0}
-          max={400}
-          onChange={(v) => onChange('layout.margin_bottom', v)}
-        />
-      </div>
-      <NumberField
-        label="Corner radius"
-        value={layout.corner_radius}
-        min={0}
-        max={200}
-        onChange={(v) => onChange('layout.corner_radius', v)}
-      />
-      <Select
-        label="Text alignment"
-        value={layout.align}
-        onChange={(v) => onChange('layout.align', v)}
-      >
-        <option value="left">Left</option>
-        <option value="center">Center</option>
-      </Select>
-      <Select
-        label="Spacing"
-        value={layout.density}
-        onChange={(v) => onChange('layout.density', v)}
-      >
-        <option value="compact">Compact</option>
-        <option value="regular">Regular</option>
-        <option value="spacious">Spacious</option>
-      </Select>
-      <Switch
-        label="Show slide numbers"
-        checked={layout.slide_numbers}
-        onChange={(v) => onChange('layout.slide_numbers', v)}
-      />
-      <TextField
-        label="Footer text"
-        value={layout.footer_text}
-        maxLength={120}
-        hint="Shown at the bottom of every slide, such as a handle or website."
-        onChange={(v) => onChange('layout.footer_text', v)}
-      />
+      <p className="hint">
+        Layouts are shared by brands. Create and edit them under Brands, Layouts.
+      </p>
     </div>
   );
 }

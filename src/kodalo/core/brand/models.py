@@ -1,10 +1,10 @@
-"""Typed brand data: colors, fonts, logo and layout.
+"""Typed brand data: colors, fonts, logo and a reference to a shared layout (by id).
 
 Every color has a light and a dark value. The ``*_alt`` colors and fonts are accents for emphasis
 inside a slide. Values are validated so they can be used safely in generated CSS.
 """
 
-from typing import Annotated, Literal, Self
+from typing import Annotated, Literal
 
 from pydantic import (
     AfterValidator,
@@ -12,8 +12,10 @@ from pydantic import (
     ConfigDict,
     Field,
     StringConstraints,
-    model_validator,
 )
+
+from kodalo.core.canvas.models import Canvas
+from kodalo.core.layout.models import DEFAULT_LAYOUT_ID, Layout
 
 HexColor = Annotated[
     str,
@@ -25,24 +27,6 @@ HexColor = Annotated[
 FontFamily = Annotated[
     str, StringConstraints(min_length=1, max_length=100, pattern=r"^[\w .+&()-]+$")
 ]
-
-CanvasPreset = Literal[
-    "instagram_portrait",
-    "instagram_square",
-    "instagram_story",
-    "linkedin_landscape",
-    "x_landscape",
-    "custom",
-]
-
-# Preset name -> (width, height) in pixels.
-CANVAS_SIZES: dict[str, tuple[int, int]] = {
-    "instagram_portrait": (1080, 1350),
-    "instagram_square": (1080, 1080),
-    "instagram_story": (1080, 1920),
-    "linkedin_landscape": (1200, 627),
-    "x_landscape": (1600, 900),
-}
 
 LogoPosition = Literal[
     "top_left", "top_center", "top_right", "bottom_left", "bottom_center", "bottom_right"
@@ -94,37 +78,12 @@ class Logo(_Strict):
     show_on: Literal["all", "first", "last"] = "all"
 
 
-class Canvas(_Strict):
-    preset: CanvasPreset = "instagram_portrait"
-    width: int = Field(default=1080, ge=200, le=4000)
-    height: int = Field(default=1350, ge=200, le=4000)
-
-    @model_validator(mode="after")
-    def _preset_matches_size(self) -> Self:
-        expected = CANVAS_SIZES.get(self.preset)
-        if expected is not None and (self.width, self.height) != expected:
-            raise ValueError(f"{self.preset} is {expected[0]}x{expected[1]} pixels")
-        return self
-
-
-class Layout(_Strict):
-    canvas: Canvas = Field(default_factory=Canvas)
-    margin_top: int = Field(default=96, ge=0, le=400)
-    margin_side: int = Field(default=80, ge=0, le=400)
-    margin_bottom: int = Field(default=96, ge=0, le=400)
-    corner_radius: int = Field(default=24, ge=0, le=200)
-    slide_numbers: bool = True
-    footer_text: Annotated[str, StringConstraints(max_length=120, pattern=r"^[^\x00-\x1f]*$")] = ""
-    align: Literal["left", "center"] = "left"
-    density: Literal["compact", "regular", "spacious"] = "regular"
-
-
 class BrandData(_Strict):
     schema_version: Literal[1] = 1
     colors: BrandColors
     fonts: BrandFonts
     logo: Logo = Field(default_factory=Logo)
-    layout: Layout = Field(default_factory=Layout)
+    layout_id: Annotated[str, StringConstraints(min_length=1, max_length=64)] = DEFAULT_LAYOUT_ID
 
 
 ProfileName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
@@ -137,5 +96,7 @@ class Brand(_Strict):
     name: ProfileName
     is_default: bool
     data: BrandData
+    layout: Layout = Field(description="The layout the layout_id refers to.")
+    canvas: Canvas
     created_at: str
     updated_at: str

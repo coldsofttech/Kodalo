@@ -67,16 +67,16 @@
           "palette": {
             "anyOf": [
               {
-                "maxLength": 32,
+                "maxLength": 64,
                 "type": "string"
               },
               {
                 "type": "null"
               }
             ],
-            "description": "Starter palette key.",
+            "description": "Name or id of a palette to start from; default Midnight.",
             "examples": [
-              "midnight"
+              "Midnight"
             ],
             "title": "Palette"
           }
@@ -96,8 +96,12 @@
           "fonts": {
             "$ref": "#/components/schemas/BrandFonts"
           },
-          "layout": {
-            "$ref": "#/components/schemas/Layout"
+          "layout_id": {
+            "default": "system-default",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Layout Id",
+            "type": "string"
           },
           "logo": {
             "$ref": "#/components/schemas/Logo"
@@ -145,6 +149,17 @@
             "default": "kodalo-brand",
             "title": "Format",
             "type": "string"
+          },
+          "layout": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LayoutExport"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The layout to match or create; without it the default is used."
           },
           "logos": {
             "additionalProperties": {
@@ -214,6 +229,10 @@
       "BrandResponse": {
         "description": "A stored brand profile.",
         "properties": {
+          "canvas": {
+            "$ref": "#/components/schemas/CanvasResponse",
+            "description": "The canvas of that layout."
+          },
           "created_at": {
             "examples": [
               "2026-11-01T09:30:00+00:00"
@@ -238,6 +257,10 @@
             "title": "Is Default",
             "type": "boolean"
           },
+          "layout": {
+            "$ref": "#/components/schemas/LayoutResponse",
+            "description": "The layout the data's layout_id refers to."
+          },
           "name": {
             "examples": [
               "Main"
@@ -260,6 +283,8 @@
           "name",
           "is_default",
           "data",
+          "layout",
+          "canvas",
           "created_at",
           "updated_at"
         ],
@@ -299,71 +324,294 @@
         "title": "BrandUpdate",
         "type": "object"
       },
-      "Canvas": {
-        "additionalProperties": false,
-        "properties": {
-          "height": {
-            "default": 1350,
-            "maximum": 4000.0,
-            "minimum": 200.0,
-            "title": "Height",
-            "type": "integer"
-          },
-          "preset": {
-            "default": "instagram_portrait",
-            "enum": [
-              "instagram_portrait",
-              "instagram_square",
-              "instagram_story",
-              "linkedin_landscape",
-              "x_landscape",
-              "custom"
-            ],
-            "title": "Preset",
-            "type": "string"
-          },
-          "width": {
-            "default": 1080,
-            "maximum": 4000.0,
-            "minimum": 200.0,
-            "title": "Width",
-            "type": "integer"
-          }
-        },
-        "title": "Canvas",
-        "type": "object"
-      },
-      "CanvasPresetResponse": {
+      "CanvasCreate": {
         "properties": {
           "height": {
             "examples": [
               1350
             ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
             "title": "Height",
             "type": "integer"
           },
-          "key": {
+          "name": {
             "examples": [
-              "instagram_portrait"
+              "Feed post"
             ],
-            "maxLength": 32,
-            "title": "Key",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
             "type": "string"
           },
           "width": {
             "examples": [
               1080
             ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
             "title": "Width",
             "type": "integer"
           }
         },
         "required": [
-          "key",
+          "name",
           "width",
           "height"
         ],
-        "title": "CanvasPresetResponse",
+        "title": "CanvasCreate",
+        "type": "object"
+      },
+      "CanvasDuplicate": {
+        "properties": {
+          "name": {
+            "examples": [
+              "Feed post copy"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CanvasDuplicate",
+        "type": "object"
+      },
+      "CanvasExport": {
+        "description": "A self-contained canvas file.",
+        "properties": {
+          "format": {
+            "const": "kodalo-canvas",
+            "default": "kodalo-canvas",
+            "title": "Format",
+            "type": "string"
+          },
+          "height": {
+            "examples": [
+              1350
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Feed post"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          },
+          "width": {
+            "examples": [
+              1080
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "width",
+          "height"
+        ],
+        "title": "CanvasExport",
+        "type": "object"
+      },
+      "CanvasRef": {
+        "description": "The canvas a brand file was made with, so another computer can match or create it.",
+        "properties": {
+          "height": {
+            "examples": [
+              1350
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Feed post"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "width": {
+            "examples": [
+              1080
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "width",
+          "height"
+        ],
+        "title": "CanvasRef",
+        "type": "object"
+      },
+      "CanvasResponse": {
+        "description": "A named slide size. Built-in (``system``) canvases cannot be changed.",
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Created At",
+            "type": "string"
+          },
+          "height": {
+            "examples": [
+              1350
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "id": {
+            "examples": [
+              "system-instagram_portrait"
+            ],
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Instagram portrait"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "system",
+              "user"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Updated At",
+            "type": "string"
+          },
+          "used_by": {
+            "description": "Names of the brand profiles whose layout uses this canvas.",
+            "examples": [
+              [
+                "Main"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "title": "Used By",
+            "type": "array"
+          },
+          "width": {
+            "examples": [
+              1080
+            ],
+            "maximum": 4000.0,
+            "minimum": 200.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "width",
+          "height",
+          "type",
+          "used_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CanvasResponse",
+        "type": "object"
+      },
+      "CanvasUpdate": {
+        "description": "Fields left out are not changed.",
+        "properties": {
+          "height": {
+            "anyOf": [
+              {
+                "maximum": 4000.0,
+                "minimum": 200.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              1350
+            ],
+            "title": "Height"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "Feed post"
+            ],
+            "title": "Name"
+          },
+          "width": {
+            "anyOf": [
+              {
+                "maximum": 4000.0,
+                "minimum": 200.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              1080
+            ],
+            "title": "Width"
+          }
+        },
+        "title": "CanvasUpdate",
         "type": "object"
       },
       "ColorPair": {
@@ -518,6 +766,32 @@
           "checks"
         ],
         "title": "DoctorResponse",
+        "type": "object"
+      },
+      "EntryResponse": {
+        "properties": {
+          "path": {
+            "examples": [
+              "src"
+            ],
+            "maxLength": 512,
+            "title": "Path",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "file",
+              "dir"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "type"
+        ],
+        "title": "EntryResponse",
         "type": "object"
       },
       "FontRef": {
@@ -712,8 +986,358 @@
         "title": "HealthResponse",
         "type": "object"
       },
-      "Layout": {
+      "LanguageResponse": {
+        "properties": {
+          "bytes": {
+            "examples": [
+              12345
+            ],
+            "minimum": 0.0,
+            "title": "Bytes",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Python"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "percent": {
+            "examples": [
+              87.5
+            ],
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Percent",
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "bytes",
+          "percent"
+        ],
+        "title": "LanguageResponse",
+        "type": "object"
+      },
+      "LayoutCreate": {
+        "description": "Fields left out take the default: Instagram portrait, 6 slides.",
+        "properties": {
+          "name": {
+            "examples": [
+              "Feed"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "settings": {
+            "$ref": "#/components/schemas/LayoutSettings"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "LayoutCreate",
+        "type": "object"
+      },
+      "LayoutDuplicate": {
+        "properties": {
+          "name": {
+            "examples": [
+              "Feed copy"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "LayoutDuplicate",
+        "type": "object"
+      },
+      "LayoutExport": {
+        "description": "A self-contained layout file; its canvas is matched or created on import.",
+        "properties": {
+          "align": {
+            "enum": [
+              "left",
+              "center"
+            ],
+            "title": "Align",
+            "type": "string"
+          },
+          "canvas": {
+            "$ref": "#/components/schemas/CanvasRef"
+          },
+          "corner_radius": {
+            "examples": [
+              24
+            ],
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Corner Radius",
+            "type": "integer"
+          },
+          "density": {
+            "enum": [
+              "compact",
+              "regular",
+              "spacious"
+            ],
+            "title": "Density",
+            "type": "string"
+          },
+          "footer_text": {
+            "maxLength": 120,
+            "pattern": "^[^\\x00-\\x1f]*$",
+            "title": "Footer Text",
+            "type": "string"
+          },
+          "format": {
+            "const": "kodalo-layout",
+            "default": "kodalo-layout",
+            "title": "Format",
+            "type": "string"
+          },
+          "margin_bottom": {
+            "examples": [
+              96
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Bottom",
+            "type": "integer"
+          },
+          "margin_side": {
+            "examples": [
+              80
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Side",
+            "type": "integer"
+          },
+          "margin_top": {
+            "examples": [
+              96
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Top",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Feed"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "slide_numbers": {
+            "title": "Slide Numbers",
+            "type": "boolean"
+          },
+          "slides_count": {
+            "examples": [
+              6
+            ],
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Slides Count",
+            "type": "integer"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "canvas",
+          "margin_top",
+          "margin_side",
+          "margin_bottom",
+          "corner_radius",
+          "slide_numbers",
+          "footer_text",
+          "align",
+          "density",
+          "slides_count"
+        ],
+        "title": "LayoutExport",
+        "type": "object"
+      },
+      "LayoutResponse": {
+        "description": "A named set of slide settings that brands share. Built-in layouts cannot be changed.",
+        "properties": {
+          "align": {
+            "enum": [
+              "left",
+              "center"
+            ],
+            "title": "Align",
+            "type": "string"
+          },
+          "canvas_id": {
+            "examples": [
+              "system-instagram_portrait"
+            ],
+            "maxLength": 64,
+            "title": "Canvas Id",
+            "type": "string"
+          },
+          "corner_radius": {
+            "examples": [
+              24
+            ],
+            "maximum": 200.0,
+            "minimum": 0.0,
+            "title": "Corner Radius",
+            "type": "integer"
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Created At",
+            "type": "string"
+          },
+          "density": {
+            "enum": [
+              "compact",
+              "regular",
+              "spacious"
+            ],
+            "title": "Density",
+            "type": "string"
+          },
+          "footer_text": {
+            "examples": [
+              "@kodalo"
+            ],
+            "maxLength": 120,
+            "pattern": "^[^\\x00-\\x1f]*$",
+            "title": "Footer Text",
+            "type": "string"
+          },
+          "id": {
+            "examples": [
+              "system-default"
+            ],
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "margin_bottom": {
+            "examples": [
+              96
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Bottom",
+            "type": "integer"
+          },
+          "margin_side": {
+            "examples": [
+              80
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Side",
+            "type": "integer"
+          },
+          "margin_top": {
+            "examples": [
+              96
+            ],
+            "maximum": 400.0,
+            "minimum": 0.0,
+            "title": "Margin Top",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Default"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "slide_numbers": {
+            "title": "Slide Numbers",
+            "type": "boolean"
+          },
+          "slides_count": {
+            "examples": [
+              6
+            ],
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Slides Count",
+            "type": "integer"
+          },
+          "type": {
+            "enum": [
+              "system",
+              "user"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Updated At",
+            "type": "string"
+          },
+          "used_by": {
+            "description": "Names of the brand profiles that use this layout.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "title": "Used By",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "canvas_id",
+          "margin_top",
+          "margin_side",
+          "margin_bottom",
+          "corner_radius",
+          "slide_numbers",
+          "footer_text",
+          "align",
+          "density",
+          "slides_count",
+          "used_by",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "LayoutResponse",
+        "type": "object"
+      },
+      "LayoutSettings": {
         "additionalProperties": false,
+        "description": "What a layout decides: the canvas, margins, corner radius, text and the number of slides.",
         "properties": {
           "align": {
             "default": "left",
@@ -724,8 +1348,12 @@
             "title": "Align",
             "type": "string"
           },
-          "canvas": {
-            "$ref": "#/components/schemas/Canvas"
+          "canvas_id": {
+            "default": "system-instagram_portrait",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Canvas Id",
+            "type": "string"
           },
           "corner_radius": {
             "default": 24,
@@ -776,9 +1404,251 @@
             "default": true,
             "title": "Slide Numbers",
             "type": "boolean"
+          },
+          "slides_count": {
+            "default": 6,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Slides Count",
+            "type": "integer"
           }
         },
-        "title": "Layout",
+        "title": "LayoutSettings",
+        "type": "object"
+      },
+      "LayoutUpdate": {
+        "description": "Fields left out are not changed.",
+        "properties": {
+          "align": {
+            "anyOf": [
+              {
+                "enum": [
+                  "left",
+                  "center"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Align"
+          },
+          "canvas_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Canvas Id"
+          },
+          "corner_radius": {
+            "anyOf": [
+              {
+                "maximum": 200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Corner Radius"
+          },
+          "density": {
+            "anyOf": [
+              {
+                "enum": [
+                  "compact",
+                  "regular",
+                  "spacious"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Density"
+          },
+          "footer_text": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "pattern": "^[^\\x00-\\x1f]*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Footer Text"
+          },
+          "margin_bottom": {
+            "anyOf": [
+              {
+                "maximum": 400.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Bottom"
+          },
+          "margin_side": {
+            "anyOf": [
+              {
+                "maximum": 400.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Side"
+          },
+          "margin_top": {
+            "anyOf": [
+              {
+                "maximum": 400.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Margin Top"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "Feed"
+            ],
+            "title": "Name"
+          },
+          "slide_numbers": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slide Numbers"
+          },
+          "slides_count": {
+            "anyOf": [
+              {
+                "maximum": 30.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slides Count"
+          }
+        },
+        "title": "LayoutUpdate",
+        "type": "object"
+      },
+      "LocalDetailsRequest": {
+        "description": "What git cannot tell about a local folder. Owner, repo, license and branch are required.",
+        "properties": {
+          "default_branch": {
+            "examples": [
+              "main"
+            ],
+            "maxLength": 128,
+            "title": "Default Branch",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "maxLength": 1024,
+            "title": "Description",
+            "type": "string"
+          },
+          "homepage": {
+            "default": "",
+            "maxLength": 512,
+            "title": "Homepage",
+            "type": "string"
+          },
+          "is_archived": {
+            "default": false,
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "is_fork": {
+            "default": false,
+            "title": "Is Fork",
+            "type": "boolean"
+          },
+          "is_private": {
+            "default": false,
+            "title": "Is Private",
+            "type": "boolean"
+          },
+          "license": {
+            "examples": [
+              "MIT"
+            ],
+            "maxLength": 128,
+            "title": "License",
+            "type": "string"
+          },
+          "owner": {
+            "examples": [
+              "owner"
+            ],
+            "maxLength": 128,
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "examples": [
+              "repo"
+            ],
+            "maxLength": 128,
+            "title": "Repo",
+            "type": "string"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Topics",
+            "type": "array"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "license",
+          "default_branch"
+        ],
+        "title": "LocalDetailsRequest",
         "type": "object"
       },
       "Logo": {
@@ -865,35 +1735,175 @@
         "title": "LogoPayload",
         "type": "object"
       },
-      "PaletteResponse": {
+      "PaletteCreate": {
         "properties": {
-          "data": {
-            "$ref": "#/components/schemas/BrandData",
-            "description": "Complete brand data to start a new profile from."
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
           },
-          "key": {
+          "name": {
             "examples": [
-              "midnight"
-            ],
-            "maxLength": 32,
-            "title": "Key",
-            "type": "string"
-          },
-          "title": {
-            "examples": [
-              "Midnight"
+              "Ocean"
             ],
             "maxLength": 64,
-            "title": "Title",
+            "minLength": 1,
+            "title": "Name",
             "type": "string"
           }
         },
         "required": [
-          "key",
-          "title",
-          "data"
+          "name",
+          "colors"
+        ],
+        "title": "PaletteCreate",
+        "type": "object"
+      },
+      "PaletteDuplicate": {
+        "properties": {
+          "name": {
+            "examples": [
+              "Ocean copy"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "PaletteDuplicate",
+        "type": "object"
+      },
+      "PaletteExport": {
+        "description": "A self-contained palette file.",
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
+          },
+          "format": {
+            "const": "kodalo-palette",
+            "default": "kodalo-palette",
+            "title": "Format",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Ocean"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "version": {
+            "const": 1,
+            "default": 1,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "colors"
+        ],
+        "title": "PaletteExport",
+        "type": "object"
+      },
+      "PaletteResponse": {
+        "description": "A named set of brand colors. Built-in (``system``) palettes cannot be changed.",
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Created At",
+            "type": "string"
+          },
+          "data": {
+            "$ref": "#/components/schemas/BrandData",
+            "description": "Complete brand data to start a new profile from."
+          },
+          "id": {
+            "examples": [
+              "system-midnight"
+            ],
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Midnight"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "system",
+              "user"
+            ],
+            "title": "Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-01T09:30:00+00:00"
+            ],
+            "maxLength": 40,
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "type",
+          "colors",
+          "data",
+          "created_at",
+          "updated_at"
         ],
         "title": "PaletteResponse",
+        "type": "object"
+      },
+      "PaletteUpdate": {
+        "description": "Fields left out are not changed.",
+        "properties": {
+          "colors": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BrandColors"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "Ocean"
+            ],
+            "title": "Name"
+          }
+        },
+        "title": "PaletteUpdate",
         "type": "object"
       },
       "ReadyResponse": {
@@ -915,6 +1925,365 @@
           "version"
         ],
         "title": "ReadyResponse",
+        "type": "object"
+      },
+      "RepoReadRequest": {
+        "description": "Read a repository, or return the stored one unless ``refresh`` is set.",
+        "properties": {
+          "details": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LocalDetailsRequest"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Local folder mode only; needed the first time."
+          },
+          "refresh": {
+            "default": false,
+            "description": "Read again even if it is stored.",
+            "title": "Refresh",
+            "type": "boolean"
+          },
+          "source": {
+            "examples": [
+              "https://github.com/owner/repo"
+            ],
+            "maxLength": 1024,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "RepoReadRequest",
+        "type": "object"
+      },
+      "RepoResponse": {
+        "description": "What was read about a repository.",
+        "properties": {
+          "access_method": {
+            "examples": [
+              "gh_cli"
+            ],
+            "maxLength": 16,
+            "title": "Access Method",
+            "type": "string"
+          },
+          "default_branch": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Branch"
+          },
+          "description": {
+            "maxLength": 4096,
+            "title": "Description",
+            "type": "string"
+          },
+          "file_count": {
+            "minimum": 0.0,
+            "title": "File Count",
+            "type": "integer"
+          },
+          "homepage": {
+            "maxLength": 512,
+            "title": "Homepage",
+            "type": "string"
+          },
+          "id": {
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "is_archived": {
+            "title": "Is Archived",
+            "type": "boolean"
+          },
+          "is_fork": {
+            "title": "Is Fork",
+            "type": "boolean"
+          },
+          "is_private": {
+            "title": "Is Private",
+            "type": "boolean"
+          },
+          "languages": {
+            "items": {
+              "$ref": "#/components/schemas/LanguageResponse"
+            },
+            "maxItems": 200,
+            "title": "Languages",
+            "type": "array"
+          },
+          "last_pushed_at": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Pushed At"
+          },
+          "last_scanned_at": {
+            "anyOf": [
+              {
+                "maxLength": 40,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Scanned At"
+          },
+          "license": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "License"
+          },
+          "local_path": {
+            "maxLength": 1024,
+            "title": "Local Path",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "owner": {
+            "maxLength": 128,
+            "title": "Owner",
+            "type": "string"
+          },
+          "top_level": {
+            "items": {
+              "$ref": "#/components/schemas/EntryResponse"
+            },
+            "maxItems": 500,
+            "title": "Top Level",
+            "type": "array"
+          },
+          "topics": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Topics",
+            "type": "array"
+          },
+          "tree_truncated": {
+            "title": "Tree Truncated",
+            "type": "boolean"
+          },
+          "url": {
+            "examples": [
+              "https://github.com/owner/repo"
+            ],
+            "maxLength": 512,
+            "title": "Url",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "url",
+          "owner",
+          "name",
+          "description",
+          "homepage",
+          "default_branch",
+          "license",
+          "topics",
+          "is_private",
+          "is_fork",
+          "is_archived",
+          "last_pushed_at",
+          "languages",
+          "top_level",
+          "file_count",
+          "access_method",
+          "tree_truncated",
+          "warnings",
+          "local_path",
+          "last_scanned_at"
+        ],
+        "title": "RepoResponse",
+        "type": "object"
+      },
+      "StudioSourceRequest": {
+        "description": "The repository to start a post from.",
+        "properties": {
+          "source": {
+            "description": "A folder in local_folder mode, otherwise a GitHub address or owner/repo.",
+            "examples": [
+              "https://github.com/owner/repo"
+            ],
+            "maxLength": 1024,
+            "title": "Source",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source"
+        ],
+        "title": "StudioSourceRequest",
+        "type": "object"
+      },
+      "StudioSourceResponse": {
+        "description": "A checked repository source.",
+        "properties": {
+          "is_git": {
+            "description": "Whether a local folder holds a git repository.",
+            "title": "Is Git",
+            "type": "boolean"
+          },
+          "kind": {
+            "enum": [
+              "local_folder",
+              "github"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "repo"
+            ],
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "next_step": {
+            "const": "repository",
+            "default": "repository",
+            "title": "Next Step",
+            "type": "string"
+          },
+          "owner": {
+            "description": "Empty for a local folder.",
+            "examples": [
+              "owner"
+            ],
+            "maxLength": 64,
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "description": "Empty for a local folder.",
+            "examples": [
+              "repo"
+            ],
+            "maxLength": 128,
+            "title": "Repo",
+            "type": "string"
+          },
+          "stored_id": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Id of the stored repository, if read before.",
+            "title": "Stored Id"
+          },
+          "suggested": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SuggestedDetails"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "For a local folder: values git could supply to prefill a form."
+          },
+          "value": {
+            "examples": [
+              "https://github.com/owner/repo"
+            ],
+            "maxLength": 1024,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "value",
+          "name",
+          "owner",
+          "repo",
+          "is_git"
+        ],
+        "title": "StudioSourceResponse",
+        "type": "object"
+      },
+      "SuggestedDetails": {
+        "description": "Values read from git to prefill the local folder form.",
+        "properties": {
+          "default_branch": {
+            "examples": [
+              "main"
+            ],
+            "maxLength": 128,
+            "title": "Default Branch",
+            "type": "string"
+          },
+          "owner": {
+            "examples": [
+              "owner"
+            ],
+            "maxLength": 128,
+            "title": "Owner",
+            "type": "string"
+          },
+          "repo": {
+            "examples": [
+              "repo"
+            ],
+            "maxLength": 128,
+            "title": "Repo",
+            "type": "string"
+          }
+        },
+        "required": [
+          "owner",
+          "repo",
+          "default_branch"
+        ],
+        "title": "SuggestedDetails",
         "type": "object"
       },
       "ValidationError": {
@@ -1078,6 +2447,35 @@
           }
         },
         "summary": "Check contrast of colors",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/brands/fonts": {
+      "get": {
+        "description": "Return the font catalogue: bundled fonts first, then fonts installed on this computer.",
+        "operationId": "list_fonts_api_v1_brands_fonts_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/FontResponse"
+                  },
+                  "title": "Response List Fonts Api V1 Brands Fonts Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List fonts",
         "tags": [
           "v1"
         ]
@@ -1667,19 +3065,19 @@
         ]
       }
     },
-    "/api/v1/canvas-presets": {
+    "/api/v1/canvases": {
       "get": {
-        "description": "Return the canvas sizes a layout can use. ``custom`` allows any size.",
-        "operationId": "list_canvas_presets_api_v1_canvas_presets_get",
+        "description": "Return the built-in canvases first, then the user's, each sorted by name.",
+        "operationId": "list_canvases_api_v1_canvases_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/CanvasPresetResponse"
+                    "$ref": "#/components/schemas/CanvasResponse"
                   },
-                  "title": "Response List Canvas Presets Api V1 Canvas Presets Get",
+                  "title": "Response List Canvases Api V1 Canvases Get",
                   "type": "array"
                 }
               }
@@ -1690,7 +3088,386 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "List canvas presets",
+        "summary": "List canvases",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Add a slide size that brand layouts can use.",
+        "operationId": "create_canvas_api_v1_canvases_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The canvas is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "description": "The name or size is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Create a canvas",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/canvases/import": {
+      "post": {
+        "description": "Add a canvas from an exported file. A name already in use gets a number added.",
+        "operationId": "import_canvas_api_v1_canvases_import_post",
+        "parameters": [
+          {
+            "description": "Name to use. Default: the file's.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Name to use. Default: the file's.",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The canvas is built in and cannot be changed."
+          },
+          "422": {
+            "description": "The name or size is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Import a canvas",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/canvases/{canvas_id}": {
+      "delete": {
+        "description": "Remove a canvas that no brand uses.",
+        "operationId": "delete_canvas_api_v1_canvases__canvas_id__delete",
+        "parameters": [
+          {
+            "description": "Canvas id.",
+            "in": "path",
+            "name": "canvas_id",
+            "required": true,
+            "schema": {
+              "description": "Canvas id.",
+              "maxLength": 64,
+              "title": "Canvas Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The canvas is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "description": "The name or size is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Delete a canvas",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "operationId": "get_canvas_api_v1_canvases__canvas_id__get",
+        "parameters": [
+          {
+            "description": "Canvas id.",
+            "in": "path",
+            "name": "canvas_id",
+            "required": true,
+            "schema": {
+              "description": "Canvas id.",
+              "maxLength": 64,
+              "title": "Canvas Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a canvas",
+        "tags": [
+          "v1"
+        ]
+      },
+      "patch": {
+        "description": "Rename or resize a canvas. Every brand that uses it follows the change.",
+        "operationId": "update_canvas_api_v1_canvases__canvas_id__patch",
+        "parameters": [
+          {
+            "description": "Canvas id.",
+            "in": "path",
+            "name": "canvas_id",
+            "required": true,
+            "schema": {
+              "description": "Canvas id.",
+              "maxLength": 64,
+              "title": "Canvas Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The canvas is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "description": "The name or size is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Change a canvas",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/canvases/{canvas_id}/duplicate": {
+      "post": {
+        "description": "Copy any canvas, built in or not, as a new canvas of your own.",
+        "operationId": "duplicate_canvas_api_v1_canvases__canvas_id__duplicate_post",
+        "parameters": [
+          {
+            "description": "Canvas id.",
+            "in": "path",
+            "name": "canvas_id",
+            "required": true,
+            "schema": {
+              "description": "Canvas id.",
+              "maxLength": 64,
+              "title": "Canvas Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CanvasDuplicate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The canvas is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "description": "The name or size is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Copy a canvas",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/canvases/{canvas_id}/export": {
+      "get": {
+        "description": "Return the canvas as a file that `import` accepts.",
+        "operationId": "export_canvas_api_v1_canvases__canvas_id__export_get",
+        "parameters": [
+          {
+            "description": "Canvas id.",
+            "in": "path",
+            "name": "canvas_id",
+            "required": true,
+            "schema": {
+              "description": "Canvas id.",
+              "maxLength": 64,
+              "title": "Canvas Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CanvasExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No canvas has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the canvas."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Export a canvas",
         "tags": [
           "v1"
         ]
@@ -1721,19 +3498,19 @@
         ]
       }
     },
-    "/api/v1/fonts": {
+    "/api/v1/layouts": {
       "get": {
-        "description": "Return the bundled fonts first, then the fonts installed on this computer.",
-        "operationId": "list_fonts_api_v1_fonts_get",
+        "description": "Return the built-in layouts first, then the user's, each sorted by name.",
+        "operationId": "list_layouts_api_v1_layouts_get",
         "responses": {
           "200": {
             "content": {
               "application/json": {
                 "schema": {
                   "items": {
-                    "$ref": "#/components/schemas/FontResponse"
+                    "$ref": "#/components/schemas/LayoutResponse"
                   },
-                  "title": "Response List Fonts Api V1 Fonts Get",
+                  "title": "Response List Layouts Api V1 Layouts Get",
                   "type": "array"
                 }
               }
@@ -1744,7 +3521,386 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "List fonts",
+        "summary": "List layouts",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Add a layout that brands can share.",
+        "operationId": "create_layout_api_v1_layouts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The layout is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "description": "The name or settings are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Create a layout",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/layouts/import": {
+      "post": {
+        "description": "Add a layout from an exported file. Its canvas is matched or created.",
+        "operationId": "import_layout_api_v1_layouts_import_post",
+        "parameters": [
+          {
+            "description": "Name to use. Default: the file's.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Name to use. Default: the file's.",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The layout is built in and cannot be changed."
+          },
+          "422": {
+            "description": "The name or settings are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Import a layout",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/layouts/{layout_id}": {
+      "delete": {
+        "description": "Remove a layout that no brand uses.",
+        "operationId": "delete_layout_api_v1_layouts__layout_id__delete",
+        "parameters": [
+          {
+            "description": "Layout id.",
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "description": "Layout id.",
+              "maxLength": 64,
+              "title": "Layout Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The layout is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "description": "The name or settings are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Delete a layout",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "operationId": "get_layout_api_v1_layouts__layout_id__get",
+        "parameters": [
+          {
+            "description": "Layout id.",
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "description": "Layout id.",
+              "maxLength": 64,
+              "title": "Layout Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a layout",
+        "tags": [
+          "v1"
+        ]
+      },
+      "patch": {
+        "description": "Rename a layout or change settings. Every brand that uses it follows the change.",
+        "operationId": "update_layout_api_v1_layouts__layout_id__patch",
+        "parameters": [
+          {
+            "description": "Layout id.",
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "description": "Layout id.",
+              "maxLength": 64,
+              "title": "Layout Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The layout is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "description": "The name or settings are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Change a layout",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/layouts/{layout_id}/duplicate": {
+      "post": {
+        "description": "Copy any layout, built in or not, as a layout of your own.",
+        "operationId": "duplicate_layout_api_v1_layouts__layout_id__duplicate_post",
+        "parameters": [
+          {
+            "description": "Layout id.",
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "description": "Layout id.",
+              "maxLength": 64,
+              "title": "Layout Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LayoutDuplicate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The layout is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "description": "The name or settings are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Copy a layout",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/layouts/{layout_id}/export": {
+      "get": {
+        "description": "Return the layout, with its canvas, as a file that `import` accepts.",
+        "operationId": "export_layout_api_v1_layouts__layout_id__export_get",
+        "parameters": [
+          {
+            "description": "Layout id.",
+            "in": "path",
+            "name": "layout_id",
+            "required": true,
+            "schema": {
+              "description": "Layout id.",
+              "maxLength": 64,
+              "title": "Layout Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LayoutExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No layout has that id."
+          },
+          "409": {
+            "description": "The name is taken, or brands still use the layout."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Export a layout",
         "tags": [
           "v1"
         ]
@@ -1752,7 +3908,7 @@
     },
     "/api/v1/palettes": {
       "get": {
-        "description": "Return the starter palettes, each with complete brand data to begin a profile from.",
+        "description": "Return the built-in palettes first, then the user's, each with brand data to start from.",
         "operationId": "list_palettes_api_v1_palettes_get",
         "responses": {
           "200": {
@@ -1773,7 +3929,386 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "List starter palettes",
+        "summary": "List palettes",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Add a palette of your own, for example from the colors of a brand.",
+        "operationId": "create_palette_api_v1_palettes_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaletteCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The palette is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "description": "The name or colors are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Create a palette",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes/import": {
+      "post": {
+        "description": "Add a palette from an exported file. A name already in use gets a number added.",
+        "operationId": "import_palette_api_v1_palettes_import_post",
+        "parameters": [
+          {
+            "description": "Name to use. Default: the file's.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Name to use. Default: the file's.",
+              "title": "Name"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaletteExport"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The palette is built in and cannot be changed."
+          },
+          "422": {
+            "description": "The name or colors are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Import a palette",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes/{palette_id}": {
+      "delete": {
+        "description": "Remove a palette of your own. Brands made from it keep their colors.",
+        "operationId": "delete_palette_api_v1_palettes__palette_id__delete",
+        "parameters": [
+          {
+            "description": "Palette id.",
+            "in": "path",
+            "name": "palette_id",
+            "required": true,
+            "schema": {
+              "description": "Palette id.",
+              "maxLength": 64,
+              "title": "Palette Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The palette is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "description": "The name or colors are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Delete a palette",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "operationId": "get_palette_by_id_api_v1_palettes__palette_id__get",
+        "parameters": [
+          {
+            "description": "Palette id.",
+            "in": "path",
+            "name": "palette_id",
+            "required": true,
+            "schema": {
+              "description": "Palette id.",
+              "maxLength": 64,
+              "title": "Palette Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a palette",
+        "tags": [
+          "v1"
+        ]
+      },
+      "patch": {
+        "description": "Rename a palette or replace its colors. Brands made from it keep their colors.",
+        "operationId": "update_palette_api_v1_palettes__palette_id__patch",
+        "parameters": [
+          {
+            "description": "Palette id.",
+            "in": "path",
+            "name": "palette_id",
+            "required": true,
+            "schema": {
+              "description": "Palette id.",
+              "maxLength": 64,
+              "title": "Palette Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaletteUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The palette is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "description": "The name or colors are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Change a palette",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes/{palette_id}/duplicate": {
+      "post": {
+        "description": "Copy any palette, built in or not, as a palette of your own.",
+        "operationId": "duplicate_palette_api_v1_palettes__palette_id__duplicate_post",
+        "parameters": [
+          {
+            "description": "Palette id.",
+            "in": "path",
+            "name": "palette_id",
+            "required": true,
+            "schema": {
+              "description": "Palette id.",
+              "maxLength": 64,
+              "title": "Palette Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PaletteDuplicate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "403": {
+            "description": "The palette is built in and cannot be changed."
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "description": "The name or colors are not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Copy a palette",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes/{palette_id}/export": {
+      "get": {
+        "description": "Return the palette as a file that `import` accepts.",
+        "operationId": "export_palette_api_v1_palettes__palette_id__export_get",
+        "parameters": [
+          {
+            "description": "Palette id.",
+            "in": "path",
+            "name": "palette_id",
+            "required": true,
+            "schema": {
+              "description": "Palette id.",
+              "maxLength": 64,
+              "title": "Palette Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteExport"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No palette has that id."
+          },
+          "409": {
+            "description": "Another palette uses that name."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Export a palette",
         "tags": [
           "v1"
         ]
@@ -1860,6 +4395,167 @@
           }
         },
         "summary": "Check GitHub connectivity",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories": {
+      "get": {
+        "description": "Return every repository that was read, sorted by owner and name.",
+        "operationId": "list_repositories_api_v1_studio_repositories_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RepoResponse"
+                  },
+                  "title": "Response List Repositories Api V1 Studio Repositories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List stored repositories",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Read the metadata, languages and top-level structure, and store them.\n\nA repository that was read before is returned from the database unless ``refresh`` is set.",
+        "operationId": "read_repository_api_v1_studio_repositories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepoReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "GitHub has no such repository."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "GitHub or the GitHub CLI could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Read a repository",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}": {
+      "get": {
+        "description": "Return one stored repository.",
+        "operationId": "get_repository_api_v1_studio_repositories__repo_id__get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a stored repository",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/source": {
+      "post": {
+        "description": "Check the repository against the saved GitHub mode. Nothing is stored.\n\nFor a local folder the answer also carries values read from git to prefill the details form.",
+        "operationId": "check_studio_source_api_v1_studio_source_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Check a repository to start a post from",
         "tags": [
           "v1"
         ]

@@ -25,8 +25,12 @@ export async function readJson(file) {
   return JSON.parse(await file.text());
 }
 
-/** A file name that is safe on Windows. @param {string} name */
-export function fileNameFor(name) {
+/**
+ * A file name that is safe on Windows.
+ * @param {string} name
+ * @param {string} [kind] what the file holds: brand, canvas, palette or layout
+ */
+export function fileNameFor(name, kind = 'brand') {
   const cleaned = name.replace(/[^\w .-]+/g, '').trim();
-  return `${cleaned || 'brand'}.kodalo-brand.json`;
+  return `${cleaned || kind}.kodalo-${kind}.json`;
 }

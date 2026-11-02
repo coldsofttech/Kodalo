@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HEX, logoFor, previewVariables, sameData, setIn } from './brand.js';
-import { SAMPLE_DATA } from './testing.js';
+import { LAYOUTS, SAMPLE_DATA } from './testing.js';
 
 describe('setIn', () => {
   it('replaces a nested value without changing the original', () => {
@@ -28,17 +28,20 @@ describe('HEX', () => {
   });
 });
 
+const CANVAS = { width: 1080, height: 1350 };
+const LAYOUT = LAYOUTS[0];
+
 describe('previewVariables', () => {
   it('maps colors for the chosen mode', () => {
-    const light = previewVariables(SAMPLE_DATA(), 'light');
-    const dark = previewVariables(SAMPLE_DATA(), 'dark');
+    const light = previewVariables(SAMPLE_DATA(), 'light', LAYOUT, CANVAS);
+    const dark = previewVariables(SAMPLE_DATA(), 'dark', LAYOUT, CANVAS);
     expect(light['--b-background']).toBe('#ffffff');
     expect(dark['--b-background']).toBe('#0b1020');
     expect(light['--b-primary-alt']).toBe('#1d4ed8');
   });
 
   it('maps fonts, layout and logo settings', () => {
-    const vars = previewVariables(SAMPLE_DATA(), 'light');
+    const vars = previewVariables(SAMPLE_DATA(), 'light', LAYOUT, CANVAS);
     expect(vars['--f-heading']).toBe('"Poppins", sans-serif');
     expect(vars['--f-mono-alt']).toBe('"Fira Code", monospace');
     expect(vars['--canvas-w']).toBe('1080');
@@ -49,8 +52,8 @@ describe('previewVariables', () => {
   });
 
   it('follows density', () => {
-    const spacious = setIn(SAMPLE_DATA(), 'layout.density', 'spacious');
-    expect(previewVariables(spacious, 'light')['--gap']).toBe('46');
+    const spacious = { ...LAYOUT, density: 'spacious' };
+    expect(previewVariables(SAMPLE_DATA(), 'light', spacious, CANVAS)['--gap']).toBe('46');
   });
 });
 

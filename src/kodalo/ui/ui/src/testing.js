@@ -6,6 +6,31 @@ import { vi } from 'vitest';
 const pair = (/** @type {string} */ light, /** @type {string} */ dark) => ({ light, dark });
 const font = (/** @type {string} */ family) => ({ family, source: 'bundled' });
 
+/** @param {string} owner */
+export const makeRepo = (owner) => ({
+  id: 'r1',
+  url: `https://github.com/${owner}/repo`,
+  owner,
+  name: 'repo',
+  description: 'A tool',
+  homepage: '',
+  default_branch: 'main',
+  license: 'MIT',
+  topics: ['cli'],
+  is_private: false,
+  is_fork: false,
+  is_archived: false,
+  last_pushed_at: '2026-10-01T10:00:00Z',
+  languages: [{ name: 'Python', bytes: 750, percent: 75 }],
+  top_level: [{ path: 'src', type: 'dir' }],
+  file_count: 3,
+  access_method: 'gh_cli',
+  tree_truncated: false,
+  warnings: [],
+  local_path: '',
+  last_scanned_at: '2026-11-02T07:00:00+00:00',
+});
+
 export const SAMPLE_DATA = () => ({
   schema_version: 1,
   colors: {
@@ -34,18 +59,64 @@ export const SAMPLE_DATA = () => ({
     padding: 48,
     show_on: 'all',
   },
-  layout: {
-    canvas: { preset: 'instagram_portrait', width: 1080, height: 1350 },
-    margin_top: 96,
-    margin_side: 80,
-    margin_bottom: 96,
-    corner_radius: 24,
-    slide_numbers: true,
-    footer_text: '',
-    align: 'left',
-    density: 'regular',
-  },
+  layout_id: 'system-default',
 });
+
+const canvasRow = (
+  /** @type {string} */ id,
+  /** @type {string} */ name,
+  /** @type {number} */ width,
+  /** @type {number} */ height,
+  /** @type {'system' | 'user'} */ type = 'system',
+) => ({
+  id,
+  name,
+  width,
+  height,
+  type,
+  used_by: /** @type {string[]} */ ([]),
+  created_at: '2026-11-01T09:00:00+00:00',
+  updated_at: '2026-11-01T09:00:00+00:00',
+});
+
+export const CANVASES = [
+  canvasRow('system-instagram_portrait', 'Instagram portrait', 1080, 1350),
+  canvasRow('system-instagram_square', 'Instagram square', 1080, 1080),
+];
+
+const layoutRow = (
+  /** @type {string} */ id,
+  /** @type {string} */ name,
+  /** @type {'system' | 'user'} */ type = 'system',
+  /** @type {Record<string, any>} */ extra = {},
+) => ({
+  id,
+  name,
+  type,
+  canvas_id: 'system-instagram_portrait',
+  margin_top: 96,
+  margin_side: 80,
+  margin_bottom: 96,
+  corner_radius: 24,
+  slide_numbers: true,
+  footer_text: '',
+  align: 'left',
+  density: 'regular',
+  slides_count: 6,
+  used_by: /** @type {string[]} */ ([]),
+  created_at: '2026-11-01T09:00:00+00:00',
+  updated_at: '2026-11-01T09:00:00+00:00',
+  ...extra,
+});
+
+export const LAYOUTS = [
+  layoutRow('system-default', 'Default'),
+  layoutRow('system-compact', 'Compact', 'system', {
+    align: 'center',
+    density: 'compact',
+    slides_count: 4,
+  }),
+];
 
 export const makeBrand = (
   /** @type {string} */ id,
@@ -56,23 +127,35 @@ export const makeBrand = (
   name,
   is_default: isDefault,
   data: SAMPLE_DATA(),
+  layout: LAYOUTS[0],
+  canvas: CANVASES[0],
+  created_at: '2026-11-01T09:00:00+00:00',
+  updated_at: '2026-11-01T09:00:00+00:00',
+});
+
+const paletteRow = (
+  /** @type {string} */ id,
+  /** @type {string} */ name,
+  /** @type {'system' | 'user'} */ type = 'system',
+) => ({
+  id,
+  name,
+  type,
+  colors: SAMPLE_DATA().colors,
+  data: SAMPLE_DATA(),
   created_at: '2026-11-01T09:00:00+00:00',
   updated_at: '2026-11-01T09:00:00+00:00',
 });
 
 export const PALETTES = [
-  { key: 'midnight', title: 'Midnight', data: SAMPLE_DATA() },
-  { key: 'paper', title: 'Paper', data: SAMPLE_DATA() },
+  paletteRow('system-midnight', 'Midnight'),
+  paletteRow('system-paper', 'Paper'),
 ];
 export const FONTS = [
   { family: 'Inter', category: 'sans', source: 'bundled' },
   { family: 'Poppins', category: 'sans', source: 'bundled' },
   { family: 'Lora', category: 'serif', source: 'bundled' },
   { family: 'Segoe UI', category: 'sans', source: 'system' },
-];
-export const PRESETS = [
-  { key: 'instagram_portrait', width: 1080, height: 1350 },
-  { key: 'instagram_square', width: 1080, height: 1080 },
 ];
 export const NO_FAILURES = Array.from({ length: 12 }, () => ({
   color: 'text',
@@ -138,7 +221,11 @@ export const DOCTOR = {
 export function createBackend(initial = []) {
   const state = {
     brands: initial,
+    canvases: CANVASES.map((canvas) => ({ ...canvas })),
+    layouts: LAYOUTS.map((layout) => ({ ...layout })),
+    palettes: PALETTES.map((palette) => ({ ...palette })),
     github: { mode: 'gh_cli', local_folder: '' },
+    repoRead: false,
     contrast: /** @type {any[]} */ (NO_FAILURES),
     doctor: /** @type {any} */ (DOCTOR),
     counter: 0,
@@ -150,6 +237,113 @@ export function createBackend(initial = []) {
     brand.updated_at = `2026-11-01T10:00:${String(state.now).padStart(2, '0')}+00:00`;
     return brand;
   };
+  const withUse = (/** @type {any} */ canvas) => ({
+    ...canvas,
+    used_by: state.layouts.filter((l) => l.canvas_id === canvas.id).map((l) => l.name),
+  });
+  const layoutUse = (/** @type {any} */ layout) => ({
+    ...layout,
+    used_by: state.brands.filter((b) => b.data.layout_id === layout.id).map((b) => b.name),
+  });
+  const taken = (/** @type {any[]} */ rows, /** @type {string} */ name, id = '') =>
+    rows.some((row) => row.id !== id && row.name.toLowerCase() === name.toLowerCase());
+  const freeName = (/** @type {any[]} */ rows, /** @type {string} */ name) => {
+    let candidate = name;
+    for (let n = 2; taken(rows, candidate); n += 1) candidate = `${name} (${n})`;
+    return candidate;
+  };
+
+  /**
+   * One CRUD resource (canvases, palettes or layouts) over a list in `state`.
+   * @param {'canvases' | 'palettes' | 'layouts'} key
+   * @param {string} format the file format of its exports
+   * @param {(id: string, body: any) => any} make builds a new row from a request body
+   * @param {(row: any) => any} view the row as the API shows it
+   * @param {(row: any, body: any) => void} apply changes a row from an update
+   * @param {(row: any) => string[]} users the names of what uses the row
+   * @param {(row: any) => any} exported what an export holds besides its format
+   */
+  const resource =
+    (key, format, make, view, apply, users, exported) =>
+    /** @type {(method: string, parts: string[], body: any, url: URL) => unknown} */ (
+      method,
+      parts,
+      body,
+      url,
+    ) => {
+      const rows = () => /** @type {any[]} */ (state[key]);
+      if (parts.length === 1) {
+        if (method === 'GET') return rows().map(view);
+        if (taken(rows(), body.name)) {
+          return [409, { detail: `A ${key.slice(0, -1)} named "${body.name}" already exists.` }];
+        }
+        state.counter += 1;
+        const created = make(`user-${state.counter}`, body);
+        state[key] = [...rows(), created];
+        return [201, view(created)];
+      }
+      if (parts[1] === 'import') {
+        state.counter += 1;
+        const name = freeName(rows(), url.searchParams.get('name') ?? body.name);
+        const created = make(`user-${state.counter}`, { ...body, name });
+        state[key] = [...rows(), created];
+        return [201, view(created)];
+      }
+      const row = rows().find((r) => r.id === parts[1]);
+      if (!row) return [404, { detail: `That ${key.slice(0, -1)} does not exist.` }];
+      if (parts[2] === 'export') return { format, version: 1, name: row.name, ...exported(row) };
+      if (parts[2] === 'duplicate') {
+        state.counter += 1;
+        const copy = make(`user-${state.counter}`, { ...row, name: body.name });
+        state[key] = [...rows(), copy];
+        return [201, view(copy)];
+      }
+      if (method === 'GET') return view(row);
+      if (row.type === 'system') return [403, { detail: `"${row.name}" is built in.` }];
+      if (method === 'DELETE') {
+        const names = users(row);
+        if (names.length)
+          return [409, { detail: `"${row.name}" is used by: ${names.join(', ')}.` }];
+        state[key] = rows().filter((r) => r.id !== row.id);
+        return [204, null];
+      }
+      if (body.name !== undefined && taken(rows(), body.name, row.id)) {
+        return [409, { detail: `A ${key.slice(0, -1)} named "${body.name}" already exists.` }];
+      }
+      apply(row, body);
+      return view(row);
+    };
+
+  const canvasRoutes = resource(
+    'canvases',
+    'kodalo-canvas',
+    (id, body) => canvasRow(id, body.name, body.width, body.height, 'user'),
+    withUse,
+    (row, body) => Object.assign(row, body),
+    (row) => withUse(row).used_by,
+    (row) => ({ width: row.width, height: row.height }),
+  );
+  const layoutRoutes = resource(
+    'layouts',
+    'kodalo-layout',
+    (id, body) => layoutRow(id, body.name, 'user', { ...(body.settings ?? body) }),
+    layoutUse,
+    (row, body) => Object.assign(row, body),
+    (row) => layoutUse(row).used_by,
+    (row) => ({ ...row, canvas: { name: 'Instagram portrait', width: 1080, height: 1350 } }),
+  );
+  const paletteRoutes = resource(
+    'palettes',
+    'kodalo-palette',
+    (id, body) => ({
+      ...paletteRow(id, body.name, 'user'),
+      colors: body.colors ?? SAMPLE_DATA().colors,
+    }),
+    (row) => ({ ...row, data: { ...row.data, colors: row.colors } }),
+    (row, body) => Object.assign(row, body),
+    () => [],
+    (row) => ({ colors: row.colors }),
+  );
   /** @type {(method: string, path: string, body: any) => unknown} */
   const handler = (method, path, body) => {
     const url = new URL(path, 'http://app');
@@ -157,14 +351,36 @@ export function createBackend(initial = []) {
     if (url.pathname === '/api/bridge/app_info') {
       return { available: true, result: { name: 'Kodalo', version: '1.2.3' } };
     }
+    if (parts[0] === 'studio' && parts[1] === 'repositories') {
+      const local = state.github.mode === 'local_folder';
+      if (local && !state.repoRead && !body.details)
+        return [422, { detail: 'Please fill in: owner.' }];
+      state.repoRead = true;
+      return makeRepo(body.details?.owner ?? 'o');
+    }
+    if (parts[0] === 'studio') {
+      if (state.github.mode === 'local_folder') {
+        const suggested = { owner: '', repo: 'proj', default_branch: 'main' };
+        return {
+          kind: 'local_folder',
+          value: body.source,
+          name: 'proj',
+          stored_id: state.repoRead ? 'r1' : null,
+          suggested,
+        };
+      }
+      if (!body.source.startsWith('https://')) return [422, { detail: 'Use a GitHub address.' }];
+      return { kind: 'github', value: body.source, name: 'repo', stored_id: null, suggested: null };
+    }
     if (parts[0] === 'settings') {
       if (parts[2] === 'check') return { mode: state.github.mode, ok: true, detail: 'Works.' };
       if (method === 'PUT') state.github = { local_folder: '', ...body };
       return state.github;
     }
-    if (parts[0] === 'palettes') return PALETTES;
-    if (parts[0] === 'fonts') return FONTS;
-    if (parts[0] === 'canvas-presets') return PRESETS;
+    if (parts[0] === 'palettes') return paletteRoutes(method, parts, body, url);
+    if (parts[0] === 'layouts') return layoutRoutes(method, parts, body, url);
+    if (parts[0] === 'canvases') return canvasRoutes(method, parts, body, url);
+    if (parts[0] === 'brands' && parts[1] === 'fonts') return FONTS;
     if (parts[0] === 'doctor') return state.doctor;
     if (parts[0] !== 'brands') return undefined;
     if (parts.length === 1) {
@@ -200,6 +416,8 @@ export function createBackend(initial = []) {
         return [409, { detail: `A brand named "${body.name}" already exists.` }];
       }
       Object.assign(brand, body);
+      brand.layout = state.layouts.find((l) => l.id === brand.data.layout_id) ?? brand.layout;
+      brand.canvas = state.canvases.find((c) => c.id === brand.layout.canvas_id) ?? brand.canvas;
       return touch(brand);
     }
     if (action === 'default') {

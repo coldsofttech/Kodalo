@@ -586,3 +586,112 @@ select {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+.steps {
+  display: flex;
+  gap: 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 1rem;
+  color: var(--muted);
+}
+
+.steps li[aria-current='step'] {
+  color: var(--text);
+  font-weight: 600;
+  border-bottom: 2px solid var(--accent);
+}
+
+button.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.facts {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0 0 1rem;
+}
+
+.facts div {
+  display: grid;
+  grid-template-columns: 10rem 1fr;
+  gap: 1rem;
+}
+
+.facts dt {
+  color: var(--muted);
+}
+
+.facts dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.entries {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  list-style: none;
+  padding: 0;
+}
+
+/* Sub-menu under a navigation item. */
+.nav .subnav {
+  margin: 0.15rem 0 0.4rem 0.9rem;
+  border-left: 1px solid var(--border);
+}
+
+.nav .subnav button {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.92rem;
+}
+
+/* Canvases page. */
+.canvases,
+.palettes,
+.layouts {
+  max-width: 60rem;
+  margin-inline: auto;
+}
+
+.canvas-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1rem 0;
+}
+
+.canvas-table th,
+.canvas-table td {
+  text-align: left;
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.canvas-table .row-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Read-only summary of the layout a brand uses. */
+.summary {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.35rem 1rem;
+  margin: 0.75rem 0;
+}
+
+.summary dt {
+  font-weight: 600;
+}
+
+.summary dd {
+  margin: 0;
+}

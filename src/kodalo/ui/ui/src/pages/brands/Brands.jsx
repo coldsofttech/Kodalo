@@ -1,23 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   createBrand,
+  createPalette,
   deleteBrand,
   duplicateBrand,
   exportBrand,
   importBrand,
   listBrands,
-  listCanvasPresets,
+  listCanvases,
   listFonts,
+  listLayouts,
   listPalettes,
   setDefaultBrand,
   updateBrand,
-} from '../api.js';
-import { sameData, setIn } from '../brand.js';
-import { Button, TextField } from '../components/controls.jsx';
-import { ColorsPanel, FontsPanel, LayoutPanel, LogoPanel } from '../components/editor.jsx';
-import NewBrand from '../components/NewBrand.jsx';
-import Preview from '../components/preview.jsx';
-import { fileNameFor, readJson, saveJson } from '../download.js';
+} from '../../api.js';
+import { sameData, setIn } from '../../brand.js';
+import { Button, TextField } from '../../components/controls.jsx';
+import { ColorsPanel, FontsPanel, LayoutPanel, LogoPanel } from '../../components/editor.jsx';
+import NewBrand from '../../components/NewBrand.jsx';
+import Preview from '../../components/preview.jsx';
+import { fileNameFor, readJson, saveJson } from '../../download.js';
 
 const TABS = [
   ['colors', 'Colors'],
@@ -31,6 +33,32 @@ const errorText = (/** @type {unknown} */ error, /** @type {string} */ fallback)
 
 /** The draft is what the form edits; the saved brand is what the server holds. */
 const toDraft = (/** @type {any} */ brand) => ({ name: brand.name, data: brand.data });
+
+/** @param {{ busy: boolean, onSave: (name: string) => Promise<unknown> }} props */
+function SavePalette({ busy, onSave }) {
+  const [name, setName] = useState('');
+  return (
+    <section className="panel" aria-label="Save as palette">
+      <h3>Save these colors as a palette</h3>
+      <p className="hint">
+        A palette can start new brands. Manage palettes under Brands, Palettes.
+      </p>
+      <div className="row">
+        <TextField label="Palette name" value={name} maxLength={64} onChange={setName} />
+        <Button
+          appearance="outline"
+          disabled={busy || !name.trim()}
+          onClick={async () => {
+            await onSave(name.trim());
+            setName('');
+          }}
+        >
+          Save palette
+        </Button>
+      </div>
+    </section>
+  );
+}
 
 /** @param {{ onImport: (file: File) => void }} props */
 function ImportButton({ onImport }) {
@@ -56,11 +84,16 @@ function ImportButton({ onImport }) {
   );
 }
 
-export default function BrandsPage() {
+/**
+ * @param {{ catalogRevision?: number, onCatalogChange?: () => void }} props `catalogRevision`
+ *   changes when canvases, layouts or palettes do; `onCatalogChange` runs when this page saves a palette.
+ */
+export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
   const [brands, setBrands] = useState(/** @type {any[] | null} */ (null));
   const [palettes, setPalettes] = useState(/** @type {any[]} */ ([]));
   const [fonts, setFonts] = useState(/** @type {any[]} */ ([]));
-  const [presets, setPresets] = useState(/** @type {any[]} */ ([]));
+  const [canvases, setCanvases] = useState(/** @type {any[]} */ ([]));
+  const [layouts, setLayouts] = useState(/** @type {any[]} */ ([]));
   const [selectedId, setSelectedId] = useState(/** @type {string | null} */ (null));
   const [draft, setDraft] = useState(/** @type {{ name: string, data: any } | null} */ (null));
   const [tab, setTab] = useState('colors');
@@ -85,17 +118,19 @@ export default function BrandsPage() {
     let alive = true;
     (async () => {
       try {
-        const [list, palettesList, fontsList, presetsList] = await Promise.all([
+        const [list, palettesList, fontsList, canvasList, layoutList] = await Promise.all([
           listBrands(),
           listPalettes(),
           listFonts(),
-          listCanvasPresets(),
+          listCanvases(),
+          listLayouts(),
         ]);
         if (!alive) return;
         setBrands(list);
         setPalettes(palettesList);
         setFonts(fontsList);
-        setPresets(presetsList);
+        setCanvases(canvasList);
+        setLayouts(layoutList);
         select(list, null);
       } catch (failure) {
         if (alive) {
@@ -108,6 +143,23 @@ export default function BrandsPage() {
       alive = false;
     };
   }, [select]);
+
+  useEffect(() => {
+    if (catalogRevision === 0) return undefined;
+    let alive = true;
+    Promise.all([listCanvases(), listLayouts(), listPalettes()]).then(
+      ([canvasList, layoutList, palettesList]) => {
+        if (!alive) return;
+        setCanvases(canvasList);
+        setLayouts(layoutList);
+        setPalettes(palettesList);
+      },
+      (failure) => alive && setError(errorText(failure, 'The lists could not be loaded.')),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [catalogRevision]);
 
   useEffect(() => {
     if (!notice) return undefined;
@@ -235,6 +287,11 @@ export default function BrandsPage() {
   }
 
   const current = draft && selected ? { brand: selected, ...draft } : null;
+  /** The canvas the draft's layout points to; the saved brand's canvas until the list is loaded. */
+  const layoutOf = (/** @type {NonNullable<typeof current>} */ item) =>
+    layouts.find((layout) => layout.id === item.data.layout_id) ?? item.brand.layout;
+  const canvasOf = (/** @type {NonNullable<typeof current>} */ item) =>
+    canvases.find((canvas) => canvas.id === layoutOf(item).canvas_id) ?? item.brand.canvas;
   return (
     <div className="brands">
       <aside className="profiles" aria-label="Brand profiles">
@@ -411,7 +468,21 @@ export default function BrandsPage() {
 
             <TabList tab={tab} onChange={setTab} />
             <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-              {tab === 'colors' ? <ColorsPanel data={current.data} onChange={edit} /> : null}
+              {tab === 'colors' ? (
+                <>
+                  <ColorsPanel data={current.data} onChange={edit} />
+                  <SavePalette
+                    busy={busy}
+                    onSave={(name) =>
+                      act(async () => {
+                        await createPalette({ name, colors: current.data.colors });
+                        onCatalogChange?.();
+                        return `Saved the palette "${name}".`;
+                      }, 'The palette could not be saved.')
+                    }
+                  />
+                </>
+              ) : null}
               {tab === 'fonts' ? (
                 <FontsPanel data={current.data} fonts={fonts} onChange={edit} />
               ) : null}
@@ -425,7 +496,12 @@ export default function BrandsPage() {
                 />
               ) : null}
               {tab === 'layout' ? (
-                <LayoutPanel data={current.data} presets={presets} onChange={edit} />
+                <LayoutPanel
+                  data={current.data}
+                  layouts={layouts}
+                  canvases={canvases}
+                  onChange={edit}
+                />
               ) : null}
             </div>
 
@@ -444,7 +520,14 @@ export default function BrandsPage() {
         ) : null}
       </section>
 
-      {current ? <Preview brand={current.brand} data={current.data} /> : null}
+      {current ? (
+        <Preview
+          brand={current.brand}
+          data={current.data}
+          layout={layoutOf(current)}
+          canvas={canvasOf(current)}
+        />
+      ) : null}
     </div>
   );
 }

@@ -51,6 +51,17 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
 
+### `studio`
+
+Start a post from a repository. Reading follows the GitHub mode: `gh_cli` and `web_fetch` read a GitHub address (`https://github.com/owner/repo` or `owner/repo`); `local_folder` reads a folder with git and its files. What is read (metadata, languages, top-level structure, warnings) is stored in the local database.
+
+| Command | What it does |
+| --- | --- |
+| `studio source <value>` | Check the folder or address against the mode. `--json` for machine-readable output. Exits with 1 when it is not valid. |
+| `studio read <value>` | Read the repository and store it. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--json` for machine-readable output. |
+| `studio list` | List stored repositories. `--json` for machine-readable output. |
+| `studio show <id>` | Show one stored repository. `--json` for machine-readable output. |
+
 ### `brand`
 
 Manage brand profiles. Every command takes the profile by name (any case) or by id. Messages go to stderr and `--quiet` hides them; data goes to stdout.
@@ -58,19 +69,35 @@ Manage brand profiles. Every command takes the profile by name (any case) or by 
 | Command | What it does |
 | --- | --- |
 | `brand list` | List profiles. `--json` for machine-readable output. |
-| `brand show NAME` | Show every setting of a profile. `--json` prints the full profile. |
-| `brand create NAME` | Create a profile from a starter palette: `--palette midnight\|paper\|graphite` (default `midnight`). `--default` makes it the default. The first profile is always the default. |
-| `brand rename NAME NEW_NAME` | Rename a profile. Names are unique, ignoring case. |
+| `brand show NAME` | Show a profile in groups (General, Colors with a swatch of each color, Fonts, Logo, Layout). `--json` prints the full profile. |
+| `brand create NAME` | Create a profile from a palette: `--palette NAME` (default `Midnight`; see `brand palette list`). `--default` makes it the default. The first profile is always the default. |
+| `brand rename NAME NEW_NAME` | Rename a profile. Names are unique, ignoring case. Renaming to the same name is an error; changing only the case is allowed. |
 | `brand duplicate NAME NEW_NAME` | Copy a profile, including its logo files. |
 | `brand default NAME` | Make a profile the default. |
 | `brand delete NAME` | Delete a profile and its logo files after asking; `--yes` skips the question. Deleting the default promotes another profile. |
-| `brand set NAME PATH VALUE` | Change one setting, for example `brand set Main colors.primary.light '#2563eb'` or `brand set Main layout.align center`. The value is checked like any other brand data. |
-| `brand settings NAME` | List the paths that `set` accepts. |
+| `brand settings set NAME PATH VALUE` | Change one setting, for example `brand settings set Main colors.primary.light '#2563eb'`. Choose a layout with `brand settings set Main layout_id "Compact"` (a name or an id). The value is checked like any other brand data. |
+| `brand settings list NAME` | List the settings that `settings set` accepts, with their values. `--json` for machine-readable output. |
 | `brand check NAME` | Report the contrast of text and accent colors in light and dark mode. `--strict` exits with 1 if any check fails; `--json` for machine-readable output. |
-| `brand palettes` | List the starter palettes. |
-| `brand fonts` | List the fonts a profile can use: bundled fonts plus installed ones (`--bundled` for only the bundled list). |
+| `brand palette list` / `show NAME` | List palettes (built-in first) or show one with a swatch of each color. `--json` for machine-readable output. |
+| `brand palette add NAME` | Create a palette from a brand's colors (`--from-brand`) or another palette (`--from-palette`, default Midnight). |
+| `brand palette set NAME PATH VALUE` | Change one color of a palette of your own, for example `brand palette set Ocean primary.light '#2563eb'`. |
+| `brand palette rename`, `duplicate`, `delete` | Rename, copy or delete a palette. Built-in palettes can be copied but not changed. Brands made from a palette keep their colors. |
+| `brand palette export NAME` / `import FILE` | Write a palette as JSON to stdout or a file (`--output`); add one from a file (`--name`). |
+| `brand fonts` | List the font catalogue with each font's category and source: bundled fonts plus installed ones (`--bundled` for only the bundled list). |
 | `brand export NAME` | Write the profile and its logos as JSON to stdout, or to a file with `--output`. |
 | `brand import FILE` | Add a profile from an exported file. `--name` sets its name; a name already in use gets a number added. |
+| `brand canvas list` | List canvases (built-in first) and the layouts that use each. `--json` for machine-readable output. |
+| `brand canvas show NAME` | Show one canvas by name or id. `--json` prints it in full. |
+| `brand canvas add NAME WIDTH HEIGHT` | Create a canvas; sizes are 200 to 4000 pixels. |
+| `brand canvas edit NAME` | Rename or resize with `--name`, `--width`, `--height`. Every layout, and so every brand, using it follows. Built-in canvases cannot be changed. |
+| `brand canvas duplicate NAME NEW_NAME` | Copy a canvas, built in or not, as a canvas of your own. |
+| `brand canvas delete NAME` | Delete a canvas no layout uses, after asking; `--yes` skips the question. |
+| `brand canvas export NAME` / `import FILE` | Write a canvas as JSON to stdout or a file (`--output`); add one from a file (`--name`). |
+| `brand layout list` / `show NAME` / `settings NAME` | List layouts (built-in first, with canvas, slide count and the brands using each), show one, or list its settings. |
+| `brand layout add NAME` | Create a layout from another one (`--from-layout`, default Default); change it with `layout set`. |
+| `brand layout set NAME PATH VALUE` | Change one setting of a layout of your own, for example `slides_count 8` or `canvas_id "Instagram story"`. Brands using it follow. |
+| `brand layout rename`, `duplicate`, `delete` | Rename, copy or delete a layout. Built-in layouts (Default, Compact, Spacious) can be copied but not changed; a layout a brand uses cannot be deleted. |
+| `brand layout export NAME` / `import FILE` | Write a layout, with its canvas, as JSON to stdout or a file (`--output`); add one from a file (`--name`). |
 | `brand logo set NAME FILE` | Set the logo from a PNG or SVG file (up to 2 MB). `--dark` sets the dark-mode logo. SVG files with scripts or external links are refused. |
 | `brand logo remove NAME` | Remove the logo (`--dark` for the dark-mode one). |
 

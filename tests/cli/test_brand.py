@@ -37,7 +37,8 @@ def test_create_list_show(data_dir: Path) -> None:
     shown = json.loads(invoke(data_dir, "show", "main", "--json").output)
     assert shown["data"]["colors"]["background"]["light"] == "#faf7f2"
     table = invoke(data_dir, "show", shown["id"])
-    assert "colors.primary" in table.output
+    assert "Colors" in table.output
+    assert "primary" in table.output
     assert "(default)" in table.output
     assert "Main" in invoke(data_dir, "list").output
 
@@ -49,7 +50,7 @@ def test_create_errors(data_dir: Path) -> None:
     assert "already exists" in duplicate.output
     unknown = invoke(data_dir, "create", "Other", "--palette", "neon")
     assert unknown.exit_code == 1
-    assert "Unknown palette" in unknown.output
+    assert "No palette named" in unknown.output
     missing = invoke(data_dir, "show", "nope")
     assert missing.exit_code == 1
     assert "No brand named" in missing.output
@@ -69,21 +70,74 @@ def test_rename_default_duplicate_delete(data_dir: Path) -> None:
     assert names(data_dir) == {"Alpha": True}
 
 
+def test_rename_to_the_same_name_is_an_error(data_dir: Path) -> None:
+    invoke(data_dir, "create", "Main")
+    same = invoke(data_dir, "rename", "Main", "Main")
+    assert same.exit_code == 1
+    assert "already named" in same.output
+    assert invoke(data_dir, "rename", "Main", "main").exit_code == 0
+    assert names(data_dir) == {"main": True}
+
+
+def test_list_json_carries_what_the_table_shows(data_dir: Path) -> None:
+    invoke(data_dir, "create", "Main")
+    [brand] = json.loads(invoke(data_dir, "list", "--json").output)
+    assert brand["name"] == "Main"
+    assert brand["layout"]["name"] == "Default"
+    assert brand["canvas"] == {
+        "id": "system-instagram_portrait",
+        "name": "Instagram portrait",
+        "width": 1080,
+        "height": 1350,
+    }
+    table = invoke(data_dir, "list").output
+    assert "Layout" in table
+    assert "Canvas" in table
+
+
+def test_show_is_grouped_with_color_swatches(data_dir: Path) -> None:
+    invoke(data_dir, "create", "Main")
+    output = invoke(data_dir, "show", "Main").output
+    for group in ("Colors", "Fonts", "Logo", "Layout"):
+        assert group in output
+    assert "#2563eb" in output
+
+
+def test_fonts_show_a_category_for_installed_fonts(
+    data_dir: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from kodalo.core.brand import fonts as fonts_module
+    from kodalo.core.brand.fonts import FontInfo
+
+    monkeypatch.setattr(
+        fonts_module, "system_fonts", lambda: [FontInfo("Segoe UI", "serif", "system")]
+    )
+    items = json.loads(invoke(data_dir, "fonts", "--json").output)
+    assert {"family": "Segoe UI", "category": "serif", "source": "system"} in items
+    row = next(line for line in invoke(data_dir, "fonts").output.splitlines() if "Segoe UI" in line)
+    assert "serif" in row
+
+
 def test_set_and_settings(data_dir: Path) -> None:
     invoke(data_dir, "create", "Main")
-    assert invoke(data_dir, "set", "Main", "colors.primary.light", "#112233").exit_code == 0
+    assert (
+        invoke(data_dir, "settings", "set", "Main", "colors.primary.light", "#112233").exit_code
+        == 0
+    )
     shown = json.loads(invoke(data_dir, "show", "Main", "--json").output)
     assert shown["data"]["colors"]["primary"]["light"] == "#112233"
-    bad = invoke(data_dir, "set", "Main", "colors.primary.light", "blue")
+    bad = invoke(data_dir, "settings", "set", "Main", "colors.primary.light", "blue")
     assert bad.exit_code == 1
     assert "colors.primary.light" in bad.output
-    assert "layout.align" in invoke(data_dir, "settings", "Main").output
+    assert "layout_id" in invoke(data_dir, "settings", "list", "Main").output
+    listed = json.loads(invoke(data_dir, "settings", "list", "Main", "--json").output)
+    assert listed["colors.primary.light"] == "#112233"
 
 
 def test_check_and_strict(data_dir: Path) -> None:
     invoke(data_dir, "create", "Main")
     assert invoke(data_dir, "check", "Main", "--strict").exit_code == 0
-    invoke(data_dir, "set", "Main", "colors.text.light", "#eeeeee")
+    invoke(data_dir, "settings", "set", "Main", "colors.text.light", "#eeeeee")
     assert invoke(data_dir, "check", "Main").exit_code == 0
     failing = invoke(data_dir, "check", "Main", "--strict", "--json")
     assert failing.exit_code == 1
@@ -91,9 +145,9 @@ def test_check_and_strict(data_dir: Path) -> None:
 
 
 def test_palettes_and_fonts(data_dir: Path) -> None:
-    keys = [p["key"] for p in json.loads(invoke(data_dir, "palettes", "--json").output)]
-    assert keys == ["midnight", "paper", "graphite"]
-    assert "Midnight" in invoke(data_dir, "palettes").output
+    names_ = [p["name"] for p in json.loads(invoke(data_dir, "palette", "list", "--json").output)]
+    assert names_ == ["Graphite", "Midnight", "Paper"]
+    assert "Midnight" in invoke(data_dir, "palette", "list").output
     bundled = json.loads(invoke(data_dir, "fonts", "--bundled", "--json").output)
     assert {f["source"] for f in bundled} == {"bundled"}
     assert "Inter" in invoke(data_dir, "fonts", "--bundled").output
