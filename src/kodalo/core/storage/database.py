@@ -4,24 +4,26 @@ import shutil
 from collections.abc import Iterator
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from alembic import command
-from alembic.config import Config
-from alembic.runtime.migration import MigrationContext
-from alembic.script import ScriptDirectory
-from alembic.script.revision import RevisionError
-from alembic.util import CommandError
 from sqlalchemy import Engine, create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 
 from kodalo.core.storage.errors import DatabaseTooNewError, MigrationError
 from kodalo.core.storage.models import VERSION_TABLE
 
+if TYPE_CHECKING:
+    from alembic.config import Config
+    from alembic.script import ScriptDirectory
+
 MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
-def _config() -> Config:
+# Alembic is imported inside the functions that use it: it is slow to load and only needed
+# when a database is opened, so importing this module stays cheap.
+def _config() -> "Config":
+    from alembic.config import Config
+
     config = Config()
     config.set_main_option("script_location", str(MIGRATIONS_DIR))
     return config
@@ -40,12 +42,17 @@ def _make_engine(path: Path) -> Engine:
 
 
 def _current_revision(engine: Engine) -> str | None:
+    from alembic.runtime.migration import MigrationContext
+
     with engine.connect() as connection:
         context = MigrationContext.configure(connection, opts={"version_table": VERSION_TABLE})
         return context.get_current_revision()
 
 
-def _is_known(script: ScriptDirectory, revision: str) -> bool:
+def _is_known(script: "ScriptDirectory", revision: str) -> bool:
+    from alembic.script.revision import RevisionError
+    from alembic.util import CommandError
+
     try:
         return script.get_revision(revision) is not None
     except (CommandError, RevisionError):
@@ -54,11 +61,15 @@ def _is_known(script: ScriptDirectory, revision: str) -> bool:
 
 def head_revision() -> str | None:
     """Return the id of the newest migration this version of the application knows."""
+    from alembic.script import ScriptDirectory
+
     return ScriptDirectory.from_config(_config()).get_current_head()
 
 
 def is_known_revision(revision: str) -> bool:
     """Return whether this version of the application knows the migration ``revision``."""
+    from alembic.script import ScriptDirectory
+
     return _is_known(ScriptDirectory.from_config(_config()), revision)
 
 
@@ -74,6 +85,9 @@ def migrate(path: Path) -> Engine:
     the copy is put back (or the new file removed), so existing data is never left half-migrated.
     A database written by a newer version of the application is refused and left alone.
     """
+    from alembic import command
+    from alembic.script import ScriptDirectory
+
     path.parent.mkdir(parents=True, exist_ok=True)
     existed = path.exists()
     config = _config()
