@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "id": "elixir-mix",
+  "ecosystem": "elixir",
+  "files": [
+    "mix.exs"
+  ],
+  "lockfiles": [
+    "mix.lock"
+  ],
+  "format": "lines",
+  "name": [
+    "app:\\s*:(?P<value>\\w+)"
+  ],
+  "version": [
+    "version:\\s*\\\"(?P<value>[^\\\"]+)\\\""
+  ],
+  "dependencies": [
+    {
+      "regex": "\\{:(?P<value>\\w+),"
+    }
+  ]
+}

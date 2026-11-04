@@ -25,6 +25,7 @@ TITLE = "Kodalo"
 VERSION = __version__
 # Window and taskbar icon: public/icon.png is copied into dist by the build. Replace it with yours.
 ICON = UI_DIR / "dist" / "icon.png"
+MAX_EXPORT_BYTES = 5_000_000
 
 
 class UiUnavailableError(RuntimeError):
@@ -45,6 +46,24 @@ def api_router() -> APIRouter:
 def app_info() -> dict[str, str]:
     """Native action ``app_info``: what the page may ask the app about itself."""
     return {"name": TITLE, "version": VERSION}
+
+
+def write_json_file(path: str, text: str) -> None:
+    """Native action ``write_json_file``: save an export where the user chose in the save dialog.
+
+    Raises:
+        ValueError: If the path is not a local ``.json`` file in an existing folder, or the text
+            is too large.
+    """
+    if not path or "\0" in path or path.startswith(("\\\\", "//")):
+        raise ValueError("Choose a file on this computer.")
+    target = Path(path)
+    if target.suffix.lower() != ".json" or not target.parent.is_dir():
+        raise ValueError("Exports are saved as .json files in an existing folder.")
+    data = text.encode("utf-8")
+    if len(data) > MAX_EXPORT_BYTES:
+        raise ValueError("That export is too large to save.")
+    target.write_bytes(data)
 
 
 def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
@@ -84,6 +103,7 @@ def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
         identity=App(id=APP_ID),
     )
     shell.action("app_info")(app_info)
+    shell.action("write_json_file")(write_json_file)
     return shell
 
 

@@ -47,9 +47,27 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 
 | Command | What it does |
 | --- | --- |
-| `settings github show` | Show the current mode and folder. `--json` for machine-readable output. |
-| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). |
+| `settings github show` | Show the current mode, folder and number of project files to read. `--refresh-with-ai` asks the default AI model for parser configs for project files no config covers: it prints the files and the expected tokens and asks first (`--yes` skips the question), then reads again with the new configs. `--json` for machine-readable output. |
+| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
+
+### `settings ai`
+
+Connect Kodalo to an AI provider: `claude_api` (Claude API), `claude_code` (the Claude Code program on this computer), `chatgpt_api` (ChatGPT API) or `gemini_api` (Gemini API). Several connections can be on at once, and one is the default. An API key is never an argument: `--key` asks for it at a hidden prompt (or reads it when piped), and it is kept in the system keychain (Windows Credential Manager), never in the database. Only the last four characters are shown afterwards. Claude Code uses your own sign-in and needs no key; `test` only checks that `claude` is installed.
+
+| Command | What it does |
+| --- | --- |
+| `settings ai list` | Every provider with its state, key, status and default model. `--json` for machine-readable output. |
+| `settings ai show <provider>` | One connection in detail. |
+| `settings ai set <provider>` | Save a connection. `--key` enters the API key, `--enable` / `--disable` turns it on or off, `--base-url URL` uses another address (empty for the default). Anything left out is kept. |
+| `settings ai test <provider>` | Check the connection. Exits with 1 when it does not work. |
+| `settings ai default <provider>` | Make a saved, enabled connection the default. |
+| `settings ai remove <provider>` | Forget a connection: settings, models and key. |
+| `settings ai models list <provider>` | The saved models and their settings. |
+| `settings ai models refresh <provider>` | Ask the provider for its models and save them. Models you added by hand are kept. |
+| `settings ai models set <provider> <name>` | Add a model or change it: `--max-tokens` (1 to 1000000), `--temperature` (0 to 2), `--timeout` seconds (1 to 600). A new model starts with Kodalo's standard settings for its kind (opus, sonnet, haiku, gemini, gpt, or the app-wide ones) wherever an option is left out; for a saved model, options left out go back to the provider's own default. Refreshing gives new models the same standard settings and keeps the ones you changed. |
+| `settings ai models default <provider> <name>` | Choose the model the connection uses by default. |
+| `settings ai models remove <provider> <name>` | Forget a model (one the provider offers comes back on the next refresh). |
 
 ### `studio`
 
@@ -58,7 +76,7 @@ Start a post from a repository. Reading follows the GitHub mode: `gh_cli` and `w
 | Command | What it does |
 | --- | --- |
 | `studio source <value>` | Check the folder or address against the mode. `--json` for machine-readable output. Exits with 1 when it is not valid. |
-| `studio read <value>` | Read the repository and store it. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--json` for machine-readable output. |
+| `studio read <value>` | Read the repository and store it, with its notable folders, project files (package, version and dependencies; see [manifest-parsers.md](manifest-parsers.md), where you can also add your own file types) and whether it is a monorepo. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--json` for machine-readable output. |
 | `studio list` | List stored repositories. `--json` for machine-readable output. |
 | `studio show <id>` | Show one stored repository. `--json` for machine-readable output. |
 

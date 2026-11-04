@@ -1,6 +1,20 @@
 import { useEffect, useState } from 'react';
-import { checkGithub, getGithubSettings, saveGithubSettings } from '../api.js';
-import { Button, Select, TextField } from '../components/controls.jsx';
+import { checkGithub, getGithubSettings, getTheme, saveGithubSettings, saveTheme } from '../api.js';
+import { Button, NumberField, Select, TextField } from '../components/controls.jsx';
+import { setTheme as applyTheme } from '../theme.js';
+import AiConnections from './settings/AiConnections.jsx';
+
+const TABS = [
+  ['github', 'GitHub'],
+  ['ai', 'AI Connections'],
+  ['appearance', 'Appearance'],
+];
+
+const THEME_CHOICES = [
+  ['system', 'System (default)'],
+  ['light', 'Light'],
+  ['dark', 'Dark'],
+];
 
 const MODES = [
   ['gh_cli', 'GitHub CLI (gh)'],
@@ -17,20 +31,26 @@ const HINTS = new Map([
 export default function SettingsPage() {
   const [mode, setMode] = useState('gh_cli');
   const [folder, setFolder] = useState('');
+  const [manifestLimit, setManifestLimit] = useState(10);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [result, setResult] = useState(
     /** @type {{ ok: boolean, detail: string } | null} */ (null),
   );
   const [busy, setBusy] = useState(false);
+  const [tab, setTab] = useState('github');
+  const [theme, setTheme] = useState('system');
+  const [themeSaved, setThemeSaved] = useState(false);
 
   useEffect(() => {
     let alive = true;
-    getGithubSettings().then(
-      (settings) => {
+    Promise.all([getGithubSettings(), getTheme()]).then(
+      ([settings, appearance]) => {
         if (!alive) return;
         setMode(settings.mode);
         setFolder(settings.local_folder);
+        setManifestLimit(settings.manifest_limit);
+        setTheme(appearance.theme);
       },
       (failure) => alive && setError(failure.message),
     );
@@ -56,8 +76,16 @@ export default function SettingsPage() {
     run(async () => {
       setSaved(false);
       setResult(null);
-      await saveGithubSettings({ mode, local_folder: folder });
+      await saveGithubSettings({ mode, local_folder: folder, manifest_limit: manifestLimit });
       setSaved(true);
+    });
+
+  const saveAppearance = () =>
+    run(async () => {
+      setThemeSaved(false);
+      const saved = await saveTheme(theme);
+      applyTheme(saved.theme);
+      setThemeSaved(true);
     });
 
   const test = () =>
@@ -67,42 +95,107 @@ export default function SettingsPage() {
     });
 
   return (
-    <section className="card" aria-labelledby="settings-title">
-      <h1 id="settings-title">Settings</h1>
-      <h2>GitHub connectivity</h2>
-      <p>Choose how Kodalo reads your repositories.</p>
-      <Select label="Connect with" value={mode} onChange={setMode}>
-        {MODES.map(([value, label]) => (
-          <option key={value} value={value}>
+    <div className="settings">
+      <h1>Settings</h1>
+      <p>Choose how Kodalo connects to the services it uses.</p>
+      <div role="tablist" aria-label="Settings" className="tabs">
+        {TABS.map(([key, label]) => (
+          <button
+            key={key}
+            type="button"
+            role="tab"
+            id={`tab-${key}`}
+            aria-selected={tab === key}
+            aria-controls={`panel-${key}`}
+            onClick={() => setTab(key)}
+          >
             {label}
-          </option>
+          </button>
         ))}
-      </Select>
-      <p className="hint">{HINTS.get(mode)}</p>
-      {mode === 'local_folder' ? (
-        <TextField label="Folder" value={folder} onChange={setFolder} maxLength={1024} />
+      </div>
+      {tab === 'appearance' ? (
+        <section
+          className="panel"
+          role="tabpanel"
+          id="panel-appearance"
+          aria-labelledby="tab-appearance"
+        >
+          <Select label="Theme" value={theme} onChange={setTheme}>
+            {THEME_CHOICES.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+          <p className="hint">Applies to this window only. System follows Windows.</p>
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy} onClick={saveAppearance}>
+              Save
+            </Button>
+          </div>
+          {error ? (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          ) : null}
+          {themeSaved ? (
+            <p role="status" className="notice">
+              Saved.
+            </p>
+          ) : null}
+        </section>
       ) : null}
-      <Button appearance="accent" disabled={busy} onClick={save}>
-        Save
-      </Button>
-      <Button disabled={busy} onClick={test}>
-        Test saved connection
-      </Button>
-      {error ? (
-        <p role="alert" className="alert">
-          {error}
-        </p>
+      {tab === 'ai' ? (
+        <section className="panel" role="tabpanel" id="panel-ai" aria-labelledby="tab-ai">
+          <AiConnections />
+        </section>
       ) : null}
-      {saved ? (
-        <p role="status" className="notice">
-          Saved.
-        </p>
+      {tab === 'github' ? (
+        <section className="panel" role="tabpanel" id="panel-github" aria-labelledby="tab-github">
+          <Select label="Connect with" value={mode} onChange={setMode}>
+            {MODES.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </Select>
+          <p className="hint">{HINTS.get(mode)}</p>
+          {mode === 'local_folder' ? (
+            <TextField label="Folder" value={folder} onChange={setFolder} maxLength={1024} />
+          ) : null}
+          <NumberField
+            label="Project files to read"
+            value={manifestLimit}
+            min={1}
+            max={100}
+            onChange={setManifestLimit}
+            hint="How many project files (package.json, pyproject.toml ...) are read from a GitHub repository. Each one is a request to GitHub, so a lower number is faster."
+          />
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy} onClick={save}>
+              Save
+            </Button>
+            <Button disabled={busy} onClick={test}>
+              Test saved connection
+            </Button>
+          </div>
+          {error ? (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          ) : null}
+          {saved ? (
+            <p role="status" className="notice">
+              Saved.
+            </p>
+          ) : null}
+          {result ? (
+            <p role="status" className={result.ok ? 'notice' : 'alert'}>
+              {result.detail}
+            </p>
+          ) : null}
+        </section>
       ) : null}
-      {result ? (
-        <p role="status" className={result.ok ? 'notice' : 'alert'}>
-          {result.detail}
-        </p>
-      ) : null}
-    </section>
+    </div>
   );
 }

@@ -28,6 +28,7 @@ classifiers = [
 # dependency groups below.
 dependencies = [
   "alembic>=1.13",
+  "keyring>=25.7.0",
   "pydantic>=2.9",
   "rich>=13.9",
   "sqlalchemy>=2.0",

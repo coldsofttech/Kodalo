@@ -227,7 +227,12 @@ function LogoSlot({ brand, variant, file, onStored, onError }) {
         />
         <Button onClick={() => input.current?.click()}>{file ? 'Replace' : 'Choose file'}</Button>
         {file ? (
-          <Button appearance="outline" onClick={remove} label={`Remove ${title.toLowerCase()}`}>
+          <Button
+            appearance="outline"
+            danger
+            onClick={remove}
+            label={`Remove ${title.toLowerCase()}`}
+          >
             Remove
           </Button>
         ) : null}

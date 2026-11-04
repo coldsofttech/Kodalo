@@ -1,19 +1,30 @@
 // Browser helpers for files: saving a JSON document and reading one the user picked.
-// They never talk to Python, so they live apart from api.js.
+// Saving goes through the window's save dialog (api.js) and falls back to a browser download.
+import { saveJsonFile } from './api.js';
 
 /**
- * Offer `document` to the user as a downloaded JSON file.
+ * Let the user choose where to save `document_` as a JSON file.
  * @param {object} document_
  * @param {string} filename
+ * @returns {Promise<boolean>} false when the user cancelled the dialog
  */
-export function saveJson(document_, filename) {
-  const blob = new Blob([JSON.stringify(document_, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
+export async function saveJson(document_, filename) {
+  const text = JSON.stringify(document_, null, 2);
+  let outcome = 'unavailable';
+  try {
+    outcome = await saveJsonFile(filename, text);
+  } catch (failure) {
+    // A page opened in a browser has no bridge; any other failure is the user's to see.
+    if (!(failure instanceof TypeError)) throw failure;
+  }
+  if (outcome !== 'unavailable') return outcome === 'saved';
+  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;
   link.click();
   URL.revokeObjectURL(url);
+  return true;
 }
 
 /**

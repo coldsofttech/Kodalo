@@ -22,6 +22,12 @@ describe('StudioPage', () => {
 
     expect(await screen.findByRole('heading', { name: 'o/repo' })).toBeInTheDocument();
     expect(screen.getByText('MIT')).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /tests\/ tests/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('row', { name: /pyproject.toml python repo 1.0.0/ }),
+    ).toBeInTheDocument();
+    expect(screen.getByText('2 (+1 dev)')).toBeInTheDocument();
+    expect(screen.getByText('Monorepo').parentElement).toHaveTextContent('No');
     expect(screen.getByRole('row', { name: /Python 750 75%/ })).toBeInTheDocument();
     expect(calls.find((call) => call.path === READ).body).toEqual({
       source: 'https://github.com/o/repo',
@@ -72,5 +78,56 @@ describe('StudioPage', () => {
 
     await userEvent.click(screen.getByRole('button', { name: 'Change in Settings' }));
     expect(open).toHaveBeenCalled();
+  });
+});
+
+describe('StudioPage AI step', () => {
+  it('shows the token estimate and sends nothing until the user proceeds', async () => {
+    const backend = createBackend([]);
+    const plan = {
+      provider: 'claude_api',
+      label: 'Claude API',
+      model: 'claude-haiku-5-5',
+      files: ['Gemfile'],
+      input_tokens: 900,
+      max_output_tokens: 700,
+    };
+    const result = { added: ['ruby-gemfile'], skipped: [], input_tokens: 850, output_tokens: 300 };
+    const calls = mockApi((method, path, body) => {
+      if (path.endsWith('/parsers/plan')) return plan;
+      if (path.endsWith('/parsers')) return result;
+      return backend.handler(method, path, body);
+    });
+    const { container } = render(<StudioPage visible onOpenSettings={() => undefined} />);
+
+    typeInto(await screen.findByLabelText('Repository address'), 'https://github.com/o/repo');
+    await userEvent.click(screen.getByText('Next'));
+    await screen.findByRole('heading', { name: 'o/repo' });
+
+    await userEvent.click(screen.getByText('Refresh with AI'));
+    expect(await screen.findByText(/About 900 tokens sent/)).toBeInTheDocument();
+    expect(calls.some((call) => call.path.endsWith('/parsers'))).toBe(false);
+    expect(await axe(container)).toHaveNoViolations();
+
+    await userEvent.click(screen.getByText('Proceed'));
+    expect(await screen.findByText(/Saved 1 parser/)).toBeInTheDocument();
+    expect(calls.filter((call) => call.path === READ).at(-1).body.refresh).toBe(true);
+    expect(screen.getByText('Refresh with AI')).toBeInTheDocument();
+  });
+
+  it('says so when no project file needs the AI', async () => {
+    const backend = createBackend([]);
+    mockApi((method, path, body) =>
+      path.endsWith('/parsers/plan')
+        ? { provider: '', label: '', model: '', files: [], input_tokens: 0, max_output_tokens: 0 }
+        : backend.handler(method, path, body),
+    );
+    render(<StudioPage visible onOpenSettings={() => undefined} />);
+    typeInto(await screen.findByLabelText('Repository address'), 'https://github.com/o/repo');
+    await userEvent.click(screen.getByText('Next'));
+    await screen.findByRole('heading', { name: 'o/repo' });
+
+    await userEvent.click(screen.getByText('Refresh with AI'));
+    expect(await screen.findByText(/nothing to ask the AI/)).toBeInTheDocument();
   });
 });

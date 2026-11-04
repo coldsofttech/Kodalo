@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "jvm-gradle",
+  "ecosystem": "jvm",
+  "files": [
+    "build.gradle",
+    "build.gradle.kts"
+  ],
+  "format": "lines",
+  "dependencies": [
+    {
+      "regex": "^\\s*(?:implementation|api|compileOnly|runtimeOnly|compile)\\s*\\(?\\s*['\\\"](?P<value>[^'\\\":]+:[^'\\\":]+)"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "regex": "^\\s*(?:testImplementation|testRuntimeOnly|testCompileOnly)\\s*\\(?\\s*['\\\"](?P<value>[^'\\\":]+:[^'\\\":]+)"
+    }
+  ]
+}

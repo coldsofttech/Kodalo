@@ -6,6 +6,7 @@ import {
   exportPalette,
   importPalette,
   listPalettes,
+  suggestPalette,
   updatePalette,
 } from '../../api.js';
 import { setIn } from '../../brand.js';
@@ -53,6 +54,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   );
   const [form, setForm] = useState(/** @type {Form | null} */ (null));
   const [asking, setAsking] = useState(/** @type {any | null} */ (null));
+  const [suggesting, setSuggesting] = useState(false);
 
   async function submit() {
     if (!form) return;
@@ -69,9 +71,21 @@ export default function PalettesPage({ onChange, revision = 0 }) {
     if (saved) setForm(null);
   }
 
+  async function suggest() {
+    setSuggesting(true);
+    try {
+      const { name, colors } = await suggestPalette();
+      setForm((f) => f && { ...f, name, colors });
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'The AI could not suggest a palette.');
+    } finally {
+      setSuggesting(false);
+    }
+  }
+
   async function exportOne(/** @type {any} */ palette) {
     try {
-      saveJson(await exportPalette(palette.id), fileNameFor(palette.name, 'palette'));
+      await saveJson(await exportPalette(palette.id), fileNameFor(palette.name, 'palette'));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'The palette could not be exported.');
     }
@@ -135,6 +149,11 @@ export default function PalettesPage({ onChange, revision = 0 }) {
             <Button appearance="accent" disabled={busy || !form.name.trim()} onClick={submit}>
               {form.kind === 'edit' ? 'Save palette' : 'Create palette'}
             </Button>
+            {form.kind === 'new' ? (
+              <Button appearance="outline" disabled={busy || suggesting} onClick={suggest}>
+                {suggesting ? 'Suggesting...' : 'Suggest with AI'}
+              </Button>
+            ) : null}
             <Button appearance="outline" disabled={busy} onClick={() => setForm(null)}>
               Cancel
             </Button>
@@ -164,6 +183,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
           <span>Delete &quot;{asking.name}&quot;? Brands made from it keep their colors.</span>
           <Button
             appearance="accent"
+            danger
             disabled={busy}
             onClick={async () => {
               await act(() => deletePalette(asking.id), `Deleted "${asking.name}".`);
@@ -238,6 +258,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
                   {palette.type === 'user' ? (
                     <Button
                       appearance="outline"
+                      danger
                       label={`Delete ${palette.name}`}
                       onClick={() => setAsking(palette)}
                     >

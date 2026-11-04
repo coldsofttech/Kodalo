@@ -1,6 +1,8 @@
 """Read repositories the way the GitHub setting says, and keep what was read in the database."""
 
 import json
+from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 
 from sqlalchemy import select
@@ -9,10 +11,41 @@ from sqlalchemy.orm import Session
 from kodalo.core.github import GitHubSettings
 from kodalo.core.repo.errors import RepoDetailsError, RepoNotFoundError
 from kodalo.core.repo.github_reader import Fetch, gh_fetch, read_github, web_fetch
+from kodalo.core.repo.github_reader import read_file as read_github_file
+from kodalo.core.repo.layout import (
+    MAX_MANIFESTS,
+    DirectoryRule,
+    LayoutRules,
+    SignalRule,
+    analyze,
+)
+from kodalo.core.repo.local_reader import read_file as read_local_file
 from kodalo.core.repo.local_reader import read_local
-from kodalo.core.repo.models import Entry, Language, LocalDetails, RepoInfo
+from kodalo.core.repo.manifest_config import ConfigSet, load_configs, manifest_rules, match_config
+from kodalo.core.repo.manifest_parser import parse_manifest
+from kodalo.core.repo.models import (
+    Entry,
+    Language,
+    Layout,
+    LocalDetails,
+    Manifest,
+    NotableDir,
+    RepoInfo,
+)
 from kodalo.core.storage import Database
-from kodalo.core.storage.models import Repository, RepositoryLanguage, utc_now
+from kodalo.core.storage.models import (
+    DirectoryPattern,
+    IgnoredDirectory,
+    MonorepoSignal,
+    Repository,
+    RepositoryDependency,
+    RepositoryEntry,
+    RepositoryLanguage,
+    RepositoryManifest,
+    RepositoryNotableDir,
+    RepositoryTopic,
+    utc_now,
+)
 from kodalo.core.studio import Source
 
 
@@ -26,27 +59,125 @@ def _info(row: Repository) -> RepoInfo:
         homepage=row.homepage,
         default_branch=row.default_branch,
         license=row.license,
-        topics=tuple(json.loads(row.topics_json)),
+        topics=tuple(topic.name for topic in row.topics),
         is_private=row.is_private,
         is_fork=row.is_fork,
         is_archived=row.is_archived,
         last_pushed_at=row.last_pushed_at,
         languages=tuple(Language(lang.name, lang.bytes, lang.percent) for lang in row.languages),
-        top_level=tuple(Entry(e["path"], e["type"]) for e in json.loads(row.structure_json)),
+        top_level=tuple(Entry(e.path, e.type) for e in row.entries),
         file_count=row.file_count,
         access_method=row.access_method,
         tree_truncated=row.tree_truncated,
         warnings=tuple(json.loads(row.warnings_json)),
         local_path=row.local_path,
         last_scanned_at=row.last_scanned_at,
+        notable_dirs=tuple(NotableDir(d.path, d.purpose, d.pattern_id) for d in row.notable_dirs),
+        manifests=tuple(_manifest(m) for m in row.manifests),
+        is_monorepo=row.is_monorepo,
+        monorepo_signals=tuple(json.loads(row.monorepo_signals_json)),
     )
+
+
+def _manifest(row: RepositoryManifest) -> Manifest:
+    return Manifest(
+        path=row.path,
+        ecosystem=row.ecosystem,
+        is_lockfile=row.is_lockfile,
+        package_name=row.package_name,
+        version=row.version,
+        dependencies=tuple(d.name for d in row.dependencies if not d.is_dev),
+        dev_dependencies=tuple(d.name for d in row.dependencies if d.is_dev),
+    )
+
+
+def _rules(session: Session, configs: ConfigSet) -> LayoutRules:
+    patterns = session.scalars(select(DirectoryPattern).order_by(DirectoryPattern.sort_order))
+    signals = session.scalars(select(MonorepoSignal).order_by(MonorepoSignal.id))
+    return LayoutRules(
+        directories=tuple(
+            DirectoryRule(p.id, p.name, p.purpose, p.match_kind, p.max_depth) for p in patterns
+        ),
+        signals=tuple(
+            SignalRule(s.ecosystem, s.signal_kind, s.file_name, s.min_count) for s in signals
+        ),
+        manifests=manifest_rules(configs.configs),
+        ignored=frozenset(d.name.lower() for d in session.scalars(select(IgnoredDirectory))),
+    )
+
+
+def _manifest_row(manifest: Manifest) -> RepositoryManifest:
+    names = [(n, False) for n in manifest.dependencies]
+    names += [(n, True) for n in manifest.dev_dependencies]
+    return RepositoryManifest(
+        path=manifest.path,
+        ecosystem=manifest.ecosystem,
+        is_lockfile=manifest.is_lockfile,
+        package_name=manifest.package_name,
+        version=manifest.version,
+        dependencies=[
+            RepositoryDependency(name=name, is_dev=is_dev, position=position)
+            for position, (name, is_dev) in enumerate(names)
+        ],
+    )
+
+
+def _read_details(
+    layout: Layout,
+    configs: ConfigSet,
+    read: Callable[[str], str | None],
+    limit: int,
+) -> tuple[Layout, list[str]]:
+    """Read up to ``limit`` project files, top folders first, and add what they say."""
+    projects = sorted(
+        (m for m in layout.manifests if not m.is_lockfile),
+        key=lambda m: (m.path.count("/"), m.path.lower()),
+    )
+    chosen = projects[:limit]
+    notes: list[str] = []
+    if len(projects) > len(chosen):
+        notes.append(
+            f"Only {len(chosen)} of {len(projects)} project files were read. "
+            "Raise the limit in Settings to read more."
+        )
+    details: dict[str, Manifest] = {}
+    unread = 0
+    for manifest in chosen:
+        matched = match_config(manifest.path, configs.configs)
+        if matched is None:
+            continue
+        text = read(manifest.path)
+        if text is None:
+            unread += 1
+            continue
+        parsed = parse_manifest(text, matched[0])
+        notes += [f"{manifest.path} {warning}" for warning in parsed.warnings]
+        details[manifest.path] = replace(
+            manifest,
+            package_name=parsed.package_name,
+            version=parsed.version,
+            dependencies=parsed.dependencies,
+            dev_dependencies=parsed.dev_dependencies,
+        )
+    if unread:
+        notes.append(f"{unread} project file(s) could not be read.")
+    merged = tuple(details.get(m.path, m) for m in layout.manifests)
+    return replace(layout, manifests=merged), notes
 
 
 class RepoService:
     """Repositories kept in the local database."""
 
-    def __init__(self, database: Database, *, gh: Fetch = gh_fetch, web: Fetch = web_fetch) -> None:
+    def __init__(
+        self,
+        database: Database,
+        *,
+        gh: Fetch = gh_fetch,
+        web: Fetch = web_fetch,
+        parsers_dir: Path | None = None,
+    ) -> None:
         self._database = database
+        self._parsers_dir = parsers_dir
         self._gh = gh
         self._web = web
 
@@ -71,6 +202,17 @@ class RepoService:
             row = self._find(session, source)
             return _info(row) if row is not None else None
 
+    def configs(self) -> ConfigSet:
+        """Return the parser configs in use: the bundled ones and the user's own."""
+        return load_configs(self._parsers_dir)
+
+    def read_text(self, settings: GitHubSettings, info: RepoInfo, path: str) -> str | None:
+        """Return the text of one file of a stored repository, or ``None`` when unreadable."""
+        if info.local_path:
+            return read_local_file(Path(info.local_path), path)
+        fetch = self._gh if settings.mode == "gh_cli" else self._web
+        return read_github_file(fetch, info.owner, info.name, path)
+
     # Reading from GitHub or a folder
 
     def read(
@@ -90,7 +232,23 @@ class RepoService:
         else:
             fetch = self._gh if settings.mode == "gh_cli" else self._web
             info = read_github(source.owner, source.repo, fetch, settings.mode)
-        return self._save(info)
+        configs = load_configs(self._parsers_dir)
+        with self._database.session() as session:
+            rules = _rules(session, configs)
+        layout = analyze(info.paths, rules)
+        if source.kind == "local_folder":
+            reader: Callable[[str], str | None] = lambda path: read_local_file(  # noqa: E731
+                Path(info.local_path), path
+            )
+            limit = MAX_MANIFESTS
+        else:
+            reader = lambda path: read_github_file(  # noqa: E731
+                fetch, info.owner, info.name, path
+            )
+            limit = settings.manifest_limit
+        layout, notes = _read_details(layout, configs, reader, limit)
+        info = replace(info, warnings=(*info.warnings, *configs.problems, *notes))
+        return self._save(info, layout)
 
     @staticmethod
     def _details(stored: RepoInfo | None) -> LocalDetails:
@@ -119,7 +277,7 @@ class RepoService:
             query = select(Repository).where(Repository.url == source.value)
         return session.scalars(query).first()
 
-    def _save(self, info: RepoInfo) -> RepoInfo:
+    def _save(self, info: RepoInfo, layout: Layout) -> RepoInfo:
         with self._database.session() as session:
             row = session.scalars(select(Repository).where(Repository.url == info.url)).first()
             if row is None:
@@ -131,7 +289,6 @@ class RepoService:
             row.homepage = info.homepage
             row.default_branch = info.default_branch
             row.license = info.license
-            row.topics_json = json.dumps(list(info.topics))
             row.is_private = info.is_private
             row.is_fork = info.is_fork
             row.is_archived = info.is_archived
@@ -139,17 +296,33 @@ class RepoService:
             row.access_method = info.access_method
             row.tree_truncated = info.tree_truncated
             row.file_count = info.file_count
-            row.structure_json = json.dumps(
-                [{"path": e.path, "type": e.type} for e in info.top_level]
-            )
             row.warnings_json = json.dumps(list(info.warnings))
             row.local_path = info.local_path
             row.last_scanned_at = utc_now()
             row.languages.clear()
+            row.topics.clear()
+            row.entries.clear()
+            row.notable_dirs.clear()
+            row.manifests.clear()
             session.flush()  # remove the old rows before adding rows with the same names
+            row.topics = [
+                RepositoryTopic(name=name, position=position)
+                for position, name in enumerate(dict.fromkeys(info.topics))
+            ]
+            row.entries = [
+                RepositoryEntry(path=entry.path, type=entry.type, position=position)
+                for position, entry in enumerate(info.top_level)
+            ]
             row.languages = [
                 RepositoryLanguage(name=lang.name, bytes=lang.bytes, percent=lang.percent)
                 for lang in info.languages
             ]
+            row.is_monorepo = layout.is_monorepo
+            row.monorepo_signals_json = json.dumps(list(layout.monorepo_signals))
+            row.notable_dirs = [
+                RepositoryNotableDir(path=d.path, purpose=d.purpose, pattern_id=d.pattern_id)
+                for d in layout.notable_dirs
+            ]
+            row.manifests = [_manifest_row(m) for m in layout.manifests]
             session.flush()
             return _info(row)

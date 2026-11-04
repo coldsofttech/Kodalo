@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "id": "python-pyproject",
+  "ecosystem": "python",
+  "files": [
+    "pyproject.toml"
+  ],
+  "lockfiles": [
+    "uv.lock",
+    "poetry.lock",
+    "pdm.lock"
+  ],
+  "format": "toml",
+  "name": [
+    "project.name",
+    "tool.poetry.name"
+  ],
+  "version": [
+    "project.version",
+    "tool.poetry.version"
+  ],
+  "dependencies": [
+    {
+      "path": "project.dependencies",
+      "shape": "requirements"
+    },
+    {
+      "path": "tool.poetry.dependencies",
+      "shape": "keys"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "path": "dependency-groups.*",
+      "shape": "requirements"
+    },
+    {
+      "path": "tool.uv.dev-dependencies",
+      "shape": "requirements"
+    },
+    {
+      "path": "tool.poetry.group.*.dependencies",
+      "shape": "keys"
+    }
+  ],
+  "exclude_dependencies": [
+    "python"
+  ]
+}

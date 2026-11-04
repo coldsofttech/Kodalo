@@ -6,6 +6,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- New palettes: `Suggest with AI` fills in a name and colors that differ from your existing palettes, for you to review before creating.
+- Studio can ask your default AI model to teach Kodalo project files it does not know yet (`Refresh with AI` in the window, `--refresh-with-ai` on the command line). It shows the tokens it expects to use and asks before sending anything.
+- AI models start with sensible max tokens, temperature and timeout for their kind (Opus, Sonnet, Haiku, Gemini, GPT).
+- AI Connections setting: connect Claude API, Claude Code, ChatGPT API or Gemini API, with API keys kept in the system keychain, a default model per connection, and tests that check each connection works, in `kodalo settings ai` and the Settings screen.
+- Reading a repository also reports its notable folders, whether it is a monorepo, and the package name, version and dependencies of its project files (npm, Python, Rust, Go, Java, .NET and more); rescan stored repositories to fill them in.
+- New GitHub setting for how many project files to read (10 by default), and your own JSON files can teach Kodalo new kinds of project files.
+- Settings has an Appearance tab to choose a light or dark theme, or follow the system (the default).
 - The window opens on a new Home page and loads each screen only when you first open it.
 - Canvases, palettes and layouts (with a number of slides, 6 by default) you can create, export, import and reuse across brands, from `kodalo brand` and the Brands screen.
 - `kodalo brand show` is grouped and shows color swatches; `brand settings list` and `brand settings set` replace `brand set`.

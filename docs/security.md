@@ -11,6 +11,8 @@ Cornea's `SecurityMiddleware` guards every mounted route, so the API adds no tok
 - a one-time start-up token is exchanged for an `HttpOnly`, `SameSite=Strict` session cookie
 - responses carry a strict content security policy and other protective headers
 
+AI provider API keys are kept in the system keychain (Windows Credential Manager) through `keyring`, never in the database, a file or a log. The database holds only a reference and the last four characters. The API accepts a key but never returns it, error messages never contain it or anything a provider sent back, and the command line takes it from a hidden prompt rather than an argument.
+
 `kodalo.ui` therefore mounts the routes without any token of its own. The API has no standalone mode: it is never started on its own, has no API key and no settings file, and must not be exposed any other way.
 
 The API itself still:
@@ -19,6 +21,10 @@ The API itself still:
 - serves no interactive docs
 - never shows details of a `500`; they go to the log with the request ID
 - sends its own protective headers when it is not hosted under Cornea (tests), and Cornea's own when it is
+
+## AI parser step
+
+`Refresh with AI` (and `studio read --refresh-with-ai`) sends the first 1.5 KB of up to five top-level project files that no parser config covers to the default AI provider. Lines containing `token`, `secret`, `password`, `api key`, `authorization` or `credential` are removed first, files named like secrets are never sent, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each config is checked against the config schema (data only, never code) and tried on the real file before it is saved to the `parsers` folder. Provider errors never include the key or the provider's reply.
 
 ## Supply chain
 

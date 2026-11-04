@@ -18,6 +18,9 @@ def test_read_local_folder_list_and_show(tmp_path: Path) -> None:
     folder = tmp_path / "proj"
     folder.mkdir()
     (folder / "a.py").write_text("print(1)")
+    (folder / "tests").mkdir()
+    (folder / "pyproject.toml").write_text("[project]")
+    (folder / "turbo.json").write_text("{}")
     runner.invoke(
         app, ["--data-dir", str(data), "settings", "github", "set", "local_folder", "--folder", "."]
     )
@@ -30,9 +33,17 @@ def test_read_local_folder_list_and_show(tmp_path: Path) -> None:
     assert code == 0
     info = json.loads(out)
     assert info["languages"][0]["name"] == "Python"
+    assert [d["path"] for d in info["notable_dirs"]] == ["tests"]
+    assert [m["path"] for m in info["manifests"]] == ["pyproject.toml"]
+    assert info["is_monorepo"] is True
+    assert info["monorepo_signals"] == ["turbo.json"]
+    assert "paths" not in info
 
     assert invoke(data, "read", str(folder))[0] == 0  # stored, no details needed
     assert "me/proj" in invoke(data, "list")[1]
+    shown = invoke(data, "show", info["id"])[1]
+    assert "Notable folders" in shown
+    assert "turbo.json" in shown
     assert json.loads(invoke(data, "show", info["id"], "--json")[1])["name"] == "proj"
     assert invoke(data, "show", "nope")[0] == 1
 

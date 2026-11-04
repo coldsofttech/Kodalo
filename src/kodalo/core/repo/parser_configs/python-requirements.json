@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "python-requirements",
+  "ecosystem": "python",
+  "files": [
+    "requirements*.txt"
+  ],
+  "format": "lines",
+  "dependencies": [
+    {
+      "regex": "^(?P<value>[A-Za-z0-9][A-Za-z0-9._-]*)"
+    }
+  ]
+}

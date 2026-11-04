@@ -22,6 +22,38 @@ class Entry:
 
 
 @dataclass(frozen=True)
+class NotableDir:
+    """A folder with a well-known name and what it is for."""
+
+    path: str
+    purpose: str
+    pattern_id: str | None = None
+
+
+@dataclass(frozen=True)
+class Manifest:
+    """A project file, such as ``package.json``, and the ecosystem it belongs to."""
+
+    path: str
+    ecosystem: str
+    is_lockfile: bool = False
+    package_name: str | None = None
+    version: str | None = None
+    dependencies: tuple[str, ...] = ()
+    dev_dependencies: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class Layout:
+    """What the folder and file names say about how a repository is organised."""
+
+    notable_dirs: tuple[NotableDir, ...] = ()
+    manifests: tuple[Manifest, ...] = ()
+    is_monorepo: bool = False
+    monorepo_signals: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class LocalDetails:
     """What git cannot tell about a local folder. The first four are required."""
 
@@ -62,6 +94,11 @@ class RepoInfo:
     local_path: str = ""
     id: str = ""
     last_scanned_at: str | None = None
+    notable_dirs: tuple[NotableDir, ...] = ()
+    manifests: tuple[Manifest, ...] = ()
+    is_monorepo: bool = False
+    monorepo_signals: tuple[str, ...] = ()
+    paths: tuple[Entry, ...] = ()  # every file and folder read; not stored
 
 
 def with_percent(sizes: dict[str, int]) -> tuple[Language, ...]:

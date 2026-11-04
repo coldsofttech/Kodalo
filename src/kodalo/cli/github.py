@@ -45,13 +45,18 @@ def _connectivity(ctx: typer.Context) -> Iterator[GitHubConnectivity]:
 
 
 def _show(settings: GitHubSettings, as_json: bool) -> None:
-    data = {"mode": settings.mode, "local_folder": settings.local_folder}
+    data = {
+        "mode": settings.mode,
+        "local_folder": settings.local_folder,
+        "manifest_limit": settings.manifest_limit,
+    }
     if as_json:
         output.console.print_json(data=data)
         return
     table = Table(show_header=False)
     table.add_row("Mode", settings.mode)
     table.add_row("Local folder", settings.local_folder or "-")
+    table.add_row("Project files to read", str(settings.manifest_limit))
     output.console.print(table)
 
 
@@ -70,11 +75,18 @@ def set_command(
         str | None,
         typer.Option("--folder", help="Folder holding your repositories (for local_folder)."),
     ] = None,
+    manifest_limit: Annotated[
+        int | None,
+        typer.Option(
+            "--manifest-limit",
+            help="How many project files (package.json ...) to read from GitHub, 1 to 100.",
+        ),
+    ] = None,
     as_json: JsonOption = False,
 ) -> None:
     """Choose the way to reach GitHub."""
     with _connectivity(ctx) as connectivity:
-        _show(connectivity.save(mode, folder), as_json)
+        _show(connectivity.save(mode, folder, manifest_limit), as_json)
 
 
 @app.command("check")

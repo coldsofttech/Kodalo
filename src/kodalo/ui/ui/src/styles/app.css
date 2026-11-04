@@ -20,8 +20,30 @@
   font-size: clamp(14px, 0.35vw + 11px, 17px);
 }
 
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+/* Dark colors: chosen in Settings, or followed from the system when the theme is "system". */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --surface: #1b1b1b;
+  --surface-2: #242424;
+  --surface-3: #303030;
+  --text: #ffffff;
+  --muted: #c2c2c2;
+  --border: #474747;
+  --accent: #479ef5;
+  --accent-text: #0a0a0a;
+  --danger: #f1707b;
+  --danger-bg: #3b1a1d;
+  --ok: #54b054;
+  --ok-bg: #12301a;
+  --shadow: 0 1px 2px rgb(0 0 0 / 50%), 0 0 2px rgb(0 0 0 / 40%);
+}
+
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme='light'], [data-theme='dark']) {
     --surface: #1b1b1b;
     --surface-2: #242424;
     --surface-3: #303030;
@@ -250,6 +272,20 @@ p {
   align-items: flex-end;
 }
 
+/* The field's bottom margin would lift it above the button beside it. */
+.row .field {
+  margin-bottom: 0;
+}
+
+/* Keeps the space the fields' own margin used to leave below a row of them. */
+.row:not(.actions) {
+  margin-bottom: 0.9rem;
+}
+
+.save-palette {
+  margin-top: 1.5rem;
+}
+
 .editor {
   min-width: 0;
 }
@@ -272,6 +308,10 @@ p {
   margin: 0;
 }
 
+.actions + .hint {
+  margin-top: 0.75rem;
+}
+
 .field {
   display: block;
   margin-bottom: 0.9rem;
@@ -288,7 +328,8 @@ p {
   margin-bottom: 0.25rem;
 }
 
-select {
+select,
+.field.select input {
   font: inherit;
   color: inherit;
   background: var(--surface);
@@ -402,6 +443,7 @@ select {
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
   padding: 1rem;
+  margin-bottom: 1rem;
 }
 
 .contrast ul {
@@ -558,9 +600,8 @@ select {
 }
 
 /* About */
-.about {
-  max-width: 52rem;
-  margin: 0 auto;
+.about fluent-button {
+  margin-bottom: 1rem;
 }
 
 .about .hint {
@@ -592,14 +633,21 @@ select {
   gap: 1.5rem;
   list-style: none;
   padding: 0;
-  margin: 0.5rem 0 1rem;
+  margin: 1rem 0 1.25rem;
   color: var(--muted);
+  border-bottom: 1px solid var(--border);
+}
+
+.steps li {
+  padding: 0.55rem 0.25rem;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
 }
 
 .steps li[aria-current='step'] {
   color: var(--text);
   font-weight: 600;
-  border-bottom: 2px solid var(--accent);
+  border-bottom-color: var(--accent);
 }
 
 button.link {
@@ -633,12 +681,39 @@ button.link {
   overflow-wrap: anywhere;
 }
 
+/* Top level of a repository as a folder tree: one entry per line. */
 .entries {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.25rem 1rem;
+  display: grid;
+  gap: 0.25rem;
   list-style: none;
   padding: 0;
+  margin: 0 0 1rem;
+}
+
+.entry-icon {
+  display: inline-block;
+  width: 1.5rem;
+}
+
+.topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.topic {
+  font-size: 0.8rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 0.1rem 0.65rem;
+}
+
+.studio .checks {
+  margin-bottom: 1.5rem;
 }
 
 /* Sub-menu under a navigation item. */
@@ -652,14 +727,7 @@ button.link {
   font-size: 0.92rem;
 }
 
-/* Canvases page. */
-.canvases,
-.palettes,
-.layouts {
-  max-width: 60rem;
-  margin-inline: auto;
-}
-
+/* Canvases, Palettes and Layouts use the full width, like the other pages. */
 .canvas-table {
   width: 100%;
   border-collapse: collapse;
@@ -694,4 +762,82 @@ button.link {
 
 .summary dd {
   margin: 0;
+}
+
+/* Destructive buttons (Delete, Remove) are red. */
+fluent-button[danger] {
+  --accent-fill-rest: #c42b1c;
+  --accent-fill-hover: #d13c2d;
+  --accent-fill-active: #a52317;
+  --foreground-on-accent-rest: #fff;
+  --foreground-on-accent-hover: #fff;
+  --foreground-on-accent-active: #fff;
+}
+
+fluent-button[danger][appearance='outline'] {
+  color: #ff6b5e;
+}
+
+fluent-button[danger][appearance='outline']::part(control) {
+  border-color: #ff6b5e;
+  color: #ff6b5e;
+}
+
+fluent-switch {
+  margin-bottom: 0.9rem;
+}
+
+.settings .actions {
+  margin-bottom: 1rem;
+}
+
+/* AI connections: one card per provider, with its models underneath. */
+.ai-card {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.ai-card h2,
+.ai-card h3,
+.ai-card h4 {
+  margin: 0 0 0.5rem;
+}
+
+.badge {
+  margin-left: 0.5rem;
+  padding: 0.1rem 0.5rem;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-s);
+  color: var(--accent);
+  font-size: 0.8rem;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+.ai-models {
+  margin-top: 1.25rem;
+}
+
+.ai-models table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.75rem;
+}
+
+.ai-models th,
+.ai-models td {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.confirm {
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
 }

@@ -1,19 +1,23 @@
 """Read a repository from the GitHub API, through the ``gh`` CLI or plain web requests."""
 
+import base64
+import binascii
 import json
 import shutil
 import subprocess
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections.abc import Callable
 from typing import Any
 
-from kodalo.core.repo.errors import RepoNotFoundError, RepoReadError
+from kodalo.core.repo.errors import RepoError, RepoNotFoundError, RepoReadError
 from kodalo.core.repo.models import Entry, Language, RepoInfo, with_percent
 
 Fetch = Callable[[str], Any]
 _TIMEOUT = 20
 _API = "https://api.github.com/"
+MAX_FILE_BYTES = 200 * 1024
 
 
 def gh_fetch(path: str) -> Any:
@@ -71,12 +75,14 @@ def read_github(owner: str, repo: str, fetch: Fetch, method: str) -> RepoInfo:
         warnings.append("The languages could not be read.")
 
     entries: tuple[Entry, ...] = ()
+    paths: tuple[Entry, ...] = ()
     count = 0
     truncated = False
     if branch:
         try:
             tree = fetch(f"repos/{login}/{name}/git/trees/{branch}?recursive=1")
             entries, count, truncated = _structure(tree)
+            paths = _paths(tree)
         except RepoReadError:
             warnings.append("The files could not be listed.")
     if truncated:
@@ -98,10 +104,32 @@ def read_github(owner: str, repo: str, fetch: Fetch, method: str) -> RepoInfo:
         last_pushed_at=data.get("pushed_at"),
         languages=languages,
         top_level=entries,
+        paths=paths,
         file_count=count,
         access_method=method,
         tree_truncated=truncated,
         warnings=tuple(warnings),
+    )
+
+
+def read_file(fetch: Fetch, owner: str, repo: str, path: str) -> str | None:
+    """Return the text of one file, or ``None`` when it is too large or cannot be read."""
+    try:
+        data = fetch(f"repos/{owner}/{repo}/contents/{urllib.parse.quote(path)}")
+        if not isinstance(data, dict) or int(data.get("size") or 0) > MAX_FILE_BYTES:
+            return None
+        if data.get("encoding") != "base64":
+            return None
+        return base64.b64decode(str(data.get("content") or "")).decode("utf-8", errors="replace")
+    except (RepoError, ValueError, binascii.Error):
+        return None
+
+
+def _paths(tree: dict[str, Any]) -> tuple[Entry, ...]:
+    return tuple(
+        Entry(item["path"], "dir" if item["type"] == "tree" else "file")
+        for item in tree.get("tree") or []
+        if item["type"] in ("tree", "blob")
     )
 
 

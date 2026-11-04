@@ -10,11 +10,22 @@ from fastapi.concurrency import run_in_threadpool
 
 from kodalo.api.deps import (
     data_dir,
+    get_ai_connections,
+    get_appearance,
     get_brand_service,
     get_github_connectivity,
+    get_parser_assistant,
     get_repo_service,
 )
 from kodalo.api.schemas import (
+    AiCheckResponse,
+    AiConnectionResponse,
+    AiConnectionUpdate,
+    AiDefaultConnection,
+    AiDefaultModel,
+    AiModelResponse,
+    AiModelUpdate,
+    AiProvider,
     BrandCreate,
     BrandDuplicate,
     BrandExport,
@@ -42,12 +53,25 @@ from kodalo.api.schemas import (
     PaletteDuplicate,
     PaletteExport,
     PaletteResponse,
+    PaletteSuggestion,
     PaletteUpdate,
+    ParserPlanResponse,
+    ParserResultResponse,
     RepoReadRequest,
     RepoResponse,
     StudioSourceRequest,
     StudioSourceResponse,
+    ThemeResponse,
+    ThemeUpdate,
 )
+from kodalo.core.ai import (
+    AiConnectionError,
+    AiConnections,
+    AiInvalidError,
+    AiNotFoundError,
+    AiSecretError,
+)
+from kodalo.core.appearance import Appearance, AppearanceInvalidError
 from kodalo.core.brand import (
     BrandError,
     BrandInvalidError,
@@ -86,7 +110,9 @@ from kodalo.core.palette import (
     PaletteNotFoundError,
     PaletteReadOnlyError,
 )
+from kodalo.core.palette.suggest import PaletteSuggester
 from kodalo.core.repo import (
+    ParserAssistant,
     RepoDetailsError,
     RepoNotFoundError,
     RepoReadError,
@@ -100,7 +126,12 @@ router = APIRouter(tags=["v1"])
 
 Service = Annotated[BrandService, Depends(get_brand_service)]
 GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
+ThemeSetting = Annotated[Appearance, Depends(get_appearance)]
+AiSetting = Annotated[AiConnections, Depends(get_ai_connections)]
+AiProviderPath = Annotated[AiProvider, Path(description="The AI provider.")]
+AiModelName = Annotated[str, Path(min_length=1, max_length=128, description="The model name.")]
 Repos = Annotated[RepoService, Depends(get_repo_service)]
+Parsers = Annotated[ParserAssistant, Depends(get_parser_assistant)]
 BrandPath = Annotated[str, Path(max_length=64, description="Brand profile id.")]
 Variant = Annotated[
     Literal["light", "dark"],
@@ -184,6 +215,32 @@ CANVAS_CHANGE_ERRORS: dict[int | str, dict[str, Any]] = {
     status.HTTP_403_FORBIDDEN: {"description": "The canvas is built in and cannot be changed."},
     status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "The name or size is not valid."},
 }
+
+
+AI_INVALID: dict[int | str, dict[str, Any]] = {
+    status.HTTP_422_UNPROCESSABLE_CONTENT: {"description": "The AI connection value is not valid."}
+}
+AI_NOT_FOUND: dict[int | str, dict[str, Any]] = {
+    status.HTTP_404_NOT_FOUND: {"description": "The connection has no such model."}
+}
+AI_UNREACHABLE: dict[int | str, dict[str, Any]] = {
+    status.HTTP_502_BAD_GATEWAY: {"description": "The provider could not be reached."}
+}
+
+
+@contextmanager
+def _ai_errors() -> Iterator[None]:
+    """Turn the AI library's errors into HTTP errors."""
+    try:
+        yield
+    except AiNotFoundError as error:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, str(error)) from error
+    except AiInvalidError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+    except AiConnectionError as error:
+        raise HTTPException(status.HTTP_502_BAD_GATEWAY, str(error)) from error
+    except AiSecretError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 
 @contextmanager
@@ -270,8 +327,139 @@ def get_github_settings(github: GitHub) -> GitHubSettingsResponse:
 def set_github_settings(body: GitHubSettingsUpdate, github: GitHub) -> GitHubSettingsResponse:
     """Choose the way to reach GitHub: a local folder, the gh CLI or the web."""
     try:
-        return GitHubSettingsResponse.from_core(github.save(body.mode, body.local_folder))
+        return GitHubSettingsResponse.from_core(
+            github.save(body.mode, body.local_folder, body.manifest_limit)
+        )
     except GitHubInvalidError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
+
+
+AI = "/settings/ai/connections"
+
+
+@router.get(AI, summary="List AI connections", responses=COMMON)
+def list_ai_connections(ai: AiSetting) -> list[AiConnectionResponse]:
+    """Return every AI provider with its connection, saved or not. Keys are never returned."""
+    return [AiConnectionResponse.from_core(c) for c in ai.list_all()]
+
+
+@router.put(f"{AI}/default", summary="Set the default AI connection", responses=COMMON | AI_INVALID)
+def set_default_ai_connection(body: AiDefaultConnection, ai: AiSetting) -> AiConnectionResponse:
+    """Make a saved, enabled connection the default."""
+    with _ai_errors():
+        return AiConnectionResponse.from_core(ai.set_default(body.provider))
+
+
+@router.put(f"{AI}/{{provider}}", summary="Save an AI connection", responses=COMMON | AI_INVALID)
+def save_ai_connection(
+    provider: AiProviderPath, body: AiConnectionUpdate, ai: AiSetting
+) -> AiConnectionResponse:
+    """Save a connection. The API key goes to the system keychain and is never returned."""
+    with _ai_errors():
+        return AiConnectionResponse.from_core(
+            ai.save(provider, enabled=body.enabled, api_key=body.api_key, base_url=body.base_url)
+        )
+
+
+@router.delete(
+    f"{AI}/{{provider}}",
+    summary="Remove an AI connection",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=COMMON,
+)
+def remove_ai_connection(provider: AiProviderPath, ai: AiSetting) -> Response:
+    """Forget a connection: its settings, models and API key."""
+    with _ai_errors():
+        ai.remove(provider)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post(
+    f"{AI}/{{provider}}/test", summary="Test an AI connection", responses=COMMON | AI_INVALID
+)
+def test_ai_connection(provider: AiProviderPath, ai: AiSetting) -> AiCheckResponse:
+    """Try the connection once. A failure is reported in the body."""
+    with _ai_errors():
+        return AiCheckResponse.from_core(ai.test(provider))
+
+
+@router.get(f"{AI}/{{provider}}/models", summary="List the models", responses=COMMON)
+def list_ai_models(provider: AiProviderPath, ai: AiSetting) -> list[AiModelResponse]:
+    """Return the saved models of a connection."""
+    with _ai_errors():
+        return [AiModelResponse.from_core(m) for m in ai.models(provider)]
+
+
+@router.post(
+    f"{AI}/{{provider}}/models/refresh",
+    summary="Refresh the models",
+    responses=COMMON | AI_INVALID | AI_UNREACHABLE,
+)
+def refresh_ai_models(provider: AiProviderPath, ai: AiSetting) -> list[AiModelResponse]:
+    """Ask the provider for its models and save them. Models typed in by hand are kept."""
+    with _ai_errors():
+        return [AiModelResponse.from_core(m) for m in ai.refresh_models(provider)]
+
+
+@router.put(
+    f"{AI}/{{provider}}/default-model",
+    summary="Set the default model",
+    responses=COMMON | AI_INVALID | AI_NOT_FOUND,
+)
+def set_default_ai_model(
+    provider: AiProviderPath, body: AiDefaultModel, ai: AiSetting
+) -> AiModelResponse:
+    """Make a model the one the connection uses by default."""
+    with _ai_errors():
+        return AiModelResponse.from_core(ai.set_default_model(provider, body.name))
+
+
+@router.put(
+    f"{AI}/{{provider}}/models/{{name:path}}",
+    summary="Save a model",
+    responses=COMMON | AI_INVALID,
+)
+def save_ai_model(
+    provider: AiProviderPath, name: AiModelName, body: AiModelUpdate, ai: AiSetting
+) -> AiModelResponse:
+    """Add a model or change its settings. A setting left out goes back to the provider's own."""
+    with _ai_errors():
+        return AiModelResponse.from_core(
+            ai.save_model(
+                provider,
+                name,
+                max_tokens=body.max_tokens,
+                temperature=body.temperature,
+                timeout_s=body.timeout_s,
+            )
+        )
+
+
+@router.delete(
+    f"{AI}/{{provider}}/models/{{name:path}}",
+    summary="Remove a model",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=COMMON | AI_INVALID | AI_NOT_FOUND,
+)
+def remove_ai_model(provider: AiProviderPath, name: AiModelName, ai: AiSetting) -> Response:
+    """Forget a model. One the provider offers comes back on the next refresh."""
+    with _ai_errors():
+        ai.remove_model(provider, name)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.get("/settings/theme", summary="Get the window theme", responses=COMMON)
+def get_theme(appearance: ThemeSetting) -> ThemeResponse:
+    """Return the theme the window uses. The default, system, follows the operating system."""
+    return ThemeResponse(theme=appearance.get())
+
+
+@router.put("/settings/theme", summary="Set the window theme", responses=COMMON | INVALID)
+def set_theme(body: ThemeUpdate, appearance: ThemeSetting) -> ThemeResponse:
+    """Choose light, dark, or system. Only the window uses it."""
+    try:
+        return ThemeResponse(theme=appearance.save(body.theme))
+    except AppearanceInvalidError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
 
 
@@ -335,6 +523,29 @@ def get_repository(repo_id: RepoPath, repos: Repos) -> RepoResponse:
     """Return one stored repository."""
     with _studio_errors():
         return RepoResponse.from_core(repos.get(repo_id))
+
+
+@router.post(
+    "/studio/repositories/{repo_id}/parsers/plan",
+    summary="Plan the AI parser step",
+    responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
+)
+def plan_parsers(repo_id: RepoPath, github: GitHub, parsers: Parsers) -> ParserPlanResponse:
+    """List the files the AI would be asked about and estimate the tokens. Nothing is sent."""
+    with _studio_errors(), _ai_errors():
+        return ParserPlanResponse.from_core(parsers.plan(github.get(), repo_id))
+
+
+@router.post(
+    "/studio/repositories/{repo_id}/parsers",
+    summary="Write parser configs with the AI",
+    responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
+)
+def generate_parsers(repo_id: RepoPath, github: GitHub, parsers: Parsers) -> ParserResultResponse:
+    """Ask the default AI model for configs for the project files no config covers, check each
+    one on the real file, and save the valid ones. Read the repository again to use them."""
+    with _studio_errors(), _ai_errors():
+        return ParserResultResponse.from_core(parsers.apply(github.get(), repo_id))
 
 
 # Reference data -----------------------------------------------------------------------------
@@ -453,6 +664,19 @@ def _palette_response(service: BrandService, palette: Palette) -> PaletteRespons
 def list_palettes(service: Service) -> list[PaletteResponse]:
     """Return the built-in palettes first, then the user's, each with brand data to start from."""
     return [_palette_response(service, p) for p in service.palettes.list_palettes()]
+
+
+@router.post(
+    "/palettes/suggest",
+    summary="Suggest a palette with AI",
+    responses={**COMMON, **INVALID, **AI_UNREACHABLE},
+)
+def suggest_palette(service: Service, ai: AiSetting) -> PaletteSuggestion:
+    """Ask the default AI model for a new palette that differs from the existing ones. Nothing is
+    saved."""
+    with _ai_errors():
+        name, colors = PaletteSuggester(service.palettes, ai).suggest()
+    return PaletteSuggestion.model_validate({"name": name, "colors": colors.model_dump()})
 
 
 @router.post(

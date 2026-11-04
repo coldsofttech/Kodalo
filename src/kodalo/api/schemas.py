@@ -4,6 +4,8 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from kodalo.core.ai import AiConnection, AiModel
+from kodalo.core.ai import ConnectionCheck as AiCheck
 from kodalo.core.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
 from kodalo.core.brand.logos import MAX_LOGO_BYTES
 from kodalo.core.canvas import Canvas
@@ -11,7 +13,7 @@ from kodalo.core.doctor import Check
 from kodalo.core.github import ConnectionCheck, GitHubSettings
 from kodalo.core.layout import Layout, LayoutSettings
 from kodalo.core.palette import Palette
-from kodalo.core.repo import LocalDetails, RepoInfo, Suggestion
+from kodalo.core.repo import LocalDetails, ParserPlan, ParserResult, RepoInfo, Suggestion
 from kodalo.core.studio import Source
 
 
@@ -265,6 +267,13 @@ class PaletteCreate(BaseModel):
     colors: BrandColors
 
 
+class PaletteSuggestion(BaseModel):
+    """A palette the AI suggested. Nothing is saved until it is created."""
+
+    name: str = Field(min_length=1, max_length=64, examples=["Desert Dusk"])
+    colors: BrandColors
+
+
 class PaletteUpdate(BaseModel):
     """Fields left out are not changed."""
 
@@ -333,17 +342,29 @@ class GitHubSettingsResponse(BaseModel):
         description="Folder holding your repositories. Used by the local_folder mode.",
         examples=["C:/Users/me/code"],
     )
+    manifest_limit: int = Field(
+        ge=1,
+        le=100,
+        description="How many project files (package.json, pyproject.toml ...) to read when "
+        "reading a repository from GitHub. Each one is a request to GitHub.",
+        examples=[10],
+    )
 
     @classmethod
     def from_core(cls, settings: GitHubSettings) -> Self:
-        return cls(mode=settings.mode, local_folder=settings.local_folder)
+        return cls(
+            mode=settings.mode,
+            local_folder=settings.local_folder,
+            manifest_limit=settings.manifest_limit,
+        )
 
 
 class GitHubSettingsUpdate(BaseModel):
-    """``local_folder`` left out keeps the saved folder."""
+    """``local_folder`` or ``manifest_limit`` left out keeps the saved value."""
 
     mode: GitHubMode = Field(examples=["gh_cli"])
     local_folder: str | None = Field(default=None, max_length=1024, examples=["C:/Users/me/code"])
+    manifest_limit: int | None = Field(default=None, ge=1, le=100, examples=[10])
 
 
 class GitHubCheckResponse(BaseModel):
@@ -356,6 +377,150 @@ class GitHubCheckResponse(BaseModel):
     @classmethod
     def from_core(cls, check: ConnectionCheck) -> Self:
         return cls(mode=check.mode, ok=check.ok, detail=check.detail)
+
+
+AiProvider = Literal["claude_api", "claude_code", "chatgpt_api", "gemini_api"]
+
+
+class AiModelResponse(BaseModel):
+    """A model of an AI connection. An empty setting means the provider's own default."""
+
+    name: str = Field(max_length=128, examples=["claude-sonnet-5-5"])
+    source: Literal["fetched", "manual"] = Field(
+        description="fetched from the provider, or typed in by hand.", examples=["fetched"]
+    )
+    is_default: bool = Field(description="Whether the connection uses this model by default.")
+    max_tokens: int | None = Field(default=None, ge=1, le=1_000_000, examples=[4096])
+    temperature: float | None = Field(default=None, ge=0, le=2, examples=[0.7])
+    timeout_s: int | None = Field(default=None, ge=1, le=600, examples=[60])
+
+    @classmethod
+    def from_core(cls, model: AiModel) -> Self:
+        return cls(
+            name=model.name,
+            source=model.source,  # type: ignore[arg-type]
+            is_default=model.is_default,
+            max_tokens=model.max_tokens,
+            temperature=model.temperature,
+            timeout_s=model.timeout_s,
+        )
+
+
+class AiConnectionResponse(BaseModel):
+    """How Kodalo reaches one AI provider. The API key is never returned, only its end."""
+
+    provider: AiProvider = Field(examples=["claude_api"])
+    label: str = Field(max_length=64, examples=["Claude API"])
+    kind: Literal["api_key", "local_cli"] = Field(
+        description="api_key needs a key; local_cli uses a program on this computer."
+    )
+    saved: bool = Field(description="Whether the connection was ever configured.")
+    enabled: bool
+    is_default: bool = Field(description="Whether this is the default connection.")
+    base_url: str = Field(
+        max_length=512, description="The address in use; empty for the provider's own."
+    )
+    default_base_url: str = Field(max_length=512, examples=["https://api.anthropic.com"])
+    has_key: bool = Field(description="Whether an API key is saved.")
+    key_hint: str = Field(
+        max_length=8,
+        description="The last characters of the key, to recognise it.",
+        examples=["a1b2"],
+    )
+    status: Literal["", "ok", "failed"] = Field(
+        description="The outcome of the last test; empty when never tested."
+    )
+    status_detail: str = Field(max_length=256, examples=["Connected. 12 models available."])
+    checked_at: str | None = Field(
+        default=None, max_length=32, examples=["2026-11-03T09:30:00+00:00"]
+    )
+    default_model: str | None = Field(default=None, max_length=128)
+    models: list[AiModelResponse]
+
+    @classmethod
+    def from_core(cls, connection: AiConnection) -> Self:
+        return cls(
+            provider=connection.provider,  # type: ignore[arg-type]
+            label=connection.label,
+            kind=connection.kind,
+            saved=connection.saved,
+            enabled=connection.enabled,
+            is_default=connection.is_default,
+            base_url=connection.base_url,
+            default_base_url=connection.default_base_url,
+            has_key=connection.has_key,
+            key_hint=connection.key_hint,
+            status=connection.status,  # type: ignore[arg-type]
+            status_detail=connection.status_detail,
+            checked_at=connection.checked_at,
+            default_model=connection.default_model,
+            models=[AiModelResponse.from_core(model) for model in connection.models],
+        )
+
+
+class AiConnectionUpdate(BaseModel):
+    """Anything left out keeps the saved value. An empty ``base_url`` resets the address."""
+
+    enabled: bool | None = None
+    api_key: str | None = Field(
+        default=None, min_length=1, max_length=512, repr=False, examples=["sk-ant-..."]
+    )
+    base_url: str | None = Field(
+        default=None, max_length=512, examples=["https://api.anthropic.com"]
+    )
+
+
+class AiCheckResponse(BaseModel):
+    """Whether a connection works."""
+
+    provider: AiProvider
+    ok: bool = Field(description="Whether the connection works.")
+    detail: str = Field(max_length=256, examples=["Connected. 12 models available."])
+
+    @classmethod
+    def from_core(cls, check: AiCheck) -> Self:
+        return cls(
+            provider=check.provider,  # type: ignore[arg-type]
+            ok=check.ok,
+            detail=check.detail,
+        )
+
+
+class AiDefaultConnection(BaseModel):
+    """The provider to use by default."""
+
+    provider: AiProvider
+
+
+class AiModelUpdate(BaseModel):
+    """The settings of a model. They replace the saved ones, so a missing one is cleared."""
+
+    max_tokens: int | None = Field(default=None, ge=1, le=1_000_000, examples=[4096])
+    temperature: float | None = Field(default=None, ge=0, le=2, examples=[0.7])
+    timeout_s: int | None = Field(default=None, ge=1, le=600, examples=[60])
+
+
+class AiDefaultModel(BaseModel):
+    """The model a connection uses by default."""
+
+    name: str = Field(min_length=1, max_length=128, examples=["claude-sonnet-5-5"])
+
+
+ThemeName = Literal["system", "light", "dark"]
+
+
+class ThemeResponse(BaseModel):
+    """The theme the window uses."""
+
+    theme: ThemeName = Field(
+        description="light, dark, or system to follow the operating system.", examples=["system"]
+    )
+
+
+class ThemeUpdate(BaseModel):
+    """The theme to use."""
+
+    theme: ThemeName = Field(examples=["dark"])
 
 
 class StudioSourceRequest(BaseModel):
@@ -467,6 +632,21 @@ class EntryResponse(BaseModel):
     type: Literal["file", "dir"]
 
 
+class NotableDirResponse(BaseModel):
+    path: str = Field(max_length=512, examples=["tests"])
+    purpose: str = Field(max_length=32, examples=["tests"])
+
+
+class ManifestResponse(BaseModel):
+    path: str = Field(max_length=512, examples=["pyproject.toml"])
+    ecosystem: str = Field(max_length=32, examples=["python"])
+    is_lockfile: bool
+    package_name: str | None = Field(max_length=256, examples=["kodalo"])
+    version: str | None = Field(max_length=256, examples=["1.0.0"])
+    dependencies: list[str] = Field(max_length=50, description="Package names, at most 50.")
+    dev_dependencies: list[str] = Field(max_length=50, description="Test and tooling packages.")
+
+
 class RepoResponse(BaseModel):
     """What was read about a repository."""
 
@@ -491,6 +671,18 @@ class RepoResponse(BaseModel):
     warnings: list[str] = Field(max_length=20)
     local_path: str = Field(max_length=1024)
     last_scanned_at: str | None = Field(max_length=40)
+    notable_dirs: list[NotableDirResponse] = Field(
+        max_length=200, description="Folders with a well-known name, and what they are for."
+    )
+    manifests: list[ManifestResponse] = Field(
+        max_length=200, description="Project files such as package.json, and lockfiles."
+    )
+    is_monorepo: bool = Field(description="Whether the repository holds several projects.")
+    monorepo_signals: list[str] = Field(
+        max_length=50,
+        description="Why it was judged a monorepo.",
+        examples=[["turbo.json"]],
+    )
 
     @classmethod
     def from_core(cls, info: RepoInfo) -> Self:
@@ -519,4 +711,61 @@ class RepoResponse(BaseModel):
             warnings=list(info.warnings),
             local_path=info.local_path,
             last_scanned_at=info.last_scanned_at,
+            notable_dirs=[
+                NotableDirResponse(path=d.path, purpose=d.purpose) for d in info.notable_dirs
+            ],
+            manifests=[
+                ManifestResponse(
+                    path=m.path,
+                    ecosystem=m.ecosystem,
+                    is_lockfile=m.is_lockfile,
+                    package_name=m.package_name,
+                    version=m.version,
+                    dependencies=list(m.dependencies),
+                    dev_dependencies=list(m.dev_dependencies),
+                )
+                for m in info.manifests
+            ],
+            is_monorepo=info.is_monorepo,
+            monorepo_signals=list(info.monorepo_signals),
+        )
+
+
+class ParserPlanResponse(BaseModel):
+    """What asking the AI for parser configs would send and cost. Nothing has been sent yet."""
+
+    provider: str = Field(max_length=32, description="Empty when there is nothing to do.")
+    label: str = Field(max_length=64, examples=["Claude API"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    files: list[str] = Field(max_length=5, description="Project files that would be sent.")
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[1200])
+    max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
+
+    @classmethod
+    def from_core(cls, plan: ParserPlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            files=list(plan.files),
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+        )
+
+
+class ParserResultResponse(BaseModel):
+    """What asking the AI for parser configs did."""
+
+    added: list[str] = Field(max_length=5, description="Ids of the configs that were saved.")
+    skipped: list[str] = Field(max_length=20, description="Plain sentences about what was left.")
+    input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
+    output_tokens: int = Field(ge=0, description="Tokens the provider counted for the answer.")
+
+    @classmethod
+    def from_core(cls, result: ParserResult) -> Self:
+        return cls(
+            added=list(result.added),
+            skipped=[s[:300] for s in result.skipped],
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
         )

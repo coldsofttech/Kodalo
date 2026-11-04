@@ -1,6 +1,5 @@
 """Store the GitHub connectivity setting and check that the chosen way works."""
 
-import json
 import shutil
 import subprocess
 import urllib.error
@@ -23,6 +22,9 @@ DEFAULT_MODE: Mode = "gh_cli"
 GROUP = "github"
 MODE_KEY = "mode"
 FOLDER_KEY = "local_folder"
+MANIFEST_LIMIT_KEY = "manifest_limit"
+DEFAULT_MANIFEST_LIMIT = 10
+MAX_MANIFEST_LIMIT = 100
 MAX_PATH = 1024
 _TIMEOUT = 10
 _RATE_LIMIT_URL = "https://api.github.com/rate_limit"
@@ -34,6 +36,7 @@ class GitHubSettings:
 
     mode: Mode = DEFAULT_MODE
     local_folder: str = ""
+    manifest_limit: int = DEFAULT_MANIFEST_LIMIT
 
 
 @dataclass(frozen=True)
@@ -56,11 +59,18 @@ class GitHubConnectivity:
         with self._database.session() as session:
             mode = self._load(session, MODE_KEY, DEFAULT_MODE)
             folder = self._load(session, FOLDER_KEY, "")
-        return GitHubSettings(mode=_valid_mode(mode), local_folder=folder)
+            limit = self._load_int(session, MANIFEST_LIMIT_KEY, DEFAULT_MANIFEST_LIMIT)
+        return GitHubSettings(mode=_valid_mode(mode), local_folder=folder, manifest_limit=limit)
 
-    def save(self, mode: str, local_folder: str | None = None) -> GitHubSettings:
-        """Choose ``mode``. ``local_folder`` is kept as given; ``None`` leaves it unchanged."""
+    def save(
+        self, mode: str, local_folder: str | None = None, manifest_limit: int | None = None
+    ) -> GitHubSettings:
+        """Choose ``mode``. ``None`` for the folder or the limit keeps the saved one."""
         mode = _valid_mode(mode)
+        if manifest_limit is not None and not 1 <= manifest_limit <= MAX_MANIFEST_LIMIT:
+            raise GitHubInvalidError(
+                f"The number of project files to read must be from 1 to {MAX_MANIFEST_LIMIT}."
+            )
         if local_folder is not None:
             local_folder = local_folder.strip()
             if len(local_folder) > MAX_PATH:
@@ -69,10 +79,12 @@ class GitHubConnectivity:
         folder = current.local_folder if local_folder is None else local_folder
         if mode == "local_folder" and not folder:
             raise GitHubInvalidError("Local folder mode needs a folder.")
+        limit = current.manifest_limit if manifest_limit is None else manifest_limit
         with self._database.session() as session:
             self._store(session, MODE_KEY, mode)
             self._store(session, FOLDER_KEY, folder)
-        return GitHubSettings(mode=mode, local_folder=folder)
+            self._store(session, MANIFEST_LIMIT_KEY, str(limit), "integer")
+        return GitHubSettings(mode=mode, local_folder=folder, manifest_limit=limit)
 
     @staticmethod
     def _query(key: str) -> Select[Setting]:
@@ -87,10 +99,18 @@ class GitHubConnectivity:
         row = session.scalars(self._query(key)).first()
         if row is None:
             return default
-        value = json.loads(row.value_json)
-        return value if isinstance(value, str) else default
+        return row.value if row.data_type == "string" else default
 
-    def _store(self, session: Session, key: str, value: str) -> None:
+    def _load_int(self, session: Session, key: str, default: int) -> int:
+        row = session.scalars(self._query(key)).first()
+        if row is None or row.data_type != "integer":
+            return default
+        try:
+            return int(row.value)
+        except ValueError:
+            return default
+
+    def _store(self, session: Session, key: str, value: str, data_type: str = "string") -> None:
         row = session.scalars(self._query(key)).first()
         if row is None:
             row = Setting(
@@ -99,10 +119,10 @@ class GitHubConnectivity:
                 group_name=GROUP,
                 key=key,
                 mode="own",
-                value_json="null",
             )
             session.add(row)
-        row.value_json = json.dumps(value)
+        row.value = value
+        row.data_type = data_type
 
 
 def _valid_mode(mode: str) -> Mode:

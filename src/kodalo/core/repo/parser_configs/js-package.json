@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "js-package",
+  "ecosystem": "js",
+  "files": [
+    "package.json"
+  ],
+  "lockfiles": [
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "bun.lockb"
+  ],
+  "format": "json",
+  "name": [
+    "name"
+  ],
+  "version": [
+    "version"
+  ],
+  "dependencies": [
+    {
+      "path": "dependencies",
+      "shape": "keys"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "path": "devDependencies",
+      "shape": "keys"
+    }
+  ]
+}

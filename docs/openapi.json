@@ -1,6 +1,415 @@
 {
   "components": {
     "schemas": {
+      "AiCheckResponse": {
+        "description": "Whether a connection works.",
+        "properties": {
+          "detail": {
+            "examples": [
+              "Connected. 12 models available."
+            ],
+            "maxLength": 256,
+            "title": "Detail",
+            "type": "string"
+          },
+          "ok": {
+            "description": "Whether the connection works.",
+            "title": "Ok",
+            "type": "boolean"
+          },
+          "provider": {
+            "enum": [
+              "claude_api",
+              "claude_code",
+              "chatgpt_api",
+              "gemini_api"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "ok",
+          "detail"
+        ],
+        "title": "AiCheckResponse",
+        "type": "object"
+      },
+      "AiConnectionResponse": {
+        "description": "How Kodalo reaches one AI provider. The API key is never returned, only its end.",
+        "properties": {
+          "base_url": {
+            "description": "The address in use; empty for the provider's own.",
+            "maxLength": 512,
+            "title": "Base Url",
+            "type": "string"
+          },
+          "checked_at": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "2026-11-03T09:30:00+00:00"
+            ],
+            "title": "Checked At"
+          },
+          "default_base_url": {
+            "examples": [
+              "https://api.anthropic.com"
+            ],
+            "maxLength": 512,
+            "title": "Default Base Url",
+            "type": "string"
+          },
+          "default_model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Model"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "has_key": {
+            "description": "Whether an API key is saved.",
+            "title": "Has Key",
+            "type": "boolean"
+          },
+          "is_default": {
+            "description": "Whether this is the default connection.",
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "key_hint": {
+            "description": "The last characters of the key, to recognise it.",
+            "examples": [
+              "a1b2"
+            ],
+            "maxLength": 8,
+            "title": "Key Hint",
+            "type": "string"
+          },
+          "kind": {
+            "description": "api_key needs a key; local_cli uses a program on this computer.",
+            "enum": [
+              "api_key",
+              "local_cli"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/AiModelResponse"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "provider": {
+            "enum": [
+              "claude_api",
+              "claude_code",
+              "chatgpt_api",
+              "gemini_api"
+            ],
+            "examples": [
+              "claude_api"
+            ],
+            "title": "Provider",
+            "type": "string"
+          },
+          "saved": {
+            "description": "Whether the connection was ever configured.",
+            "title": "Saved",
+            "type": "boolean"
+          },
+          "status": {
+            "description": "The outcome of the last test; empty when never tested.",
+            "enum": [
+              "",
+              "ok",
+              "failed"
+            ],
+            "title": "Status",
+            "type": "string"
+          },
+          "status_detail": {
+            "examples": [
+              "Connected. 12 models available."
+            ],
+            "maxLength": 256,
+            "title": "Status Detail",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "kind",
+          "saved",
+          "enabled",
+          "is_default",
+          "base_url",
+          "default_base_url",
+          "has_key",
+          "key_hint",
+          "status",
+          "status_detail",
+          "models"
+        ],
+        "title": "AiConnectionResponse",
+        "type": "object"
+      },
+      "AiConnectionUpdate": {
+        "description": "Anything left out keeps the saved value. An empty ``base_url`` resets the address.",
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "sk-ant-..."
+            ],
+            "title": "Api Key"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "https://api.anthropic.com"
+            ],
+            "title": "Base Url"
+          },
+          "enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enabled"
+          }
+        },
+        "title": "AiConnectionUpdate",
+        "type": "object"
+      },
+      "AiDefaultConnection": {
+        "description": "The provider to use by default.",
+        "properties": {
+          "provider": {
+            "enum": [
+              "claude_api",
+              "claude_code",
+              "chatgpt_api",
+              "gemini_api"
+            ],
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider"
+        ],
+        "title": "AiDefaultConnection",
+        "type": "object"
+      },
+      "AiDefaultModel": {
+        "description": "The model a connection uses by default.",
+        "properties": {
+          "name": {
+            "examples": [
+              "claude-sonnet-5-5"
+            ],
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "AiDefaultModel",
+        "type": "object"
+      },
+      "AiModelResponse": {
+        "description": "A model of an AI connection. An empty setting means the provider's own default.",
+        "properties": {
+          "is_default": {
+            "description": "Whether the connection uses this model by default.",
+            "title": "Is Default",
+            "type": "boolean"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              4096
+            ],
+            "title": "Max Tokens"
+          },
+          "name": {
+            "examples": [
+              "claude-sonnet-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "source": {
+            "description": "fetched from the provider, or typed in by hand.",
+            "enum": [
+              "fetched",
+              "manual"
+            ],
+            "examples": [
+              "fetched"
+            ],
+            "title": "Source",
+            "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              0.7
+            ],
+            "title": "Temperature"
+          },
+          "timeout_s": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              60
+            ],
+            "title": "Timeout S"
+          }
+        },
+        "required": [
+          "name",
+          "source",
+          "is_default"
+        ],
+        "title": "AiModelResponse",
+        "type": "object"
+      },
+      "AiModelUpdate": {
+        "description": "The settings of a model. They replace the saved ones, so a missing one is cleared.",
+        "properties": {
+          "max_tokens": {
+            "anyOf": [
+              {
+                "maximum": 1000000.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              4096
+            ],
+            "title": "Max Tokens"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              0.7
+            ],
+            "title": "Temperature"
+          },
+          "timeout_s": {
+            "anyOf": [
+              {
+                "maximum": 600.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              60
+            ],
+            "title": "Timeout S"
+          }
+        },
+        "title": "AiModelUpdate",
+        "type": "object"
+      },
       "BrandColors": {
         "additionalProperties": false,
         "properties": {
@@ -903,6 +1312,16 @@
             "title": "Local Folder",
             "type": "string"
           },
+          "manifest_limit": {
+            "description": "How many project files (package.json, pyproject.toml ...) to read when reading a repository from GitHub. Each one is a request to GitHub.",
+            "examples": [
+              10
+            ],
+            "maximum": 100.0,
+            "minimum": 1.0,
+            "title": "Manifest Limit",
+            "type": "integer"
+          },
           "mode": {
             "description": "The chosen way to reach GitHub.",
             "enum": [
@@ -919,13 +1338,14 @@
         },
         "required": [
           "mode",
-          "local_folder"
+          "local_folder",
+          "manifest_limit"
         ],
         "title": "GitHubSettingsResponse",
         "type": "object"
       },
       "GitHubSettingsUpdate": {
-        "description": "``local_folder`` left out keeps the saved folder.",
+        "description": "``local_folder`` or ``manifest_limit`` left out keeps the saved value.",
         "properties": {
           "local_folder": {
             "anyOf": [
@@ -941,6 +1361,22 @@
               "C:/Users/me/code"
             ],
             "title": "Local Folder"
+          },
+          "manifest_limit": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              10
+            ],
+            "title": "Manifest Limit"
           },
           "mode": {
             "enum": [
@@ -1735,6 +2171,115 @@
         "title": "LogoPayload",
         "type": "object"
       },
+      "ManifestResponse": {
+        "properties": {
+          "dependencies": {
+            "description": "Package names, at most 50.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "dev_dependencies": {
+            "description": "Test and tooling packages.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Dev Dependencies",
+            "type": "array"
+          },
+          "ecosystem": {
+            "examples": [
+              "python"
+            ],
+            "maxLength": 32,
+            "title": "Ecosystem",
+            "type": "string"
+          },
+          "is_lockfile": {
+            "title": "Is Lockfile",
+            "type": "boolean"
+          },
+          "package_name": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "kodalo"
+            ],
+            "title": "Package Name"
+          },
+          "path": {
+            "examples": [
+              "pyproject.toml"
+            ],
+            "maxLength": 512,
+            "title": "Path",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "maxLength": 256,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "1.0.0"
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "path",
+          "ecosystem",
+          "is_lockfile",
+          "package_name",
+          "version",
+          "dependencies",
+          "dev_dependencies"
+        ],
+        "title": "ManifestResponse",
+        "type": "object"
+      },
+      "NotableDirResponse": {
+        "properties": {
+          "path": {
+            "examples": [
+              "tests"
+            ],
+            "maxLength": 512,
+            "title": "Path",
+            "type": "string"
+          },
+          "purpose": {
+            "examples": [
+              "tests"
+            ],
+            "maxLength": 32,
+            "title": "Purpose",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "purpose"
+        ],
+        "title": "NotableDirResponse",
+        "type": "object"
+      },
       "PaletteCreate": {
         "properties": {
           "colors": {
@@ -1873,6 +2418,29 @@
         "title": "PaletteResponse",
         "type": "object"
       },
+      "PaletteSuggestion": {
+        "description": "A palette the AI suggested. Nothing is saved until it is created.",
+        "properties": {
+          "colors": {
+            "$ref": "#/components/schemas/BrandColors"
+          },
+          "name": {
+            "examples": [
+              "Desert Dusk"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "colors"
+        ],
+        "title": "PaletteSuggestion",
+        "type": "object"
+      },
       "PaletteUpdate": {
         "description": "Fields left out are not changed.",
         "properties": {
@@ -1904,6 +2472,110 @@
           }
         },
         "title": "PaletteUpdate",
+        "type": "object"
+      },
+      "ParserPlanResponse": {
+        "description": "What asking the AI for parser configs would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "files": {
+            "description": "Project files that would be sent.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Files",
+            "type": "array"
+          },
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              1200
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "description": "Empty when there is nothing to do.",
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "files",
+          "input_tokens",
+          "max_output_tokens"
+        ],
+        "title": "ParserPlanResponse",
+        "type": "object"
+      },
+      "ParserResultResponse": {
+        "description": "What asking the AI for parser configs did.",
+        "properties": {
+          "added": {
+            "description": "Ids of the configs that were saved.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Added",
+            "type": "array"
+          },
+          "input_tokens": {
+            "description": "Tokens the provider counted for the request.",
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "description": "Tokens the provider counted for the answer.",
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "skipped": {
+            "description": "Plain sentences about what was left.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Skipped",
+            "type": "array"
+          }
+        },
+        "required": [
+          "added",
+          "skipped",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "ParserResultResponse",
         "type": "object"
       },
       "ReadyResponse": {
@@ -2013,6 +2685,11 @@
             "title": "Is Fork",
             "type": "boolean"
           },
+          "is_monorepo": {
+            "description": "Whether the repository holds several projects.",
+            "title": "Is Monorepo",
+            "type": "boolean"
+          },
           "is_private": {
             "title": "Is Private",
             "type": "boolean"
@@ -2066,10 +2743,42 @@
             "title": "Local Path",
             "type": "string"
           },
+          "manifests": {
+            "description": "Project files such as package.json, and lockfiles.",
+            "items": {
+              "$ref": "#/components/schemas/ManifestResponse"
+            },
+            "maxItems": 200,
+            "title": "Manifests",
+            "type": "array"
+          },
+          "monorepo_signals": {
+            "description": "Why it was judged a monorepo.",
+            "examples": [
+              [
+                "turbo.json"
+              ]
+            ],
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Monorepo Signals",
+            "type": "array"
+          },
           "name": {
             "maxLength": 128,
             "title": "Name",
             "type": "string"
+          },
+          "notable_dirs": {
+            "description": "Folders with a well-known name, and what they are for.",
+            "items": {
+              "$ref": "#/components/schemas/NotableDirResponse"
+            },
+            "maxItems": 200,
+            "title": "Notable Dirs",
+            "type": "array"
           },
           "owner": {
             "maxLength": 128,
@@ -2134,7 +2843,11 @@
           "tree_truncated",
           "warnings",
           "local_path",
-          "last_scanned_at"
+          "last_scanned_at",
+          "notable_dirs",
+          "manifests",
+          "is_monorepo",
+          "monorepo_signals"
         ],
         "title": "RepoResponse",
         "type": "object"
@@ -2284,6 +2997,51 @@
           "default_branch"
         ],
         "title": "SuggestedDetails",
+        "type": "object"
+      },
+      "ThemeResponse": {
+        "description": "The theme the window uses.",
+        "properties": {
+          "theme": {
+            "description": "light, dark, or system to follow the operating system.",
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ],
+            "examples": [
+              "system"
+            ],
+            "title": "Theme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "title": "ThemeResponse",
+        "type": "object"
+      },
+      "ThemeUpdate": {
+        "description": "The theme to use.",
+        "properties": {
+          "theme": {
+            "enum": [
+              "system",
+              "light",
+              "dark"
+            ],
+            "examples": [
+              "dark"
+            ],
+            "title": "Theme",
+            "type": "string"
+          }
+        },
+        "required": [
+          "theme"
+        ],
+        "title": "ThemeUpdate",
         "type": "object"
       },
       "ValidationError": {
@@ -4043,6 +4801,37 @@
         ]
       }
     },
+    "/api/v1/palettes/suggest": {
+      "post": {
+        "description": "Ask the default AI model for a new palette that differs from the existing ones. Nothing is\nsaved.",
+        "operationId": "suggest_palette_api_v1_palettes_suggest_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteSuggestion"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Suggest a palette with AI",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/palettes/{palette_id}": {
       "delete": {
         "description": "Remove a palette of your own. Brands made from it keep their colors.",
@@ -4314,6 +5103,518 @@
         ]
       }
     },
+    "/api/v1/settings/ai/connections": {
+      "get": {
+        "description": "Return every AI provider with its connection, saved or not. Keys are never returned.",
+        "operationId": "list_ai_connections_api_v1_settings_ai_connections_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiConnectionResponse"
+                  },
+                  "title": "Response List Ai Connections Api V1 Settings Ai Connections Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List AI connections",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/default": {
+      "put": {
+        "description": "Make a saved, enabled connection the default.",
+        "operationId": "set_default_ai_connection_api_v1_settings_ai_connections_default_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDefaultConnection"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the default AI connection",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}": {
+      "delete": {
+        "description": "Forget a connection: its settings, models and API key.",
+        "operationId": "remove_ai_connection_api_v1_settings_ai_connections__provider__delete",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Remove an AI connection",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Save a connection. The API key goes to the system keychain and is never returned.",
+        "operationId": "save_ai_connection_api_v1_settings_ai_connections__provider__put",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiConnectionUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiConnectionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Save an AI connection",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}/default-model": {
+      "put": {
+        "description": "Make a model the one the connection uses by default.",
+        "operationId": "set_default_ai_model_api_v1_settings_ai_connections__provider__default_model_put",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiDefaultModel"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "The connection has no such model."
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the default model",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}/models": {
+      "get": {
+        "description": "Return the saved models of a connection.",
+        "operationId": "list_ai_models_api_v1_settings_ai_connections__provider__models_get",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiModelResponse"
+                  },
+                  "title": "Response List Ai Models Api V1 Settings Ai Connections  Provider  Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List the models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}/models/refresh": {
+      "post": {
+        "description": "Ask the provider for its models and save them. Models typed in by hand are kept.",
+        "operationId": "refresh_ai_models_api_v1_settings_ai_connections__provider__models_refresh_post",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiModelResponse"
+                  },
+                  "title": "Response Refresh Ai Models Api V1 Settings Ai Connections  Provider  Models Refresh Post",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Refresh the models",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}/models/{name}": {
+      "delete": {
+        "description": "Forget a model. One the provider offers comes back on the next refresh.",
+        "operationId": "remove_ai_model_api_v1_settings_ai_connections__provider__models__name__delete",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The model name.",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "The model name.",
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "The connection has no such model."
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Remove a model",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Add a model or change its settings. A setting left out goes back to the provider's own.",
+        "operationId": "save_ai_model_api_v1_settings_ai_connections__provider__models__name__put",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The model name.",
+            "in": "path",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "The model name.",
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiModelUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Save a model",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/connections/{provider}/test": {
+      "post": {
+        "description": "Try the connection once. A failure is reported in the body.",
+        "operationId": "test_ai_connection_api_v1_settings_ai_connections__provider__test_post",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCheckResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Test an AI connection",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/settings/github": {
       "get": {
         "description": "Return how Kodalo reaches GitHub. The default is the gh CLI.",
@@ -4395,6 +5696,67 @@
           }
         },
         "summary": "Check GitHub connectivity",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/theme": {
+      "get": {
+        "description": "Return the theme the window uses. The default, system, follows the operating system.",
+        "operationId": "get_theme_api_v1_settings_theme_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the window theme",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Choose light, dark, or system. Only the window uses it.",
+        "operationId": "set_theme_api_v1_settings_theme_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThemeUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the window theme",
         "tags": [
           "v1"
         ]
@@ -4518,6 +5880,102 @@
           }
         },
         "summary": "Get a stored repository",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/parsers": {
+      "post": {
+        "description": "Ask the default AI model for configs for the project files no config covers, check each\none on the real file, and save the valid ones. Read the repository again to use them.",
+        "operationId": "generate_parsers_api_v1_studio_repositories__repo_id__parsers_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParserResultResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Write parser configs with the AI",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/parsers/plan": {
+      "post": {
+        "description": "List the files the AI would be asked about and estimate the tokens. Nothing is sent.",
+        "operationId": "plan_parsers_api_v1_studio_repositories__repo_id__parsers_plan_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ParserPlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan the AI parser step",
         "tags": [
           "v1"
         ]

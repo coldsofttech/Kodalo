@@ -106,6 +106,8 @@ const PALETTES = '/api/v1/palettes';
 export const listPalettes = () => request(PALETTES);
 /** @param {{ name: string, colors: object }} body */
 export const createPalette = (body) => request(PALETTES, { method: 'POST', json: body });
+/** Ask the default AI model for a palette; nothing is saved. */
+export const suggestPalette = () => request(`${PALETTES}/suggest`, { method: 'POST' });
 /** @param {string} id @param {{ name?: string, colors?: object }} body */
 export const updatePalette = (id, body) =>
   request(`${PALETTES}/${id}`, { method: 'PATCH', json: body });
@@ -177,15 +179,95 @@ export async function appInfo() {
   return body.result;
 }
 
+/**
+ * Ask where to save a JSON file with the system's save dialog, then write it there.
+ * @param {string} filename suggested name
+ * @param {string} text file contents
+ * @returns {Promise<'saved' | 'cancelled' | 'unavailable'>} `unavailable` outside the window
+ */
+export async function saveJsonFile(filename, text) {
+  const chosen = await request('/api/bridge/save_file', {
+    method: 'POST',
+    json: { filename, file_types: ['JSON files (*.json)'] },
+  });
+  if (!chosen?.available) return 'unavailable';
+  if (!chosen.result) return 'cancelled';
+  const written = await request('/api/bridge/write_json_file', {
+    method: 'POST',
+    json: { path: chosen.result, text },
+  });
+  if (!written?.available) throw new ApiError(written?.reason || 'The file could not be saved', 0);
+  return 'saved';
+}
+
+/**
+ * Open a web address in the system's browser. Outside the window, where there is no bridge, the
+ * browser opens it in a new tab.
+ * @param {string} url
+ */
+export async function openExternal(url) {
+  try {
+    const body = await request('/api/bridge/open_external', { method: 'POST', json: { url } });
+    if (body?.available) return;
+  } catch {
+    // Fall through to the browser.
+  }
+  window.open(url, '_blank', 'noopener');
+}
+
 const GITHUB_SETTINGS = '/api/v1/settings/github';
 
 export const getGithubSettings = () => request(GITHUB_SETTINGS);
-/** @param {{ mode: string, local_folder?: string }} body */
+/** @param {{ mode: string, local_folder?: string, manifest_limit?: number }} body */
 export const saveGithubSettings = (body) => request(GITHUB_SETTINGS, { method: 'PUT', json: body });
+export const getTheme = () => request('/api/v1/settings/theme');
+/** @param {string} theme */
+export const saveTheme = (theme) =>
+  request('/api/v1/settings/theme', { method: 'PUT', json: { theme } });
 /** @param {string} source */
 export const checkStudioSource = (source) =>
   request('/api/v1/studio/source', { method: 'POST', json: { source } });
 /** @param {{ source: string, refresh?: boolean, details?: object }} body */
 export const readRepository = (body) =>
   request('/api/v1/studio/repositories', { method: 'POST', json: body });
+/** What asking the AI for parser configs would send and cost; nothing is sent. */
+export const planParsers = (/** @type {string} */ repoId) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/parsers/plan`, {
+    method: 'POST',
+  });
+/** Ask the AI for parser configs and save the valid ones. */
+export const generateParsers = (/** @type {string} */ repoId) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/parsers`, {
+    method: 'POST',
+  });
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
+
+const AI = '/api/v1/settings/ai/connections';
+
+export const listAiConnections = () => request(AI);
+/** @param {string} provider @param {{ enabled?: boolean, api_key?: string, base_url?: string }} body */
+export const saveAiConnection = (provider, body) =>
+  request(`${AI}/${provider}`, { method: 'PUT', json: body });
+/** @param {string} provider */
+export const removeAiConnection = (provider) => request(`${AI}/${provider}`, { method: 'DELETE' });
+/** @param {string} provider */
+export const setDefaultAiConnection = (provider) =>
+  request(`${AI}/default`, { method: 'PUT', json: { provider } });
+/** @param {string} provider */
+export const testAiConnection = (provider) => request(`${AI}/${provider}/test`, { method: 'POST' });
+/** @param {string} provider */
+export const refreshAiModels = (provider) =>
+  request(`${AI}/${provider}/models/refresh`, { method: 'POST' });
+/**
+ * @param {string} provider
+ * @param {string} name
+ * @param {{ max_tokens: number | null, temperature: number | null, timeout_s: number | null }} body
+ */
+export const saveAiModel = (provider, name, body) =>
+  request(`${AI}/${provider}/models/${encodeURIComponent(name)}`, { method: 'PUT', json: body });
+/** @param {string} provider @param {string} name */
+export const removeAiModel = (provider, name) =>
+  request(`${AI}/${provider}/models/${encodeURIComponent(name)}`, { method: 'DELETE' });
+/** @param {string} provider @param {string} name */
+export const setDefaultAiModel = (provider, name) =>
+  request(`${AI}/${provider}/default-model`, { method: 'PUT', json: { name } });

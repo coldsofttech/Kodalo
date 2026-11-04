@@ -1,5 +1,12 @@
 import { useEffect, useState } from 'react';
-import { checkStudioSource, getGithubSettings, readRepository } from '../api.js';
+import {
+  checkStudioSource,
+  generateParsers,
+  getGithubSettings,
+  openExternal,
+  planParsers,
+  readRepository,
+} from '../api.js';
 import { Button, Switch, TextField } from '../components/controls.jsx';
 
 const STEPS = [
@@ -32,20 +39,167 @@ const EMPTY_DETAILS = {
 /** @param {string | null | undefined} value */
 const orDash = (value) => (value ? value : '-');
 
+/** A web address as a link that opens in the system's browser; other text is shown as it is. */
+function webLink(/** @type {string | null | undefined} */ url) {
+  if (!url) return '-';
+  if (!/^https?:\/\//i.test(url)) return url;
+  return (
+    <a
+      href={url}
+      onClick={(event) => {
+        event.preventDefault();
+        openExternal(url);
+      }}
+    >
+      {url}
+    </a>
+  );
+}
+
+/** A timestamp in the user's own time zone and format; the text itself if it is not a date. */
+function localTime(/** @type {string | null | undefined} */ value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleString();
+}
+
 /** @param {{ repo: any, busy: boolean, onRefresh: () => void, onBack: () => void }} props */
-function RepositoryView({ repo, busy, onRefresh, onBack }) {
+function packageText(/** @type {any} */ manifest) {
+  if (manifest.is_lockfile) return 'Lockfile';
+  if (!manifest.package_name) return orDash('');
+  return manifest.version ? `${manifest.package_name} ${manifest.version}` : manifest.package_name;
+}
+
+function Dependencies(/** @type {{ manifest: any }} */ { manifest }) {
+  const all = [
+    ...manifest.dependencies.map((/** @type {string} */ name) => ({ name, dev: false })),
+    ...manifest.dev_dependencies.map((/** @type {string} */ name) => ({ name, dev: true })),
+  ];
+  if (all.length === 0) return orDash('');
+  const dev = manifest.dev_dependencies.length;
+  return (
+    <details>
+      <summary>
+        {manifest.dependencies.length} {dev > 0 ? `(+${dev} dev)` : ''}
+      </summary>
+      <ul className="topics" aria-label={`Dependencies of ${manifest.path}`}>
+        {all.map((item) => (
+          <li key={`${item.dev}-${item.name}`} className="topic">
+            {item.name}
+            {item.dev ? ' (dev)' : ''}
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+function AiStep(
+  /** @type {{ repo: any, busy: boolean, onRun: (action: () => Promise<void>) => void, onDone: () => Promise<void>, onRefresh: () => void, onBack: () => void }} */ {
+    repo,
+    busy,
+    onRefresh,
+    onBack,
+    onRun,
+    onDone,
+  },
+) {
+  const [plan, setPlan] = useState(/** @type {any} */ (null));
+  const [message, setMessage] = useState('');
+
+  const ask = () =>
+    onRun(async () => {
+      setMessage('');
+      const found = await planParsers(repo.id);
+      if (found.files.length === 0) {
+        setMessage('Every project file is already understood, so there is nothing to ask the AI.');
+        return;
+      }
+      setPlan(found);
+    });
+
+  const proceed = () =>
+    onRun(async () => {
+      setPlan(null);
+      const result = await generateParsers(repo.id);
+      const notes = result.skipped.join(' ');
+      setMessage(
+        `Saved ${result.added.length} parser(s). Used ${result.input_tokens} tokens in and ` +
+          `${result.output_tokens} out. ${notes}`.trim(),
+      );
+      if (result.added.length > 0) await onDone();
+    });
+
+  return (
+    <>
+      <div className="row actions">
+        <Button appearance="accent" disabled={busy} onClick={onRefresh}>
+          Refresh
+        </Button>
+        <Button disabled={busy || plan !== null} onClick={ask}>
+          Refresh with AI
+        </Button>
+        <Button disabled={busy} onClick={onBack}>
+          Back
+        </Button>
+      </div>
+      {plan ? (
+        <div role="group" aria-labelledby="ai-plan-title" className="confirm">
+          <h3 id="ai-plan-title">Send to {plan.label}?</h3>
+          <p>
+            Kodalo will send the start of {plan.files.join(', ')} to {plan.label} ({plan.model}) to
+            write parser settings. Lines that look like secrets are removed first.
+          </p>
+          <p>
+            About {plan.input_tokens} tokens sent, and at most {plan.max_output_tokens} tokens in
+            the answer.
+          </p>
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy} onClick={proceed}>
+              Proceed
+            </Button>
+            <Button disabled={busy} onClick={() => setPlan(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      ) : null}
+      {message ? (
+        <p role="status" className="hint">
+          {message}
+        </p>
+      ) : null}
+    </>
+  );
+}
+
+function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
   const facts = [
-    ['Address', repo.url],
+    ['Address', webLink(repo.url)],
     ['Description', orDash(repo.description)],
-    ['Home page', orDash(repo.homepage)],
+    ['Home page', webLink(repo.homepage)],
     ['Default branch', orDash(repo.default_branch)],
     ['License', orDash(repo.license)],
-    ['Topics', orDash(repo.topics.join(', '))],
+    [
+      'Topics',
+      repo.topics.length ? (
+        <ul className="topics" aria-label="Topics">
+          {repo.topics.map((/** @type {string} */ topic) => (
+            <li key={topic} className="topic">
+              {topic}
+            </li>
+          ))}
+        </ul>
+      ) : (
+        orDash('')
+      ),
+    ],
     ['Private', repo.is_private ? 'Yes' : 'No'],
     ['Fork', repo.is_fork ? 'Yes' : 'No'],
     ['Archived', repo.is_archived ? 'Yes' : 'No'],
-    ['Last pushed', orDash(repo.last_pushed_at)],
+    ['Last pushed', localTime(repo.last_pushed_at)],
     ['Files', String(repo.file_count)],
+    ['Monorepo', repo.is_monorepo ? `Yes (${repo.monorepo_signals.join(', ')})` : 'No'],
     ['Read with', repo.access_method],
     ['Last read', orDash(repo.last_scanned_at)],
   ];
@@ -89,23 +243,92 @@ function RepositoryView({ repo, busy, onRefresh, onBack }) {
       <h3>Top level</h3>
       <ul className="entries">
         {repo.top_level.map((/** @type {any} */ entry) => (
-          <li key={entry.path}>
+          <li key={entry.path} className={entry.type === 'dir' ? 'folder' : 'file'}>
+            <span aria-hidden="true" className="entry-icon">
+              {entry.type === 'dir' ? '📁' : '📄'}
+            </span>
             {entry.path}
             {entry.type === 'dir' ? '/' : ''}
           </li>
         ))}
       </ul>
+      <h3>Notable folders</h3>
+      {repo.notable_dirs.length === 0 ? (
+        <p className="hint">No notable folders were found.</p>
+      ) : (
+        <table className="checks">
+          <caption className="visually-hidden">Notable folders</caption>
+          <thead>
+            <tr>
+              <th scope="col">Folder</th>
+              <th scope="col">Used for</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repo.notable_dirs.map((/** @type {any} */ dir) => (
+              <tr key={dir.path}>
+                <th scope="row">
+                  <span aria-hidden="true" className="entry-icon">
+                    📁
+                  </span>
+                  {dir.path}/
+                </th>
+                <td>
+                  <span className="topic">{dir.purpose}</span>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <h3>Project files</h3>
+      {repo.manifests.length === 0 ? (
+        <p className="hint">No project files were found.</p>
+      ) : (
+        <table className="checks">
+          <caption className="visually-hidden">Project files</caption>
+          <thead>
+            <tr>
+              <th scope="col">File</th>
+              <th scope="col">Ecosystem</th>
+              <th scope="col">Package</th>
+              <th scope="col">Dependencies</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repo.manifests.map((/** @type {any} */ manifest) => (
+              <tr key={manifest.path}>
+                <th scope="row">
+                  <span aria-hidden="true" className="entry-icon">
+                    📄
+                  </span>
+                  {manifest.path}
+                </th>
+                <td>
+                  <span className="topic">{manifest.ecosystem}</span>
+                </td>
+                <td>{packageText(manifest)}</td>
+                <td>
+                  <Dependencies manifest={manifest} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       {repo.warnings.map((/** @type {string} */ warning) => (
         <p key={warning} role="status" className="hint">
           {warning}
         </p>
       ))}
-      <Button appearance="accent" disabled={busy} onClick={onRefresh}>
-        Refresh
-      </Button>
-      <Button disabled={busy} onClick={onBack}>
-        Back
-      </Button>
+      <AiStep
+        repo={repo}
+        busy={busy}
+        onRefresh={onRefresh}
+        onBack={onBack}
+        onRun={onRun}
+        onDone={onReload}
+      />
     </>
   );
 }
@@ -188,7 +411,7 @@ export default function StudioPage({ visible, onOpenSettings }) {
   const shown = step === 'details' ? 'source' : step;
 
   return (
-    <section className="card" aria-labelledby="studio-title">
+    <section className="studio" aria-labelledby="studio-title">
       <h1 id="studio-title">Studio</h1>
       <ol className="steps" aria-label="Steps">
         {STEPS.map(([key, label]) => (
@@ -216,9 +439,11 @@ export default function StudioPage({ visible, onOpenSettings }) {
             onChange={setSource}
             maxLength={1024}
           />
-          <Button appearance="accent" disabled={busy || !source.trim()} onClick={next}>
-            Next
-          </Button>
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy || !source.trim()} onClick={next}>
+              Next
+            </Button>
+          </div>
         </>
       ) : null}
 
@@ -275,12 +500,14 @@ export default function StudioPage({ visible, onOpenSettings }) {
             checked={details.is_archived}
             onChange={(v) => change('is_archived', v)}
           />
-          <Button appearance="accent" disabled={busy || !ready} onClick={submitDetails}>
-            Continue
-          </Button>
-          <Button disabled={busy} onClick={() => setStep('source')}>
-            Back
-          </Button>
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy || !ready} onClick={submitDetails}>
+              Continue
+            </Button>
+            <Button disabled={busy} onClick={() => setStep('source')}>
+              Back
+            </Button>
+          </div>
         </>
       ) : null}
 
@@ -289,7 +516,9 @@ export default function StudioPage({ visible, onOpenSettings }) {
           repo={repo}
           busy={busy}
           onRefresh={() => run(() => read({ refresh: true }))}
+          onReload={() => read({ refresh: true })}
           onBack={() => setStep('source')}
+          onRun={run}
         />
       ) : null}
 

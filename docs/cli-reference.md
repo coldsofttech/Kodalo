@@ -994,7 +994,266 @@ $ kodalo settings [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `ai`: Connect Kodalo to Claude, ChatGPT or...
 * `github`: Choose how Kodalo reaches GitHub: a local...
+
+### `kodalo settings ai`
+
+Connect Kodalo to Claude, ChatGPT or Gemini, and choose their models.
+
+**Usage**:
+
+```console
+$ kodalo settings ai [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `list`: List every provider with its connection,...
+* `show`: Show the connection to one provider.
+* `set`: Save the connection to a provider.
+* `test`: Check that the connection works.
+* `default`: Make a provider the default connection.
+* `remove`: Forget a connection: its settings, models...
+* `models`: Manage the models of a connection.
+
+#### `kodalo settings ai list`
+
+List every provider with its connection, saved or not.
+
+**Usage**:
+
+```console
+$ kodalo settings ai list [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai show`
+
+Show the connection to one provider.
+
+**Usage**:
+
+```console
+$ kodalo settings ai show [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai set`
+
+Save the connection to a provider. Values you leave out are kept.
+
+**Usage**:
+
+```console
+$ kodalo settings ai set [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--key`: Enter the API key at a hidden prompt, or pipe it in. Never an argument.
+* `--enable / --disable`: Turn the connection on or off.
+* `--base-url <str>`: Another address for the API. Empty for the default.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai test`
+
+Check that the connection works. Exits with 1 when it does not.
+
+**Usage**:
+
+```console
+$ kodalo settings ai test [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai default`
+
+Make a provider the default connection.
+
+**Usage**:
+
+```console
+$ kodalo settings ai default [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai remove`
+
+Forget a connection: its settings, models and API key.
+
+**Usage**:
+
+```console
+$ kodalo settings ai remove [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai models`
+
+Manage the models of a connection.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `list`: List the saved models of a connection.
+* `refresh`: Ask the provider which models it offers...
+* `set`: Add a model or change its settings.
+* `default`: Make a model the one the connection uses...
+* `remove`: Forget a model.
+
+##### `kodalo settings ai models list`
+
+List the saved models of a connection.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models list [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings ai models refresh`
+
+Ask the provider which models it offers and save them.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models refresh [OPTIONS] {provider}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings ai models set`
+
+Add a model or change its settings. Options you leave out go back to the provider&#x27;s own.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models set [OPTIONS] {provider} {name}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+* `name`: The model name.  [required]
+
+**Options**:
+
+* `--max-tokens <int>`: Most tokens to generate, 1 to 1000000.
+* `--temperature <float>`: Randomness, 0 to 2.
+* `--timeout <int>`: Seconds to wait for an answer, 1 to 600.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings ai models default`
+
+Make a model the one the connection uses by default.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models default [OPTIONS] {provider} {name}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+* `name`: The model name.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings ai models remove`
+
+Forget a model. A model the provider offers comes back on the next refresh.
+
+**Usage**:
+
+```console
+$ kodalo settings ai models remove [OPTIONS] {provider} {name}
+```
+
+**Arguments**:
+
+* `provider`: One of: claude_api, claude_code, chatgpt_api, gemini_api.  [required]
+* `name`: The model name.  [required]
+
+**Options**:
+
+* `--help`: Show this message and exit.
 
 ### `kodalo settings github`
 
@@ -1048,6 +1307,7 @@ $ kodalo settings github set [OPTIONS] {mode}
 **Options**:
 
 * `--folder <str>`: Folder holding your repositories (for local_folder).
+* `--manifest-limit <int>`: How many project files (package.json ...) to read from GitHub, 1 to 100.
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 
@@ -1133,6 +1393,8 @@ $ kodalo studio read [OPTIONS] {value}
 * `--private`: Local folder: it is private.
 * `--fork`: Local folder: it is a fork.
 * `--archived`: Local folder: it is archived.
+* `--refresh-with-ai`: Ask the default AI model to write parser configs for unknown project files.
+* `-y, --yes`: With --refresh-with-ai: do not ask before sending.
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 

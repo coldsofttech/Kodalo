@@ -1,3 +1,4 @@
+import base64
 from pathlib import Path
 from typing import Any
 
@@ -10,6 +11,7 @@ from kodalo.core.repo import RepoNotFoundError
 
 READ = "/api/v1/studio/repositories"
 SETTINGS = "/api/v1/settings/github"
+PYPROJECT = b'[project]\nname = "r"\nversion = "1.2.3"\ndependencies = ["typer>=0.9"]\n'
 GITHUB = {
     "repos/o/r": {
         "name": "r",
@@ -24,7 +26,19 @@ GITHUB = {
         "pushed_at": "2026-10-01T10:00:00Z",
     },
     "repos/o/r/languages": {"Python": 100},
-    "repos/o/r/git/trees/main?recursive=1": {"tree": [{"path": "a.py", "type": "blob"}]},
+    "repos/o/r/contents/pyproject.toml": {
+        "size": 60,
+        "encoding": "base64",
+        "content": base64.b64encode(PYPROJECT).decode(),
+    },
+    "repos/o/r/git/trees/main?recursive=1": {
+        "tree": [
+            {"path": "a.py", "type": "blob"},
+            {"path": "tests", "type": "tree"},
+            {"path": "pyproject.toml", "type": "blob"},
+            {"path": "turbo.json", "type": "blob"},
+        ]
+    },
 }
 
 
@@ -47,7 +61,21 @@ def test_read_store_list_and_get(client: TestClient) -> None:
     assert response.status_code == 200
     body = response.json()
     assert (body["owner"], body["license"], body["languages"][0]["percent"]) == ("o", "MIT", 100.0)
-    assert body["top_level"] == [{"path": "a.py", "type": "file"}]
+    assert body["top_level"][0] == {"path": "tests", "type": "dir"}
+    assert body["notable_dirs"] == [{"path": "tests", "purpose": "tests"}]
+    assert body["manifests"] == [
+        {
+            "path": "pyproject.toml",
+            "ecosystem": "python",
+            "is_lockfile": False,
+            "package_name": "r",
+            "version": "1.2.3",
+            "dependencies": ["typer"],
+            "dev_dependencies": [],
+        }
+    ]
+    assert body["is_monorepo"] is True
+    assert body["monorepo_signals"] == ["turbo.json"]
 
     assert client.get(READ).json() == [body]
     assert client.get(f"{READ}/{body['id']}").json() == body

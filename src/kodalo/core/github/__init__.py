@@ -2,7 +2,9 @@
 
 from kodalo.core.github.errors import GitHubInvalidError
 from kodalo.core.github.service import (
+    DEFAULT_MANIFEST_LIMIT,
     DEFAULT_MODE,
+    MAX_MANIFEST_LIMIT,
     MODES,
     ConnectionCheck,
     GitHubConnectivity,
@@ -11,7 +13,9 @@ from kodalo.core.github.service import (
 )
 
 __all__ = [
+    "DEFAULT_MANIFEST_LIMIT",
     "DEFAULT_MODE",
+    "MAX_MANIFEST_LIMIT",
     "MODES",
     "ConnectionCheck",
     "GitHubConnectivity",

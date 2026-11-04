@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "rust-cargo",
+  "ecosystem": "rust",
+  "files": [
+    "Cargo.toml"
+  ],
+  "lockfiles": [
+    "Cargo.lock"
+  ],
+  "format": "toml",
+  "name": [
+    "package.name"
+  ],
+  "version": [
+    "package.version"
+  ],
+  "dependencies": [
+    {
+      "path": "dependencies",
+      "shape": "keys"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "path": "dev-dependencies",
+      "shape": "keys"
+    }
+  ]
+}

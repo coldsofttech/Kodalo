@@ -73,7 +73,7 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
 
   async function exportOne(/** @type {any} */ layout) {
     try {
-      saveJson(await exportLayout(layout.id), fileNameFor(layout.name, 'layout'));
+      await saveJson(await exportLayout(layout.id), fileNameFor(layout.name, 'layout'));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'The layout could not be exported.');
     }
@@ -241,6 +241,7 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
           <span>Delete &quot;{asking.name}&quot;?</span>
           <Button
             appearance="accent"
+            danger
             disabled={busy}
             onClick={async () => {
               await act(() => deleteLayout(asking.id), `Deleted "${asking.name}".`);
@@ -317,6 +318,7 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
                   {layout.type === 'user' ? (
                     <Button
                       appearance="outline"
+                      danger
                       label={`Delete ${layout.name}`}
                       onClick={() => setAsking(layout)}
                     >

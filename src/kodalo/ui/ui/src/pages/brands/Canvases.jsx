@@ -51,7 +51,7 @@ export default function CanvasesPage({ onChange, revision = 0 }) {
 
   async function exportOne(/** @type {any} */ canvas) {
     try {
-      saveJson(await exportCanvas(canvas.id), fileNameFor(canvas.name, 'canvas'));
+      await saveJson(await exportCanvas(canvas.id), fileNameFor(canvas.name, 'canvas'));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'The canvas could not be exported.');
     }
@@ -148,6 +148,7 @@ export default function CanvasesPage({ onChange, revision = 0 }) {
           <span>Delete &quot;{asking.name}&quot;?</span>
           <Button
             appearance="accent"
+            danger
             disabled={busy}
             onClick={async () => {
               await act(() => deleteCanvas(asking.id), `Deleted "${asking.name}".`);
@@ -216,6 +217,7 @@ export default function CanvasesPage({ onChange, revision = 0 }) {
                   {canvas.type === 'user' ? (
                     <Button
                       appearance="outline"
+                      danger
                       label={`Delete ${canvas.name}`}
                       onClick={() => setAsking(canvas)}
                     >

@@ -7,6 +7,7 @@ migration in ``migrations/versions/``; a test fails when the two disagree.
 
 import uuid
 from datetime import UTC, datetime
+from typing import Literal
 
 from sqlalchemy import (
     CheckConstraint,
@@ -23,10 +24,14 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 VERSION_TABLE = "schema_migrations"
 ORIGINS = ("repository", "inferred", "user_added")
 FEATURE_STATUSES = ("verified", "partially_verified", "documented_only", "planned")
-PROVIDER_TYPES = ("claude_code_cli", "gemini_api", "openai_compatible")
+AI_PROVIDERS = ("claude_api", "claude_code", "chatgpt_api", "gemini_api")
+AI_MODEL_SOURCES = ("fetched", "manual")
 SETTING_SCOPES = ("global", "product")
 SETTING_MODES = ("inherit", "override", "own")
+SETTING_DATA_TYPES = ("string", "integer", "boolean", "float", "json")
 CANVAS_TYPES = ("system", "user")
+ENTRY_TYPES = ("file", "dir")
+SIGNAL_KINDS = ("file_exists", "multi_manifest")
 FONT_SOURCES = ("bundled", "system")
 FONT_CATEGORIES = ("sans", "serif", "display", "mono")
 FONT_COLUMNS = ("body", "body_alt", "heading", "heading_alt", "mono", "mono_alt")
@@ -77,13 +82,14 @@ class _Row:
 
 
 class Setting(_Row, Base):
-    """One setting value. Global rows use an empty ``owner_id``."""
+    """One setting: ``value`` is text read as ``data_type``. Global rows have no ``owner_id``."""
 
     __tablename__ = "settings"
     __table_args__ = (
         UniqueConstraint("scope", "owner_id", "group_name", "key"),
         CheckConstraint(in_values("scope", SETTING_SCOPES), name="scope"),
         CheckConstraint(in_values("mode", SETTING_MODES), name="mode"),
+        CheckConstraint(in_values("data_type", SETTING_DATA_TYPES), name="data_type"),
     )
 
     scope: Mapped[str] = mapped_column(String(16))
@@ -91,7 +97,8 @@ class Setting(_Row, Base):
     group_name: Mapped[str] = mapped_column(String(64))
     key: Mapped[str] = mapped_column(String(128))
     mode: Mapped[str] = mapped_column(String(16), default="inherit")
-    value_json: Mapped[str] = mapped_column(Text, default="null")
+    value: Mapped[str] = mapped_column(Text, default="")
+    data_type: Mapped[str] = mapped_column(String(16), default="string", server_default="string")
 
 
 class BrandProfile(_Row, Base):
@@ -293,21 +300,67 @@ class BrandLogoRow(_BrandPart, Base):
     size_percent: Mapped[int] = mapped_column(default=14)
 
 
-class ProviderSetting(_Row, Base):
-    """A connection to an AI provider. Non-secret values only; ``credential_ref`` names a secret."""
+class AiConnectionRow(_Row, Base):
+    """A connection to an AI provider, one row per provider. Never holds a secret: ``secret_ref``
+    names the key in the system keychain. At most one connection is the default."""
 
-    __tablename__ = "provider_settings"
+    __tablename__ = "ai_connections"
     __table_args__ = (
-        CheckConstraint(in_values("provider_type", PROVIDER_TYPES), name="provider_type"),
+        CheckConstraint(in_values("provider", AI_PROVIDERS), name="provider"),
+        Index("uq_ai_connections_provider", "provider", unique=True),
+        Index(
+            "uq_ai_connections_default",
+            "is_default",
+            unique=True,
+            sqlite_where=text("is_default = 1"),
+        ),
     )
 
-    provider_type: Mapped[str] = mapped_column(String(32))
-    display_name: Mapped[str] = mapped_column(String(128), unique=True)
-    endpoint: Mapped[str | None] = mapped_column(String(512))
-    models_json: Mapped[str] = mapped_column(Text, default="[]")
-    credential_ref: Mapped[str | None] = mapped_column(String(256))
-    last_test_json: Mapped[str | None] = mapped_column(Text)
-    notes: Mapped[str] = mapped_column(Text, default="")
+    schema_version: Mapped[int] = mapped_column(default=1, server_default="1")
+    provider: Mapped[str] = mapped_column(String(16))
+    enabled: Mapped[bool] = mapped_column(default=True)
+    is_default: Mapped[bool] = mapped_column(default=False)
+    base_url: Mapped[str] = mapped_column(String(512), default="", server_default="")
+    secret_ref: Mapped[str | None] = mapped_column(String(128))
+    key_hint: Mapped[str] = mapped_column(String(8), default="", server_default="")
+    last_status: Mapped[str] = mapped_column(String(8), default="", server_default="")
+    last_detail: Mapped[str] = mapped_column(String(256), default="", server_default="")
+    last_checked_at: Mapped[str | None] = mapped_column(String(32))
+
+    models: Mapped[list["AiModelRow"]] = relationship(
+        back_populates="connection",
+        cascade="all, delete-orphan",
+        order_by="AiModelRow.name",
+        lazy="selectin",
+    )
+
+
+class AiModelRow(_Row, Base):
+    """A model of an AI connection, with its generation defaults. ``fetched`` rows come from the
+    provider; ``manual`` rows are typed in and survive a refresh. At most one model per connection
+    is the default; empty parameters mean "use the provider's own default"."""
+
+    __tablename__ = "ai_models"
+    __table_args__ = (
+        UniqueConstraint("connection_id", "name"),
+        CheckConstraint(in_values("source", AI_MODEL_SOURCES), name="source"),
+        Index(
+            "uq_ai_models_default",
+            "connection_id",
+            unique=True,
+            sqlite_where=text("is_default = 1"),
+        ),
+    )
+
+    connection_id: Mapped[str] = mapped_column(ForeignKey("ai_connections.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(128))
+    source: Mapped[str] = mapped_column(String(8), default="manual")
+    is_default: Mapped[bool] = mapped_column(default=False)
+    max_tokens: Mapped[int | None]
+    temperature: Mapped[float | None]
+    timeout_s: Mapped[int | None]
+
+    connection: Mapped[AiConnectionRow] = relationship(back_populates="models")
 
 
 class Repository(_Row, Base):
@@ -322,22 +375,42 @@ class Repository(_Row, Base):
     last_scanned_at: Mapped[str | None] = mapped_column(String(32))
     homepage: Mapped[str] = mapped_column(String(512), default="", server_default="")
     license: Mapped[str | None] = mapped_column(String(128))
-    topics_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     is_fork: Mapped[bool] = mapped_column(default=False, server_default="0")
     is_archived: Mapped[bool] = mapped_column(default=False, server_default="0")
     last_pushed_at: Mapped[str | None] = mapped_column(String(40))
     access_method: Mapped[str] = mapped_column(String(16), default="", server_default="")
     tree_truncated: Mapped[bool] = mapped_column(default=False, server_default="0")
     file_count: Mapped[int] = mapped_column(default=0, server_default="0")
-    structure_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     warnings_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     local_path: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    is_monorepo: Mapped[bool] = mapped_column(default=False, server_default="0")
+    monorepo_signals_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
 
     tools: Mapped[list["Tool"]] = relationship(back_populates="repository")
     languages: Mapped[list["RepositoryLanguage"]] = relationship(
         back_populates="repository",
         cascade="all, delete-orphan",
         order_by="RepositoryLanguage.bytes.desc()",
+    )
+    topics: Mapped[list["RepositoryTopic"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryTopic.position",
+    )
+    entries: Mapped[list["RepositoryEntry"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryEntry.position",
+    )
+    notable_dirs: Mapped[list["RepositoryNotableDir"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryNotableDir.path",
+    )
+    manifests: Mapped[list["RepositoryManifest"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryManifest.path",
     )
 
 
@@ -353,6 +426,124 @@ class RepositoryLanguage(_Row, Base):
     percent: Mapped[float] = mapped_column(default=0.0)
 
     repository: Mapped["Repository"] = relationship(back_populates="languages")
+
+
+class RepositoryTopic(_Row, Base):
+    """One topic of a repository. ``position`` keeps them in the order they were read."""
+
+    __tablename__ = "repository_topics"
+    __table_args__ = (UniqueConstraint("repository_id", "name"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(128))
+    position: Mapped[int] = mapped_column(default=0)
+
+    repository: Mapped["Repository"] = relationship(back_populates="topics")
+
+
+class RepositoryEntry(_Row, Base):
+    """One file or folder at the top level of a repository, in the order it was read."""
+
+    __tablename__ = "repository_entries"
+    __table_args__ = (
+        UniqueConstraint("repository_id", "path"),
+        CheckConstraint(in_values("type", ENTRY_TYPES), name="type"),
+    )
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    path: Mapped[str] = mapped_column(String(1024))
+    type: Mapped[Literal["file", "dir"]] = mapped_column(String(8))
+    position: Mapped[int] = mapped_column(default=0)
+
+    repository: Mapped["Repository"] = relationship(back_populates="entries")
+
+
+class RepositoryNotableDir(_Row, Base):
+    """A folder with a well-known name, such as ``tests``, and what it is for."""
+
+    __tablename__ = "repository_notable_dirs"
+    __table_args__ = (UniqueConstraint("repository_id", "path"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    path: Mapped[str] = mapped_column(String(1024))
+    purpose: Mapped[str] = mapped_column(String(32))
+    pattern_id: Mapped[str | None] = mapped_column(
+        ForeignKey("directory_patterns.id", ondelete="SET NULL")
+    )
+
+    repository: Mapped["Repository"] = relationship(back_populates="notable_dirs")
+
+
+class RepositoryManifest(_Row, Base):
+    """A project file, such as ``package.json``, found in a repository."""
+
+    __tablename__ = "repository_manifests"
+    __table_args__ = (UniqueConstraint("repository_id", "path"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    path: Mapped[str] = mapped_column(String(1024))
+    ecosystem: Mapped[str] = mapped_column(String(32))
+    is_lockfile: Mapped[bool] = mapped_column(default=False)
+    package_name: Mapped[str | None] = mapped_column(String(256))
+    version: Mapped[str | None] = mapped_column(String(256))
+
+    repository: Mapped["Repository"] = relationship(back_populates="manifests")
+    dependencies: Mapped[list["RepositoryDependency"]] = relationship(
+        back_populates="manifest",
+        cascade="all, delete-orphan",
+        order_by="RepositoryDependency.position",
+    )
+
+
+class RepositoryDependency(_Row, Base):
+    """One package a project file depends on. ``is_dev`` marks test and tooling packages."""
+
+    __tablename__ = "repository_dependencies"
+    __table_args__ = (UniqueConstraint("manifest_id", "name", "is_dev"),)
+
+    manifest_id: Mapped[str] = mapped_column(
+        ForeignKey("repository_manifests.id", ondelete="CASCADE")
+    )
+    name: Mapped[str] = mapped_column(String(256))
+    is_dev: Mapped[bool] = mapped_column(default=False)
+    position: Mapped[int] = mapped_column(default=0)
+
+    manifest: Mapped["RepositoryManifest"] = relationship(back_populates="dependencies")
+
+
+class DirectoryPattern(_Row, Base):
+    """Seed data: a folder name and what it is for. Read only while the app runs."""
+
+    __tablename__ = "directory_patterns"
+    __table_args__ = (UniqueConstraint("name", "match_kind"),)
+
+    name: Mapped[str] = mapped_column(String(128))
+    purpose: Mapped[str] = mapped_column(String(32))
+    match_kind: Mapped[str] = mapped_column(String(16), default="exact")
+    max_depth: Mapped[int] = mapped_column(default=2)
+    sort_order: Mapped[int] = mapped_column(default=0)
+
+
+class MonorepoSignal(_Row, Base):
+    """Seed data: a sign that a repository holds several projects."""
+
+    __tablename__ = "monorepo_signals"
+    __table_args__ = (CheckConstraint(in_values("signal_kind", SIGNAL_KINDS), name="signal_kind"),)
+
+    ecosystem: Mapped[str] = mapped_column(String(32))
+    signal_kind: Mapped[str] = mapped_column(String(24))
+    file_name: Mapped[str] = mapped_column(String(128), default="")
+    min_count: Mapped[int] = mapped_column(default=1)
+    description: Mapped[str] = mapped_column(String(256), default="")
+
+
+class IgnoredDirectory(_Row, Base):
+    """Seed data: a folder that is never read, such as ``node_modules``."""
+
+    __tablename__ = "ignored_directories"
+
+    name: Mapped[str] = mapped_column(String(128), unique=True)
+    reason: Mapped[str] = mapped_column(String(128), default="")
 
 
 class Tool(_Row, Base):

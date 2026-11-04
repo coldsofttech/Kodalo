@@ -7,9 +7,11 @@ from pathlib import Path
 
 from fastapi import HTTPException, status
 
+from kodalo.core.ai import AiConnections
+from kodalo.core.appearance import Appearance
 from kodalo.core.brand import BrandService
 from kodalo.core.github import GitHubConnectivity
-from kodalo.core.repo import RepoService
+from kodalo.core.repo import ParserAssistant, RepoService
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -27,6 +29,9 @@ class Services:
     brands: BrandService
     github: GitHubConnectivity
     repos: RepoService
+    appearance: Appearance
+    ai: AiConnections
+    parsers: ParserAssistant
 
 
 def data_dir() -> Path:
@@ -38,11 +43,16 @@ def data_dir() -> Path:
 def _build_services() -> Services:
     folder = data_dir()
     database = Database.open(database_path(folder))
+    repos = RepoService(database, parsers_dir=folder / "parsers")
+    ai = AiConnections(database)
     return Services(
         database,
         BrandService(database, folder),
         GitHubConnectivity(database),
-        RepoService(database),
+        repos,
+        Appearance(database),
+        ai,
+        ParserAssistant(repos, ai, folder / "parsers"),
     )
 
 
@@ -68,10 +78,34 @@ def get_github_connectivity() -> GitHubConnectivity:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 
+def get_appearance() -> Appearance:
+    """Return the appearance setting, opening the database on first use."""
+    try:
+        return _services().appearance
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_ai_connections() -> AiConnections:
+    """Return the AI connections, opening the database on first use."""
+    try:
+        return _services().ai
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
 def get_repo_service() -> RepoService:
     """Return the repository service, opening the database on first use."""
     try:
         return _services().repos
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_parser_assistant() -> ParserAssistant:
+    """Return the AI parser assistant, opening the database on first use."""
+    try:
+        return _services().parsers
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 

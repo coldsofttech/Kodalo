@@ -2,7 +2,7 @@
 
 import typer
 
-from kodalo.cli import github
+from kodalo.cli import ai, github
 
 app = typer.Typer(
     help="Change Kodalo's settings.",
@@ -10,4 +10,5 @@ app = typer.Typer(
     rich_markup_mode="rich",
     pretty_exceptions_enable=False,
 )
+app.add_typer(ai.app, name="ai")
 app.add_typer(github.app, name="github")

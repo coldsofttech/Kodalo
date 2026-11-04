@@ -12,6 +12,7 @@ from kodalo.core.repo.models import Entry, LocalDetails, RepoInfo, with_percent
 
 MAX_FILES = 50_000
 MAX_TOP_LEVEL = 200
+MAX_FILE_BYTES = 200 * 1024
 _SKIP_DIRS = frozenset(
     {".git", "node_modules", ".venv", "venv", "__pycache__", "dist", "build", "target"}
     | {".tox", ".mypy_cache", ".ruff_cache", ".pytest_cache", ".idea", ".vscode"}
@@ -102,7 +103,8 @@ def read_local(folder: Path, details: LocalDetails) -> RepoInfo:
     if missing:
         raise RepoDetailsError(f"Please fill in: {', '.join(missing)}.")
     sizes: dict[str, int] = {}
-    count, truncated = _walk(folder, sizes)
+    paths: list[Entry] = []
+    count, truncated = _walk(folder, sizes, paths)
     warnings = ["Read from a folder, so private, fork and archived come from your answers."]
     if truncated:
         warnings.append("The folder is large, so the file list is incomplete.")
@@ -122,12 +124,24 @@ def read_local(folder: Path, details: LocalDetails) -> RepoInfo:
         last_pushed_at=_git(folder, "log", "-1", "--format=%cI") or None,
         languages=with_percent(sizes),
         top_level=_top_level(folder),
+        paths=tuple(paths),
         file_count=count,
         access_method="local_folder",
         tree_truncated=truncated,
         warnings=tuple(warnings),
         local_path=str(folder),
     )
+
+
+def read_file(folder: Path, path: str) -> str | None:
+    """Return the text of one file in ``folder``, or ``None`` when it is too large or unreadable."""
+    try:
+        target = (folder / path).resolve()
+        if not target.is_relative_to(folder.resolve()) or target.stat().st_size > MAX_FILE_BYTES:
+            return None
+        return target.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None
 
 
 def _top_level(folder: Path) -> tuple[Entry, ...]:
@@ -139,8 +153,11 @@ def _top_level(folder: Path) -> tuple[Entry, ...]:
     return tuple(Entry(c.name, "dir" if c.is_dir() else "file") for c in children[:MAX_TOP_LEVEL])
 
 
-def _walk(folder: Path, sizes: dict[str, int]) -> tuple[int, bool]:
-    """Count files and add up bytes per language. Returns the count and whether it stopped."""
+def _walk(folder: Path, sizes: dict[str, int], paths: list[Entry]) -> tuple[int, bool]:
+    """Count files, add up bytes per language and note every path in ``paths``.
+
+    Returns the count and whether it stopped early.
+    """
     count = 0
     stack = [folder]
     while stack:
@@ -155,8 +172,10 @@ def _walk(folder: Path, sizes: dict[str, int]) -> tuple[int, bool]:
             if child.is_dir():
                 if child.name not in _SKIP_DIRS:
                     stack.append(child)
+                    paths.append(Entry(child.relative_to(folder).as_posix(), "dir"))
                 continue
             count += 1
+            paths.append(Entry(child.relative_to(folder).as_posix(), "file"))
             language = _LANGUAGES.get(child.suffix.lower())
             if language:
                 with contextlib.suppress(OSError):

@@ -10,10 +10,12 @@ export default function HomePage({ onOpen }) {
         and nothing is posted without your approval.
       </p>
       <p>Pick up where you left off, or adjust how your posts look.</p>
-      <Button appearance="accent" onClick={() => onOpen('studio')}>
-        Open Studio
-      </Button>
-      <Button onClick={() => onOpen('brands')}>Manage brands</Button>
+      <div className="row">
+        <Button appearance="accent" onClick={() => onOpen('studio')}>
+          Open Studio
+        </Button>
+        <Button onClick={() => onOpen('brands')}>Manage brands</Button>
+      </div>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 // Small React wrappers around the Fluent UI Web Components. A custom element reports changes with
 // DOM events and keeps its value as a property, so each wrapper wires both ends.
-import { useEffect, useRef } from 'react';
+import { useEffect, useId, useRef } from 'react';
 
 /**
  * Keep a custom element's property in step with React state and report its `events`.
@@ -33,7 +33,7 @@ function useElement(property, value, events, onEvent) {
 const TEXT_EVENTS = ['input', 'change'];
 const CHANGE_EVENTS = ['change'];
 
-/** @param {{ label: string, value: string, onChange: (value: string) => void, hint?: string, maxLength?: number, disabled?: boolean, invalid?: boolean, hideLabel?: boolean }} props */
+/** @param {{ label: string, value: string, onChange: (value: string) => void, hint?: string, maxLength?: number, disabled?: boolean, invalid?: boolean, hideLabel?: boolean, type?: 'text' | 'password' }} props */
 export function TextField({
   label,
   value,
@@ -43,6 +43,7 @@ export function TextField({
   disabled,
   invalid,
   hideLabel,
+  type,
 }) {
   const ref = useElement('value', value, TEXT_EVENTS, (el) => onChange(String(el.value ?? '')));
   return (
@@ -53,6 +54,8 @@ export function TextField({
         aria-invalid={invalid ? 'true' : undefined}
         maxlength={maxLength}
         disabled={disabled}
+        type={type}
+        autocomplete={type === 'password' ? 'off' : undefined}
         appearance="outline"
       >
         {hideLabel ? null : label}
@@ -96,13 +99,14 @@ export function Switch({ label, checked, onChange }) {
   );
 }
 
-/** @param {{ children: import('react').ReactNode, onClick?: () => void, appearance?: 'accent' | 'neutral' | 'outline' | 'stealth', disabled?: boolean, label?: string }} props */
-export function Button({ children, onClick, appearance = 'neutral', disabled, label }) {
+/** @param {{ children: import('react').ReactNode, onClick?: () => void, appearance?: 'accent' | 'neutral' | 'outline' | 'stealth', disabled?: boolean, label?: string, danger?: boolean }} props */
+export function Button({ children, onClick, appearance = 'neutral', disabled, label, danger }) {
   return (
     <fluent-button
       appearance={appearance}
       disabled={disabled}
       aria-label={label}
+      danger={danger ? '' : undefined}
       onClick={disabled ? undefined : onClick}
     >
       {children}
@@ -122,6 +126,33 @@ export function Select({ label, value, onChange, children }) {
       <select value={value} onChange={(event) => onChange(event.target.value)}>
         {children}
       </select>
+    </label>
+  );
+}
+
+/**
+ * A text box that is also a dropdown: it suggests `options` but accepts any text. A native input
+ * with a datalist, like Select, so it follows the same look and keyboard behavior.
+ * @param {{ label: string, value: string, onChange: (value: string) => void, options: string[], maxLength?: number }} props
+ */
+export function ComboBox({ label, value, onChange, options, maxLength }) {
+  const list = useId();
+  return (
+    <label className="field select">
+      <span>{label}</span>
+      <input
+        type="text"
+        list={list}
+        value={value}
+        maxLength={maxLength}
+        autoComplete="off"
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <datalist id={list}>
+        {options.map((option) => (
+          <option key={option} value={option} />
+        ))}
+      </datalist>
     </label>
   );
 }

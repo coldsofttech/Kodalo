@@ -11,16 +11,16 @@ import SettingsPage from './pages/Settings.jsx';
 /** Canvases, Palettes and Layouts are sub-menus of Brands. */
 const PAGES = [
   ['home', 'Home', []],
+  ['studio', 'Studio', []],
   [
     'brands',
     'Brands',
     [
-      ['canvases', 'Canvases'],
       ['palettes', 'Palettes'],
+      ['canvases', 'Canvases'],
       ['layouts', 'Layouts'],
     ],
   ],
-  ['studio', 'Studio', []],
   ['settings', 'Settings', []],
   ['about', 'About', []],
 ];

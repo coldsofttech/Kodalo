@@ -38,7 +38,7 @@ const toDraft = (/** @type {any} */ brand) => ({ name: brand.name, data: brand.d
 function SavePalette({ busy, onSave }) {
   const [name, setName] = useState('');
   return (
-    <section className="panel" aria-label="Save as palette">
+    <section className="panel save-palette" aria-label="Save as palette">
       <h3>Save these colors as a palette</h3>
       <p className="hint">
         A palette can start new brands. Manage palettes under Brands, Palettes.
@@ -375,11 +375,11 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
                   disabled={busy || dirty}
                   onClick={() =>
                     act(async () => {
-                      saveJson(
+                      const saved = await saveJson(
                         await exportBrand(current.brand.id),
                         fileNameFor(current.brand.name),
                       );
-                      return 'Exported. Check your downloads.';
+                      return saved === false ? 'Export cancelled.' : 'Exported.';
                     }, 'The brand could not be exported.')
                   }
                 >
@@ -387,6 +387,7 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
                 </Button>
                 <Button
                   appearance="outline"
+                  danger
                   disabled={busy}
                   onClick={() => setAsking({ kind: 'delete' })}
                 >
@@ -429,6 +430,7 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
                 </p>
                 <Button
                   appearance="accent"
+                  danger
                   disabled={busy}
                   onClick={() =>
                     act(async () => {

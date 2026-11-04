@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "ruby-gemfile",
+  "ecosystem": "ruby",
+  "files": [
+    "Gemfile"
+  ],
+  "lockfiles": [
+    "Gemfile.lock"
+  ],
+  "format": "lines",
+  "dependencies": [
+    {
+      "regex": "^\\s*gem\\s+['\\\"](?P<value>[^'\\\"]+)['\\\"]"
+    }
+  ]
+}

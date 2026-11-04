@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 from pathlib import Path
+from typing import ClassVar
 
 import pytest
 
@@ -11,6 +12,30 @@ def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
     for item in items:
         if "integration" in item.path.parts:
             item.add_marker(pytest.mark.integration)
+
+
+class MemorySecrets:
+    """An in-memory stand-in for the system keychain, shared so separate commands see one store."""
+
+    values: ClassVar[dict[str, str]] = {}
+
+    def get(self, ref: str) -> str | None:
+        return self.values.get(ref)
+
+    def set(self, ref: str, value: str) -> None:
+        self.values[ref] = value
+
+    def delete(self, ref: str) -> None:
+        self.values.pop(ref, None)
+
+
+@pytest.fixture(autouse=True)
+def _memory_keychain(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
+    """Keep every test away from the real system keychain."""
+    MemorySecrets.values.clear()
+    monkeypatch.setattr("kodalo.core.ai.service.KeychainSecrets", MemorySecrets)
+    yield
+    MemorySecrets.values.clear()
 
 
 @pytest.fixture(autouse=True)

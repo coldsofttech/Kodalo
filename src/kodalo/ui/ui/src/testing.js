@@ -29,6 +29,29 @@ export const makeRepo = (owner) => ({
   warnings: [],
   local_path: '',
   last_scanned_at: '2026-11-02T07:00:00+00:00',
+  notable_dirs: [{ path: 'tests', purpose: 'tests' }],
+  manifests: [
+    {
+      path: 'pyproject.toml',
+      ecosystem: 'python',
+      is_lockfile: false,
+      package_name: 'repo',
+      version: '1.0.0',
+      dependencies: ['typer', 'rich'],
+      dev_dependencies: ['pytest'],
+    },
+    {
+      path: 'uv.lock',
+      ecosystem: 'python',
+      is_lockfile: true,
+      package_name: null,
+      version: null,
+      dependencies: [],
+      dev_dependencies: [],
+    },
+  ],
+  is_monorepo: false,
+  monorepo_signals: [],
 });
 
 export const SAMPLE_DATA = () => ({
@@ -218,13 +241,107 @@ export const DOCTOR = {
  * A small in-memory stand-in for the whole API. `state.brands` is what the "database" holds.
  * @param {ReturnType<typeof makeBrand>[]} initial
  */
+const AI_PROVIDERS = [
+  ['claude_api', 'Claude API', 'api_key', 'https://api.anthropic.com'],
+  ['claude_code', 'Claude Code', 'local_cli', ''],
+  ['chatgpt_api', 'ChatGPT API', 'api_key', 'https://api.openai.com'],
+  ['gemini_api', 'Gemini API', 'api_key', 'https://generativelanguage.googleapis.com'],
+];
+
+/** @param {string} provider @param {string} label @param {string} kind @param {string} base */
+const makeAiConnection = (provider, label, kind, base) => ({
+  provider,
+  label,
+  kind,
+  saved: false,
+  enabled: false,
+  is_default: false,
+  base_url: '',
+  default_base_url: base,
+  has_key: false,
+  key_hint: '',
+  status: '',
+  status_detail: '',
+  checked_at: null,
+  default_model: null,
+  models: /** @type {any[]} */ ([]),
+});
+
+/** @param {string} name @param {string} source */
+const makeAiModel = (name, source) => ({
+  name,
+  source,
+  is_default: false,
+  max_tokens: null,
+  temperature: null,
+  timeout_s: null,
+});
+
+/**
+ * The AI connection routes, kept in memory. `rest` is the path after /settings/ai/connections.
+ * @param {any[]} list @param {string} method @param {string[]} rest @param {any} body
+ */
+function aiRoutes(list, method, rest, body) {
+  if (rest.length === 0) return list;
+  if (rest[0] === 'default') {
+    for (const item of list) item.is_default = item.provider === body.provider;
+    return list.find((item) => item.provider === body.provider);
+  }
+  const item = list.find((candidate) => candidate.provider === rest[0]);
+  if (rest.length === 1) {
+    if (method === 'DELETE') {
+      Object.assign(
+        item,
+        makeAiConnection(item.provider, item.label, item.kind, item.default_base_url),
+      );
+      return [204, null];
+    }
+    item.enabled = body.enabled ?? (item.enabled || !item.saved);
+    item.saved = true;
+    if (body.api_key) {
+      item.has_key = true;
+      item.key_hint = body.api_key.slice(-4);
+    }
+    if (body.base_url !== undefined) item.base_url = body.base_url;
+    return item;
+  }
+  if (rest[1] === 'test') {
+    item.status = 'ok';
+    item.status_detail = 'Connected. 2 models available.';
+    return { provider: item.provider, ok: true, detail: item.status_detail };
+  }
+  if (rest[1] === 'default-model') {
+    for (const model of item.models) model.is_default = model.name === body.name;
+    item.default_model = body.name;
+    return item.models.find((/** @type {any} */ model) => model.name === body.name);
+  }
+  if (rest[2] === 'refresh') {
+    const manual = item.models.filter((/** @type {any} */ model) => model.source === 'manual');
+    item.models = [...manual, makeAiModel('m-a', 'fetched'), makeAiModel('m-b', 'fetched')];
+    return item.models;
+  }
+  const name = decodeURIComponent(rest.slice(2).join('/'));
+  if (method === 'DELETE') {
+    item.models = item.models.filter((/** @type {any} */ model) => model.name !== name);
+    return [204, null];
+  }
+  let model = item.models.find((/** @type {any} */ candidate) => candidate.name === name);
+  if (!model) {
+    model = makeAiModel(name, 'manual');
+    item.models.push(model);
+  }
+  Object.assign(model, body);
+  return model;
+}
+
 export function createBackend(initial = []) {
   const state = {
     brands: initial,
     canvases: CANVASES.map((canvas) => ({ ...canvas })),
     layouts: LAYOUTS.map((layout) => ({ ...layout })),
     palettes: PALETTES.map((palette) => ({ ...palette })),
-    github: { mode: 'gh_cli', local_folder: '' },
+    github: { mode: 'gh_cli', local_folder: '', manifest_limit: 10 },
+    ai: AI_PROVIDERS.map((provider) => makeAiConnection(...provider)),
     repoRead: false,
     contrast: /** @type {any[]} */ (NO_FAILURES),
     doctor: /** @type {any} */ (DOCTOR),
@@ -373,8 +490,13 @@ export function createBackend(initial = []) {
       return { kind: 'github', value: body.source, name: 'repo', stored_id: null, suggested: null };
     }
     if (parts[0] === 'settings') {
+      if (parts[1] === 'theme') {
+        if (method === 'PUT') state.theme = body.theme;
+        return { theme: state.theme ?? 'system' };
+      }
+      if (parts[1] === 'ai') return aiRoutes(state.ai, method, parts.slice(3), body);
       if (parts[2] === 'check') return { mode: state.github.mode, ok: true, detail: 'Works.' };
-      if (method === 'PUT') state.github = { local_folder: '', ...body };
+      if (method === 'PUT') state.github = { local_folder: '', ...state.github, ...body };
       return state.github;
     }
     if (parts[0] === 'palettes') return paletteRoutes(method, parts, body, url);

@@ -9,14 +9,26 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | Method and path | Purpose |
 | --- | --- |
 | `GET /health`, `GET /ready` | Liveness and readiness probes, no authentication |
-| `GET`, `PUT /api/v1/settings/github` | Read or choose how Kodalo reaches GitHub (`gh_cli` by default, `local_folder`, `web_fetch`) |
+| `GET`, `PUT /api/v1/settings/github` | Read or choose how Kodalo reaches GitHub (`gh_cli` by default, `local_folder`, `web_fetch`) and `manifest_limit`, how many project files to read from GitHub (1 to 100, default 10) |
+| `GET /api/v1/settings/ai/connections` | Every AI provider (`claude_api`, `claude_code`, `chatgpt_api`, `gemini_api`) with its connection and models, saved or not. The API key is never returned, only its last characters (`key_hint`) |
+| `PUT`, `DELETE /api/v1/settings/ai/connections/{provider}` | Save a connection (`enabled`, `api_key`, `base_url`; anything left out is kept) or forget it with its models and key. The key goes to the system keychain |
+| `PUT /api/v1/settings/ai/connections/default` | Make a saved, enabled connection the default |
+| `POST /api/v1/settings/ai/connections/{provider}/test` | Try the connection; a failure is reported in the body, not as an error |
+| `GET /api/v1/settings/ai/connections/{provider}/models` | The saved models |
+| `POST /api/v1/settings/ai/connections/{provider}/models/refresh` | Ask the provider for its models and save them (502 when it cannot be reached); models added by hand are kept |
+| `PUT`, `DELETE /api/v1/settings/ai/connections/{provider}/models/{name}` | Add a model or change its `max_tokens`, `temperature` and `timeout_s`, or forget it. A new model gets Kodalo's standard settings (see `core/ai/defaults.py`) for any left out; for a saved model they replace the saved ones, so a missing one is cleared |
+| `PUT /api/v1/settings/ai/connections/{provider}/default-model` | Choose the model the connection uses by default |
+| `GET`, `PUT /api/v1/settings/theme` | Read or choose the window theme (`system` by default, `light`, `dark`); only the window uses it |
 | `POST /api/v1/settings/github/check` | Try the saved way once; a failure is reported in the body, not as an error |
 | `POST /api/v1/studio/source` | Check a repository against the saved GitHub mode (a folder, or a GitHub address); nothing is stored. For a folder it returns values read from git to prefill a form, and `stored_id` when it was read before |
-| `POST /api/v1/studio/repositories` | Read a repository (metadata, languages, top-level structure) and store it; a stored one is returned unless `refresh` is set. A local folder needs `details` the first time. Errors: `404` no such repository, `422` invalid source or missing details, `502` GitHub or `gh` unreachable |
+| `POST /api/v1/studio/repositories` | Read a repository (metadata, languages, top-level structure, notable folders, project files with their package name, version and dependencies, and a monorepo flag with its reasons; see [manifest-parsers.md](manifest-parsers.md)) and store it; a stored one is returned unless `refresh` is set. A local folder needs `details` the first time. Errors: `404` no such repository, `422` invalid source or missing details, `502` GitHub or `gh` unreachable |
+| `POST /api/v1/studio/repositories/{id}/parsers/plan` | List the top-level project files no parser config covers and estimate the tokens asking the default AI would use. Nothing is sent. Errors: `404`, `422` (no default connection or model), `502` |
+| `POST /api/v1/studio/repositories/{id}/parsers` | Send the start of those files to the default AI model (secret-looking lines removed, at most 5 files), and save each valid parser config to the `parsers` folder. Read the repository again to use them. Errors as above |
 | `GET /api/v1/studio/repositories`, `GET /api/v1/studio/repositories/{id}` | List stored repositories, read one |
 | `GET`, `POST /api/v1/palettes` | List palettes (built-in first, each with complete brand data to begin from), create one |
 | `GET`, `PATCH`, `DELETE /api/v1/palettes/{id}` | Read, rename or recolor, delete a palette. Built-in palettes answer `403` |
 | `POST /api/v1/palettes/{id}/duplicate` | Copy any palette as a palette of your own |
+| `POST /api/v1/palettes/suggest` | Ask the default AI model for a new palette (name and colors) that differs from the existing ones; nothing is saved |
 | `GET /api/v1/palettes/{id}/export`, `POST /api/v1/palettes/import` | Export a palette as a file; add one from a file (`?name=` sets its name) |
 | `GET`, `POST /api/v1/layouts` | List layouts (built-in first, each with the layouts that use it), create one |
 | `GET`, `PATCH`, `DELETE /api/v1/layouts/{id}` | Read, change, delete a layout. Built-in layouts answer `403`; deleting one that brands use answers `409` |

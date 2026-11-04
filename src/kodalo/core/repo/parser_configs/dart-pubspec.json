@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "dart-pubspec",
+  "ecosystem": "dart",
+  "files": [
+    "pubspec.yaml"
+  ],
+  "lockfiles": [
+    "pubspec.lock"
+  ],
+  "format": "lines",
+  "name": [
+    "^name:\\s*(?P<value>\\S+)"
+  ],
+  "version": [
+    "^version:\\s*(?P<value>\\S+)"
+  ],
+  "dependencies": [
+    {
+      "regex": "^ {2}(?P<value>[A-Za-z_]\\w*):",
+      "section": "^dependencies:\\s*$"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "regex": "^ {2}(?P<value>[A-Za-z_]\\w*):",
+      "section": "^dev_dependencies:\\s*$"
+    }
+  ]
+}

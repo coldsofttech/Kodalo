@@ -44,6 +44,9 @@ These apply on top of the rules above.
 
 9. **Layout**: source lives in `src/<package>/`, tests in `tests/`. Keep the package typed
    (`py.typed`). The version lives only in `__version__` in the package `__init__.py`.
+   All AI prompts and skill files live in `src/kodalo/core/ai/prompts/<area>/` (for example
+   `prompts/repo/`), never next to the feature that uses them; load them with
+   `importlib.resources` from `kodalo.core.ai`.
 
 10. **Style**: Ruff handles lint and formatting (line length 100); mypy runs in strict mode, so add
     type hints to all new code. Target Python 3.11+ and don't use syntax or APIs newer than the
