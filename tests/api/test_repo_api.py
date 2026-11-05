@@ -72,8 +72,11 @@ def test_read_store_list_and_get(client: TestClient) -> None:
             "version": "1.2.3",
             "dependencies": ["typer"],
             "dev_dependencies": [],
+            "evidence": 'name = "r"',
         }
     ]
+    assert body["documentation"]["readmes"] == []
+    assert body["skipped"] == []
     assert body["is_monorepo"] is True
     assert body["monorepo_signals"] == ["turbo.json"]
 
@@ -106,3 +109,35 @@ def test_local_folder_needs_details(client: TestClient, tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.json()["languages"][0]["name"] == "Python"
     assert client.post(READ, json={"source": str(folder)}).status_code == 200
+
+
+def test_frameworks_are_returned_with_evidence(client: TestClient) -> None:
+    body = client.post(READ, json={"source": "o/r"}).json()
+    assert body["frameworks"] == [
+        {
+            "id": "typer",
+            "name": "Typer",
+            "category": "cli",
+            "evidence": 'pyproject.toml: "typer"',
+            "path": "pyproject.toml",
+        }
+    ]
+
+
+def test_ai_analysis_with_nothing_to_ask_or_nothing_stored(client: TestClient) -> None:
+    repo_id = client.post(READ, json={"source": "o/r"}).json()["id"]
+    plan = client.post(f"{READ}/{repo_id}/analysis/plan")
+    assert plan.status_code == 200
+    assert plan.json()["dependencies"] == []  # every package is already understood
+    result = client.post(f"{READ}/{repo_id}/analysis")
+    assert result.status_code == 200
+    assert result.json()["frameworks"] == []
+    for suffix in ("analysis/plan", "analysis"):
+        assert client.post(f"{READ}/missing/{suffix}").status_code == 404
+
+
+def test_tooling_is_returned_and_the_plan_lists_tool_files(client: TestClient) -> None:
+    body = client.post(READ, json={"source": "o/r"}).json()
+    assert isinstance(body["tooling"], list)
+    plan = client.post(f"{READ}/{body['id']}/analysis/plan").json()
+    assert isinstance(plan["tool_files"], list)

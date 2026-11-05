@@ -16,6 +16,7 @@ from kodalo.core.ai.errors import (
     AiInvalidError,
     AiNotFoundError,
 )
+from kodalo.core.ai.history import AiHistory
 from kodalo.core.ai.providers import PROVIDER_IDS, PROVIDERS, Kind, Provider, get_provider
 from kodalo.core.ai.secrets import KeychainSecrets, SecretStore
 from kodalo.core.storage import Database
@@ -101,6 +102,7 @@ class AiConnections:
         self._secrets: SecretStore = secrets if secrets is not None else KeychainSecrets()
         self._prober: Prober = prober if prober is not None else probe
         self._generator: Generator = generator if generator is not None else generate
+        self.history = AiHistory(database)
 
     # -- using the default -----------------------------------------------------------------------
 
@@ -123,9 +125,12 @@ class AiConnections:
                 raise AiInvalidError(f"Choose a default model for {connection.label} in Settings.")
         raise AiInvalidError("Choose a default AI connection in Settings first.")
 
-    def generate(self, system: str, prompt: str, max_tokens: int) -> Generation:
+    def generate(
+        self, system: str, prompt: str, max_tokens: int, *, purpose: str, title: str
+    ) -> Generation:
         """Send ``prompt`` to the default model. The model's saved settings apply, and its
-        maximum tokens, when set, caps ``max_tokens``. Raises ``AiConnectionError``."""
+        maximum tokens, when set, caps ``max_tokens``. The call is added to the history under
+        ``title`` and ``purpose`` (one of ``PURPOSES``). Raises ``AiConnectionError``."""
         target = self.default_target()
         info = _provider(target.provider)
         request = GenerateRequest(
@@ -139,7 +144,53 @@ class AiConnections:
             temperature=target.temperature,
             timeout_s=target.timeout_s,
         )
-        return self._generator(request)
+        sent = f"{system}\n\n{prompt}"
+        try:
+            reply = self._generator(request)
+        except AiConnectionError as exc:
+            self._log(target, purpose, title, "failed", str(exc), prompt=sent)
+            raise
+        self._log(
+            target,
+            purpose,
+            title,
+            "ok",
+            "",
+            reply.input_tokens,
+            reply.output_tokens,
+            sent,
+            reply.text,
+        )
+        return reply
+
+    def _log(
+        self,
+        target: AiTarget,
+        purpose: str,
+        title: str,
+        status: str,
+        error: str,
+        input_tokens: int = 0,
+        output_tokens: int = 0,
+        prompt: str | None = None,
+        reply: str | None = None,
+    ) -> None:
+        """Add a call to the history. A failure to write it never stops the call itself."""
+        try:
+            self.history.record(
+                title=title,
+                purpose=purpose,
+                provider=target.provider,
+                model=target.model,
+                status=status,
+                error=error,
+                input_tokens=input_tokens,
+                output_tokens=output_tokens,
+                prompt=prompt,
+                reply=reply,
+            )
+        except Exception:
+            return
 
     # -- connections ---------------------------------------------------------------------------
 
@@ -223,12 +274,17 @@ class AiConnections:
         """Try the connection to ``provider`` and remember the outcome."""
         info = _provider(provider)
         api_key = self._key_for(info)
+        model = self.get(provider).default_model or ""
+        target = AiTarget(provider, info.label, model, None, None, None)
+        title = f"Test the {info.label} connection"
         try:
             result = self._prober(provider, self._base_url(info), api_key)
         except AiConnectionError as exc:
             self._record(provider, "failed", str(exc))
+            self._log(target, "connection_test", title, "failed", str(exc))
             return ConnectionCheck(provider, False, str(exc))
         self._record(provider, "ok", result.detail)
+        self._log(target, "connection_test", title, "ok", "")
         return ConnectionCheck(provider, True, result.detail)
 
     # -- models --------------------------------------------------------------------------------

@@ -60,7 +60,13 @@ class PaletteSuggester:
         """Return a suggested name and colors. Raises ``AiInvalidError`` when the model's answer
         cannot be used, and ``AiConnectionError`` when it cannot be reached."""
         existing = self._palettes.list_palettes()
-        reply = self._ai.generate(system_prompt(), build_prompt(existing), MAX_OUTPUT_TOKENS)
+        reply = self._ai.generate(
+            system_prompt(),
+            build_prompt(existing),
+            MAX_OUTPUT_TOKENS,
+            purpose="palette",
+            title="Suggest a palette",
+        )
         data = _reply_json(reply.text)
         name = data.get("name") if isinstance(data, dict) else None
         if not isinstance(name, str) or not name.strip():

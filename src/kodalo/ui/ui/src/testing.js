@@ -30,6 +30,24 @@ export const makeRepo = (owner) => ({
   local_path: '',
   last_scanned_at: '2026-11-02T07:00:00+00:00',
   notable_dirs: [{ path: 'tests', purpose: 'tests' }],
+  frameworks: [
+    {
+      id: 'typer',
+      name: 'Typer',
+      category: 'cli',
+      evidence: 'pyproject.toml: "typer"',
+      path: 'pyproject.toml',
+    },
+  ],
+  tooling: [
+    {
+      id: 'ruff',
+      name: 'Ruff',
+      category: 'lint_format',
+      evidence: 'pyproject.toml: "ruff"',
+      path: 'pyproject.toml',
+    },
+  ],
   manifests: [
     {
       path: 'pyproject.toml',
@@ -39,6 +57,7 @@ export const makeRepo = (owner) => ({
       version: '1.0.0',
       dependencies: ['typer', 'rich'],
       dev_dependencies: ['pytest'],
+      evidence: 'name = "repo"',
     },
     {
       path: 'uv.lock',
@@ -48,10 +67,21 @@ export const makeRepo = (owner) => ({
       version: null,
       dependencies: [],
       dev_dependencies: [],
+      evidence: '',
     },
   ],
   is_monorepo: false,
   monorepo_signals: [],
+  documentation: {
+    readmes: ['README.md'],
+    docs_dir: 'docs',
+    changelog: 'CHANGELOG.md',
+    contributing: '',
+    license_file: 'LICENSE',
+    code_of_conduct: '',
+    security: '',
+  },
+  skipped: [{ path: '.env', reason: 'secret' }],
 });
 
 export const SAMPLE_DATA = () => ({
@@ -277,6 +307,98 @@ const makeAiModel = (name, source) => ({
   timeout_s: null,
 });
 
+/** Two sample AI calls: one that kept its text and one that failed. */
+export const AI_CALLS = [
+  {
+    id: 'c1',
+    created_at: '2026-11-04T20:15:09+00:00',
+    title: 'Suggest a palette',
+    purpose: 'palette',
+    provider: 'claude_api',
+    model: 'claude-haiku-5-5',
+    status: 'ok',
+    error: '',
+    input_tokens: 1200,
+    output_tokens: 300,
+    has_text: true,
+  },
+  {
+    id: 'c2',
+    created_at: '2026-11-03T08:00:00+00:00',
+    title: 'Frameworks and tooling for o/repo',
+    purpose: 'studio',
+    provider: 'claude_code',
+    model: 'haiku',
+    status: 'failed',
+    error: 'Claude Code did not answer.',
+    input_tokens: 0,
+    output_tokens: 0,
+    has_text: false,
+  },
+];
+
+/** @param {any[]} calls */
+function usageOf(calls) {
+  /** @type {Map<string, any>} */
+  const rows = new Map();
+  /** @type {Map<string, any>} */
+  const days = new Map();
+  for (const call of calls) {
+    const key = `${call.provider}/${call.model}`;
+    const row = rows.get(key) ?? {
+      provider: call.provider,
+      model: call.model,
+      calls: 0,
+      input_tokens: 0,
+      output_tokens: 0,
+    };
+    row.calls += 1;
+    row.input_tokens += call.input_tokens;
+    row.output_tokens += call.output_tokens;
+    rows.set(key, row);
+    const day = days.get(call.created_at.slice(0, 10)) ?? {
+      day: call.created_at.slice(0, 10),
+      input_tokens: 0,
+      output_tokens: 0,
+    };
+    day.input_tokens += call.input_tokens;
+    day.output_tokens += call.output_tokens;
+    days.set(day.day, day);
+  }
+  return {
+    calls: calls.length,
+    input_tokens: calls.reduce((sum, call) => sum + call.input_tokens, 0),
+    output_tokens: calls.reduce((sum, call) => sum + call.output_tokens, 0),
+    rows: [...rows.values()],
+    days: [...days.values()].sort((a, b) => a.day.localeCompare(b.day)),
+  };
+}
+
+/**
+ * The AI history routes, kept in memory. `rest` is the path after /settings/ai/history.
+ * @param {{ calls: any[], store_text: boolean, retention_days: number }} history
+ * @param {string} method @param {string[]} rest @param {any} body
+ */
+function aiHistoryRoutes(history, method, rest, body) {
+  if (rest[0] === 'settings') {
+    if (method === 'PUT') Object.assign(history, body);
+    return { store_text: history.store_text, retention_days: history.retention_days };
+  }
+  if (rest.length === 0 && method === 'DELETE') {
+    const deleted = history.calls.length;
+    history.calls = [];
+    return { deleted };
+  }
+  if (rest.length === 0) return { total: history.calls.length, items: history.calls };
+  const call = history.calls.find((item) => item.id === rest[0]);
+  if (!call) return [404, { detail: 'There is no such entry in the history.' }];
+  return {
+    ...call,
+    prompt_text: call.has_text ? 'The prompt that was sent.' : null,
+    reply_text: call.has_text ? '{"answer": true}' : null,
+  };
+}
+
 /**
  * The AI connection routes, kept in memory. `rest` is the path after /settings/ai/connections.
  * @param {any[]} list @param {string} method @param {string[]} rest @param {any} body
@@ -342,6 +464,11 @@ export function createBackend(initial = []) {
     palettes: PALETTES.map((palette) => ({ ...palette })),
     github: { mode: 'gh_cli', local_folder: '', manifest_limit: 10 },
     ai: AI_PROVIDERS.map((provider) => makeAiConnection(...provider)),
+    aiHistory: {
+      calls: AI_CALLS.map((call) => ({ ...call })),
+      store_text: false,
+      retention_days: 90,
+    },
     repoRead: false,
     contrast: /** @type {any[]} */ (NO_FAILURES),
     doctor: /** @type {any} */ (DOCTOR),
@@ -494,7 +621,12 @@ export function createBackend(initial = []) {
         if (method === 'PUT') state.theme = body.theme;
         return { theme: state.theme ?? 'system' };
       }
-      if (parts[1] === 'ai') return aiRoutes(state.ai, method, parts.slice(3), body);
+      if (parts[1] === 'ai' && parts[2] === 'history') {
+        return aiHistoryRoutes(state.aiHistory, method, parts.slice(3), body);
+      }
+      if (parts[1] === 'ai' && parts[2] === 'usage') return usageOf(state.aiHistory.calls);
+      if (parts[1] === 'ai' && parts[2] === 'connections')
+        return aiRoutes(state.ai, method, parts.slice(3), body);
       if (parts[2] === 'check') return { mode: state.github.mode, ok: true, detail: 'Works.' };
       if (method === 'PUT') state.github = { local_folder: '', ...state.github, ...body };
       return state.github;

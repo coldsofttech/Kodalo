@@ -1,15 +1,25 @@
 """Read repositories the way the GitHub setting says, and keep what was read in the database."""
 
 import json
+import re
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import asdict, replace
 from pathlib import Path
+from typing import TypeVar
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kodalo.core.github import GitHubSettings
+from kodalo.core.repo.documentation import find_documentation, is_secret
 from kodalo.core.repo.errors import RepoDetailsError, RepoNotFoundError
+from kodalo.core.repo.framework_config import (
+    FrameworkConfigSet,
+    detect_frameworks,
+    detect_tooling,
+    load_framework_configs,
+    load_tooling_configs,
+)
 from kodalo.core.repo.github_reader import Fetch, gh_fetch, read_github, web_fetch
 from kodalo.core.repo.github_reader import read_file as read_github_file
 from kodalo.core.repo.layout import (
@@ -18,19 +28,23 @@ from kodalo.core.repo.layout import (
     LayoutRules,
     SignalRule,
     analyze,
+    without_ignored,
 )
 from kodalo.core.repo.local_reader import read_file as read_local_file
 from kodalo.core.repo.local_reader import read_local
 from kodalo.core.repo.manifest_config import ConfigSet, load_configs, manifest_rules, match_config
 from kodalo.core.repo.manifest_parser import parse_manifest
 from kodalo.core.repo.models import (
+    Documentation,
     Entry,
+    Framework,
     Language,
     Layout,
     LocalDetails,
     Manifest,
     NotableDir,
     RepoInfo,
+    SkippedFile,
 )
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import (
@@ -40,13 +54,19 @@ from kodalo.core.storage.models import (
     Repository,
     RepositoryDependency,
     RepositoryEntry,
+    RepositoryFramework,
     RepositoryLanguage,
     RepositoryManifest,
     RepositoryNotableDir,
+    RepositoryTool,
     RepositoryTopic,
     utc_now,
 )
 from kodalo.core.studio import Source
+
+MAX_EVIDENCE = 120
+SKIP_SENSITIVE = "secret"
+SKIP_UNREADABLE = "too large or unreadable"  # over 200 KB, binary, or the read failed
 
 
 def _info(row: Repository) -> RepoInfo:
@@ -76,11 +96,26 @@ def _info(row: Repository) -> RepoInfo:
         manifests=tuple(_manifest(m) for m in row.manifests),
         is_monorepo=row.is_monorepo,
         monorepo_signals=tuple(json.loads(row.monorepo_signals_json)),
+        frameworks=tuple(
+            Framework(f.framework_id, f.name, f.category, f.evidence, f.path)
+            for f in row.frameworks
+        ),
+        tooling=tuple(
+            Framework(t.tool_id, t.name, t.category, t.evidence, t.path) for t in row.tooling
+        ),
+        documentation=_documentation(row.documentation_json),
+        skipped=tuple(SkippedFile(s["path"], s["reason"]) for s in json.loads(row.skipped_json)),
     )
+
+
+def _documentation(text: str) -> Documentation:
+    data = json.loads(text)
+    return Documentation(**{**data, "readmes": tuple(data.get("readmes", ()))})
 
 
 def _manifest(row: RepositoryManifest) -> Manifest:
     return Manifest(
+        evidence=row.evidence,
         path=row.path,
         ecosystem=row.ecosystem,
         is_lockfile=row.is_lockfile,
@@ -115,6 +150,7 @@ def _manifest_row(manifest: Manifest) -> RepositoryManifest:
         is_lockfile=manifest.is_lockfile,
         package_name=manifest.package_name,
         version=manifest.version,
+        evidence=manifest.evidence,
         dependencies=[
             RepositoryDependency(name=name, is_dev=is_dev, position=position)
             for position, (name, is_dev) in enumerate(names)
@@ -127,8 +163,12 @@ def _read_details(
     configs: ConfigSet,
     read: Callable[[str], str | None],
     limit: int,
-) -> tuple[Layout, list[str]]:
-    """Read up to ``limit`` project files, top folders first, and add what they say."""
+) -> tuple[Layout, list[str], list[SkippedFile]]:
+    """Read up to ``limit`` project files, top folders first, and add what they say.
+
+    Files that look like secrets are never opened; files that cannot be read (too large, binary,
+    or failing) are recorded too, so the result says what was left out.
+    """
     projects = sorted(
         (m for m in layout.manifests if not m.is_lockfile),
         key=lambda m: (m.path.count("/"), m.path.lower()),
@@ -141,14 +181,17 @@ def _read_details(
             "Raise the limit in Settings to read more."
         )
     details: dict[str, Manifest] = {}
-    unread = 0
+    skipped: list[SkippedFile] = []
     for manifest in chosen:
         matched = match_config(manifest.path, configs.configs)
         if matched is None:
             continue
+        if is_secret(manifest.path):
+            skipped.append(SkippedFile(manifest.path, SKIP_SENSITIVE))
+            continue
         text = read(manifest.path)
         if text is None:
-            unread += 1
+            skipped.append(SkippedFile(manifest.path, SKIP_UNREADABLE))
             continue
         parsed = parse_manifest(text, matched[0])
         notes += [f"{manifest.path} {warning}" for warning in parsed.warnings]
@@ -158,11 +201,36 @@ def _read_details(
             version=parsed.version,
             dependencies=parsed.dependencies,
             dev_dependencies=parsed.dev_dependencies,
+            evidence=_quote(text, parsed.package_name or next(iter(parsed.dependencies), None)),
         )
+    unread = sum(1 for s in skipped if s.reason == SKIP_UNREADABLE)
     if unread:
         notes.append(f"{unread} project file(s) could not be read.")
     merged = tuple(details.get(m.path, m) for m in layout.manifests)
-    return replace(layout, manifests=merged), notes
+    return replace(layout, manifests=merged), notes, skipped
+
+
+_T = TypeVar("_T")
+
+
+def _attempt(label: str, failures: list[str], empty: _T, run: Callable[[], _T]) -> _T:
+    """Run one detection step; when it fails, note it in ``failures`` and return ``empty``."""
+    try:
+        return run()
+    except Exception:
+        failures.append(f"{label} could not be detected, so that part is missing.")
+        return empty
+
+
+def _quote(text: str, needle: str | None) -> str:
+    """The first line that holds ``needle``, trimmed to 120 characters; empty when none does."""
+    if not needle:
+        return ""
+    whole = re.compile(rf"(?<![\w.-]){re.escape(needle)}(?![\w.-])")
+    for line in text.splitlines():
+        if whole.search(line):
+            return line.strip()[:MAX_EVIDENCE]
+    return ""
 
 
 class RepoService:
@@ -175,9 +243,13 @@ class RepoService:
         gh: Fetch = gh_fetch,
         web: Fetch = web_fetch,
         parsers_dir: Path | None = None,
+        frameworks_dir: Path | None = None,
+        tooling_dir: Path | None = None,
     ) -> None:
         self._database = database
         self._parsers_dir = parsers_dir
+        self._frameworks_dir = frameworks_dir
+        self._tooling_dir = tooling_dir
         self._gh = gh
         self._web = web
 
@@ -205,6 +277,14 @@ class RepoService:
     def configs(self) -> ConfigSet:
         """Return the parser configs in use: the bundled ones and the user's own."""
         return load_configs(self._parsers_dir)
+
+    def framework_configs(self) -> FrameworkConfigSet:
+        """Return the framework configs in use: the bundled ones and the user's own."""
+        return load_framework_configs(self._frameworks_dir)
+
+    def tooling_configs(self) -> FrameworkConfigSet:
+        """Return the tooling configs in use: the bundled ones and the user's own."""
+        return load_tooling_configs(self._tooling_dir)
 
     def read_text(self, settings: GitHubSettings, info: RepoInfo, path: str) -> str | None:
         """Return the text of one file of a stored repository, or ``None`` when unreadable."""
@@ -246,8 +326,41 @@ class RepoService:
                 fetch, info.owner, info.name, path
             )
             limit = settings.manifest_limit
-        layout, notes = _read_details(layout, configs, reader, limit)
-        info = replace(info, warnings=(*info.warnings, *configs.problems, *notes))
+        layout, notes, skipped = _read_details(layout, configs, reader, limit)
+        frameworks = load_framework_configs(self._frameworks_dir)
+        kept = without_ignored(info.paths, rules.ignored)
+        tools = load_tooling_configs(self._tooling_dir)
+        failures: list[str] = []
+        found = _attempt(
+            "Frameworks",
+            failures,
+            info.frameworks,
+            lambda: detect_frameworks(frameworks.rules, layout.manifests, kept),
+        )
+        tooling = _attempt(
+            "Tooling",
+            failures,
+            info.tooling,
+            lambda: detect_tooling(tools.rules, layout.manifests, kept),
+        )
+        documentation = _attempt(
+            "Documentation", failures, info.documentation, lambda: find_documentation(info.paths)
+        )
+        info = replace(
+            info,
+            warnings=(
+                *info.warnings,
+                *configs.problems,
+                *frameworks.problems,
+                *tools.problems,
+                *notes,
+                *failures,
+            ),
+            frameworks=found,
+            tooling=tooling,
+            documentation=documentation,
+            skipped=tuple(skipped),
+        )
         return self._save(info, layout)
 
     @staticmethod
@@ -298,12 +411,16 @@ class RepoService:
             row.file_count = info.file_count
             row.warnings_json = json.dumps(list(info.warnings))
             row.local_path = info.local_path
+            row.documentation_json = json.dumps(asdict(info.documentation))
+            row.skipped_json = json.dumps([asdict(s) for s in info.skipped])
             row.last_scanned_at = utc_now()
             row.languages.clear()
             row.topics.clear()
             row.entries.clear()
             row.notable_dirs.clear()
             row.manifests.clear()
+            row.frameworks.clear()
+            row.tooling.clear()
             session.flush()  # remove the old rows before adding rows with the same names
             row.topics = [
                 RepositoryTopic(name=name, position=position)
@@ -324,5 +441,27 @@ class RepoService:
                 for d in layout.notable_dirs
             ]
             row.manifests = [_manifest_row(m) for m in layout.manifests]
+            row.frameworks = [
+                RepositoryFramework(
+                    framework_id=f.id,
+                    name=f.name,
+                    category=f.category,
+                    evidence=f.evidence,
+                    path=f.path,
+                    position=position,
+                )
+                for position, f in enumerate(info.frameworks)
+            ]
+            row.tooling = [
+                RepositoryTool(
+                    tool_id=t.id,
+                    name=t.name,
+                    category=t.category,
+                    evidence=t.evidence,
+                    path=t.path,
+                    position=position,
+                )
+                for position, t in enumerate(info.tooling)
+            ]
             session.flush()
             return _info(row)

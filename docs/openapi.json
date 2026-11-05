@@ -1,6 +1,222 @@
 {
   "components": {
     "schemas": {
+      "AiCallDetailResponse": {
+        "description": "One call with what was sent and what came back, when the text was kept.",
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-04T20:15:09+00:00"
+            ],
+            "maxLength": 32,
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "description": "Why the call failed; empty when it worked.",
+            "maxLength": 256,
+            "title": "Error",
+            "type": "string"
+          },
+          "has_text": {
+            "description": "Whether the prompt and answer text was kept.",
+            "title": "Has Text",
+            "type": "boolean"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "prompt_text": {
+            "anyOf": [
+              {
+                "maxLength": 200000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What was sent.",
+            "title": "Prompt Text"
+          },
+          "provider": {
+            "examples": [
+              "claude_api"
+            ],
+            "maxLength": 16,
+            "title": "Provider",
+            "type": "string"
+          },
+          "purpose": {
+            "examples": [
+              "palette"
+            ],
+            "maxLength": 24,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "reply_text": {
+            "anyOf": [
+              {
+                "maxLength": 200000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "What came back.",
+            "title": "Reply Text"
+          },
+          "status": {
+            "examples": [
+              "ok"
+            ],
+            "maxLength": 8,
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "examples": [
+              "Suggest a palette"
+            ],
+            "maxLength": 128,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "title",
+          "purpose",
+          "provider",
+          "model",
+          "status",
+          "error",
+          "input_tokens",
+          "output_tokens",
+          "has_text",
+          "prompt_text",
+          "reply_text"
+        ],
+        "title": "AiCallDetailResponse",
+        "type": "object"
+      },
+      "AiCallResponse": {
+        "description": "One call to an AI provider, without its text.",
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-04T20:15:09+00:00"
+            ],
+            "maxLength": 32,
+            "title": "Created At",
+            "type": "string"
+          },
+          "error": {
+            "description": "Why the call failed; empty when it worked.",
+            "maxLength": 256,
+            "title": "Error",
+            "type": "string"
+          },
+          "has_text": {
+            "description": "Whether the prompt and answer text was kept.",
+            "title": "Has Text",
+            "type": "boolean"
+          },
+          "id": {
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "provider": {
+            "examples": [
+              "claude_api"
+            ],
+            "maxLength": 16,
+            "title": "Provider",
+            "type": "string"
+          },
+          "purpose": {
+            "examples": [
+              "palette"
+            ],
+            "maxLength": 24,
+            "title": "Purpose",
+            "type": "string"
+          },
+          "status": {
+            "examples": [
+              "ok"
+            ],
+            "maxLength": 8,
+            "title": "Status",
+            "type": "string"
+          },
+          "title": {
+            "examples": [
+              "Suggest a palette"
+            ],
+            "maxLength": 128,
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "title",
+          "purpose",
+          "provider",
+          "model",
+          "status",
+          "error",
+          "input_tokens",
+          "output_tokens",
+          "has_text"
+        ],
+        "title": "AiCallResponse",
+        "type": "object"
+      },
       "AiCheckResponse": {
         "description": "Whether a connection works.",
         "properties": {
@@ -231,6 +447,36 @@
         "title": "AiConnectionUpdate",
         "type": "object"
       },
+      "AiDayUsageResponse": {
+        "description": "Tokens used on one UTC day.",
+        "properties": {
+          "day": {
+            "examples": [
+              "2026-11-04"
+            ],
+            "maxLength": 10,
+            "title": "Day",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "day",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "AiDayUsageResponse",
+        "type": "object"
+      },
       "AiDefaultConnection": {
         "description": "The provider to use by default.",
         "properties": {
@@ -268,6 +514,89 @@
           "name"
         ],
         "title": "AiDefaultModel",
+        "type": "object"
+      },
+      "AiHistoryPageResponse": {
+        "description": "A page of calls, newest first.",
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AiCallResponse"
+            },
+            "maxItems": 200,
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "description": "How many calls match the period in all.",
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "AiHistoryPageResponse",
+        "type": "object"
+      },
+      "AiHistorySettingsResponse": {
+        "description": "How the AI history is kept.",
+        "properties": {
+          "retention_days": {
+            "description": "Entries older than this many days are removed; 0 keeps them.",
+            "maximum": 3650.0,
+            "minimum": 0.0,
+            "title": "Retention Days",
+            "type": "integer"
+          },
+          "store_text": {
+            "description": "Whether the text of prompts and answers is kept.",
+            "title": "Store Text",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "store_text",
+          "retention_days"
+        ],
+        "title": "AiHistorySettingsResponse",
+        "type": "object"
+      },
+      "AiHistorySettingsUpdate": {
+        "description": "Changes to the AI history settings. A field left out keeps its saved value.",
+        "properties": {
+          "retention_days": {
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              90
+            ],
+            "title": "Retention Days"
+          },
+          "store_text": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Keep the text of calls.",
+            "title": "Store Text"
+          }
+        },
+        "title": "AiHistorySettingsUpdate",
         "type": "object"
       },
       "AiModelResponse": {
@@ -408,6 +737,265 @@
           }
         },
         "title": "AiModelUpdate",
+        "type": "object"
+      },
+      "AiPurgeResponse": {
+        "description": "How many history entries a purge removed.",
+        "properties": {
+          "deleted": {
+            "minimum": 0.0,
+            "title": "Deleted",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "deleted"
+        ],
+        "title": "AiPurgeResponse",
+        "type": "object"
+      },
+      "AiUsageResponse": {
+        "description": "Tokens used in a period, in all, per connection and model and per day.",
+        "properties": {
+          "calls": {
+            "minimum": 0.0,
+            "title": "Calls",
+            "type": "integer"
+          },
+          "days": {
+            "items": {
+              "$ref": "#/components/schemas/AiDayUsageResponse"
+            },
+            "maxItems": 3700,
+            "title": "Days",
+            "type": "array"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/AiUsageRowResponse"
+            },
+            "maxItems": 500,
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "calls",
+          "input_tokens",
+          "output_tokens",
+          "rows",
+          "days"
+        ],
+        "title": "AiUsageResponse",
+        "type": "object"
+      },
+      "AiUsageRowResponse": {
+        "description": "Calls and tokens for one connection and model.",
+        "properties": {
+          "calls": {
+            "minimum": 0.0,
+            "title": "Calls",
+            "type": "integer"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "provider": {
+            "examples": [
+              "claude_api"
+            ],
+            "maxLength": 16,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "model",
+          "calls",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "AiUsageRowResponse",
+        "type": "object"
+      },
+      "AnalysisPlanResponse": {
+        "description": "What asking the AI to analyze a repository would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "dependencies": {
+            "description": "Package names no framework config covers; only names are sent.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 80,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "files": {
+            "description": "Project files whose start would be sent to write parsers.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Files",
+            "type": "array"
+          },
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              2100
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "names": {
+            "description": "Top-level file names that would be sent.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 40,
+            "title": "Names",
+            "type": "array"
+          },
+          "provider": {
+            "description": "Empty when there is nothing to do.",
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          },
+          "tool_files": {
+            "description": "Top-level names no tooling config covers; only names are sent.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 40,
+            "title": "Tool Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "files",
+          "dependencies",
+          "names",
+          "tool_files",
+          "input_tokens",
+          "max_output_tokens"
+        ],
+        "title": "AnalysisPlanResponse",
+        "type": "object"
+      },
+      "AnalysisResultResponse": {
+        "description": "What asking the AI to analyze a repository did.",
+        "properties": {
+          "frameworks": {
+            "description": "Ids of the frameworks saved.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Frameworks",
+            "type": "array"
+          },
+          "input_tokens": {
+            "description": "Tokens the provider counted for the request.",
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "description": "Tokens the provider counted for the answer.",
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "parsers": {
+            "description": "Ids of the parser configs saved.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Parsers",
+            "type": "array"
+          },
+          "skipped": {
+            "description": "Plain sentences about what was left.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 60,
+            "title": "Skipped",
+            "type": "array"
+          },
+          "tools": {
+            "description": "Ids of the tooling configs saved.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Tools",
+            "type": "array"
+          }
+        },
+        "required": [
+          "parsers",
+          "frameworks",
+          "tools",
+          "skipped",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "AnalysisResultResponse",
         "type": "object"
       },
       "BrandColors": {
@@ -1177,6 +1765,70 @@
         "title": "DoctorResponse",
         "type": "object"
       },
+      "DocumentationResponse": {
+        "properties": {
+          "changelog": {
+            "examples": [
+              "CHANGELOG.md"
+            ],
+            "maxLength": 512,
+            "title": "Changelog",
+            "type": "string"
+          },
+          "code_of_conduct": {
+            "maxLength": 512,
+            "title": "Code Of Conduct",
+            "type": "string"
+          },
+          "contributing": {
+            "examples": [
+              "CONTRIBUTING.md"
+            ],
+            "maxLength": 512,
+            "title": "Contributing",
+            "type": "string"
+          },
+          "docs_dir": {
+            "description": "The documentation folder, if any.",
+            "maxLength": 512,
+            "title": "Docs Dir",
+            "type": "string"
+          },
+          "license_file": {
+            "examples": [
+              "LICENSE"
+            ],
+            "maxLength": 512,
+            "title": "License File",
+            "type": "string"
+          },
+          "readmes": {
+            "description": "README files at the top level.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Readmes",
+            "type": "array"
+          },
+          "security": {
+            "maxLength": 512,
+            "title": "Security",
+            "type": "string"
+          }
+        },
+        "required": [
+          "readmes",
+          "docs_dir",
+          "changelog",
+          "contributing",
+          "license_file",
+          "code_of_conduct",
+          "security"
+        ],
+        "title": "DocumentationResponse",
+        "type": "object"
+      },
       "EntryResponse": {
         "properties": {
           "path": {
@@ -1264,6 +1916,59 @@
           "source"
         ],
         "title": "FontResponse",
+        "type": "object"
+      },
+      "FrameworkResponse": {
+        "properties": {
+          "category": {
+            "examples": [
+              "web",
+              "lint_format"
+            ],
+            "maxLength": 24,
+            "title": "Category",
+            "type": "string"
+          },
+          "evidence": {
+            "description": "What shows it.",
+            "examples": [
+              "pyproject.toml: \"fastapi\""
+            ],
+            "maxLength": 128,
+            "title": "Evidence",
+            "type": "string"
+          },
+          "id": {
+            "examples": [
+              "fastapi"
+            ],
+            "maxLength": 64,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "FastAPI"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "path": {
+            "description": "The file that shows it.",
+            "maxLength": 1024,
+            "title": "Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "category",
+          "evidence",
+          "path"
+        ],
+        "title": "FrameworkResponse",
         "type": "object"
       },
       "GitHubCheckResponse": {
@@ -2199,6 +2904,15 @@
             "title": "Ecosystem",
             "type": "string"
           },
+          "evidence": {
+            "description": "A line of the file, at most 120 characters, that shows what was read.",
+            "examples": [
+              "name = \"kodalo\""
+            ],
+            "maxLength": 128,
+            "title": "Evidence",
+            "type": "string"
+          },
           "is_lockfile": {
             "title": "Is Lockfile",
             "type": "boolean"
@@ -2249,7 +2963,8 @@
           "package_name",
           "version",
           "dependencies",
-          "dev_dependencies"
+          "dev_dependencies",
+          "evidence"
         ],
         "title": "ManifestResponse",
         "type": "object"
@@ -2474,110 +3189,6 @@
         "title": "PaletteUpdate",
         "type": "object"
       },
-      "ParserPlanResponse": {
-        "description": "What asking the AI for parser configs would send and cost. Nothing has been sent yet.",
-        "properties": {
-          "files": {
-            "description": "Project files that would be sent.",
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 5,
-            "title": "Files",
-            "type": "array"
-          },
-          "input_tokens": {
-            "description": "Estimated tokens sent.",
-            "examples": [
-              1200
-            ],
-            "minimum": 0.0,
-            "title": "Input Tokens",
-            "type": "integer"
-          },
-          "label": {
-            "examples": [
-              "Claude API"
-            ],
-            "maxLength": 64,
-            "title": "Label",
-            "type": "string"
-          },
-          "max_output_tokens": {
-            "description": "The most tokens the answer can use.",
-            "minimum": 0.0,
-            "title": "Max Output Tokens",
-            "type": "integer"
-          },
-          "model": {
-            "examples": [
-              "claude-haiku-5-5"
-            ],
-            "maxLength": 128,
-            "title": "Model",
-            "type": "string"
-          },
-          "provider": {
-            "description": "Empty when there is nothing to do.",
-            "maxLength": 32,
-            "title": "Provider",
-            "type": "string"
-          }
-        },
-        "required": [
-          "provider",
-          "label",
-          "model",
-          "files",
-          "input_tokens",
-          "max_output_tokens"
-        ],
-        "title": "ParserPlanResponse",
-        "type": "object"
-      },
-      "ParserResultResponse": {
-        "description": "What asking the AI for parser configs did.",
-        "properties": {
-          "added": {
-            "description": "Ids of the configs that were saved.",
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 5,
-            "title": "Added",
-            "type": "array"
-          },
-          "input_tokens": {
-            "description": "Tokens the provider counted for the request.",
-            "minimum": 0.0,
-            "title": "Input Tokens",
-            "type": "integer"
-          },
-          "output_tokens": {
-            "description": "Tokens the provider counted for the answer.",
-            "minimum": 0.0,
-            "title": "Output Tokens",
-            "type": "integer"
-          },
-          "skipped": {
-            "description": "Plain sentences about what was left.",
-            "items": {
-              "type": "string"
-            },
-            "maxItems": 20,
-            "title": "Skipped",
-            "type": "array"
-          }
-        },
-        "required": [
-          "added",
-          "skipped",
-          "input_tokens",
-          "output_tokens"
-        ],
-        "title": "ParserResultResponse",
-        "type": "object"
-      },
       "ReadyResponse": {
         "properties": {
           "status": {
@@ -2662,10 +3273,23 @@
             "title": "Description",
             "type": "string"
           },
+          "documentation": {
+            "$ref": "#/components/schemas/DocumentationResponse",
+            "description": "README, changelog, contributing, license and docs folder, by file name."
+          },
           "file_count": {
             "minimum": 0.0,
             "title": "File Count",
             "type": "integer"
+          },
+          "frameworks": {
+            "description": "Frameworks and libraries in use, each with its evidence.",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkResponse"
+            },
+            "maxItems": 200,
+            "title": "Frameworks",
+            "type": "array"
           },
           "homepage": {
             "maxLength": 512,
@@ -2785,6 +3409,24 @@
             "title": "Owner",
             "type": "string"
           },
+          "skipped": {
+            "description": "Project files that were not read (secret-looking, over 200 KB or unreadable).",
+            "items": {
+              "$ref": "#/components/schemas/SkippedFileResponse"
+            },
+            "maxItems": 200,
+            "title": "Skipped",
+            "type": "array"
+          },
+          "tooling": {
+            "description": "Build, test, lint and format, CI, container and package tools in use.",
+            "items": {
+              "$ref": "#/components/schemas/FrameworkResponse"
+            },
+            "maxItems": 200,
+            "title": "Tooling",
+            "type": "array"
+          },
           "top_level": {
             "items": {
               "$ref": "#/components/schemas/EntryResponse"
@@ -2846,10 +3488,41 @@
           "last_scanned_at",
           "notable_dirs",
           "manifests",
+          "frameworks",
+          "tooling",
           "is_monorepo",
-          "monorepo_signals"
+          "monorepo_signals",
+          "documentation",
+          "skipped"
         ],
         "title": "RepoResponse",
+        "type": "object"
+      },
+      "SkippedFileResponse": {
+        "properties": {
+          "path": {
+            "examples": [
+              ".env"
+            ],
+            "maxLength": 512,
+            "title": "Path",
+            "type": "string"
+          },
+          "reason": {
+            "examples": [
+              "secret",
+              "too large or unreadable"
+            ],
+            "maxLength": 32,
+            "title": "Reason",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "reason"
+        ],
+        "title": "SkippedFileResponse",
         "type": "object"
       },
       "StudioSourceRequest": {
@@ -5615,6 +6288,336 @@
         ]
       }
     },
+    "/api/v1/settings/ai/history": {
+      "delete": {
+        "description": "Remove every entry of the history. Token totals start again from zero.",
+        "operationId": "purge_ai_history_api_v1_settings_ai_history_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiPurgeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Purge the AI history",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "description": "Return the calls made to AI providers in the period, newest first, without their text.",
+        "operationId": "list_ai_history_api_v1_settings_ai_history_get",
+        "parameters": [
+          {
+            "description": "The time window.",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "description": "The time window.",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year",
+                "all",
+                "custom"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "description": "First day of a custom period, 2026-11-01.",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 10,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day of a custom period, 2026-11-01.",
+              "title": "Start"
+            }
+          },
+          {
+            "description": "Last day of a custom period, 2026-11-30.",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 10,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day of a custom period, 2026-11-30.",
+              "title": "End"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "maximum": 10000000,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiHistoryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List the AI calls",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/history/settings": {
+      "get": {
+        "description": "Return whether the text of calls is kept and after how many days entries are removed.",
+        "operationId": "get_ai_history_settings_api_v1_settings_ai_history_settings_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiHistorySettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the AI history settings",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Choose whether to keep the text of calls and how long entries are kept (0 forever).",
+        "operationId": "set_ai_history_settings_api_v1_settings_ai_history_settings_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiHistorySettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiHistorySettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the AI history settings",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/history/{call_id}": {
+      "get": {
+        "description": "Return one call with what was sent and what came back, when the text was kept.",
+        "operationId": "get_ai_call_api_v1_settings_ai_history__call_id__get",
+        "parameters": [
+          {
+            "description": "The entry id.",
+            "in": "path",
+            "name": "call_id",
+            "required": true,
+            "schema": {
+              "description": "The entry id.",
+              "maxLength": 36,
+              "minLength": 1,
+              "title": "Call Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiCallDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "The connection has no such model."
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get one AI call",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/usage": {
+      "get": {
+        "description": "Return the calls and tokens used in the period per connection and model and per day.",
+        "operationId": "get_ai_usage_api_v1_settings_ai_usage_get",
+        "parameters": [
+          {
+            "description": "The time window.",
+            "in": "query",
+            "name": "period",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "description": "The time window.",
+              "enum": [
+                "day",
+                "week",
+                "month",
+                "year",
+                "all",
+                "custom"
+              ],
+              "title": "Period",
+              "type": "string"
+            }
+          },
+          {
+            "description": "First day of a custom period, 2026-11-01.",
+            "in": "query",
+            "name": "start",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 10,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "First day of a custom period, 2026-11-01.",
+              "title": "Start"
+            }
+          },
+          {
+            "description": "Last day of a custom period, 2026-11-30.",
+            "in": "query",
+            "name": "end",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 10,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Last day of a custom period, 2026-11-30.",
+              "title": "End"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiUsageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the AI token usage",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/settings/github": {
       "get": {
         "description": "Return how Kodalo reaches GitHub. The default is the gh CLI.",
@@ -5885,10 +6888,10 @@
         ]
       }
     },
-    "/api/v1/studio/repositories/{repo_id}/parsers": {
+    "/api/v1/studio/repositories/{repo_id}/analysis": {
       "post": {
-        "description": "Ask the default AI model for configs for the project files no config covers, check each\none on the real file, and save the valid ones. Read the repository again to use them.",
-        "operationId": "generate_parsers_api_v1_studio_repositories__repo_id__parsers_post",
+        "description": "Ask the default AI model once for parser, framework and tooling configs, check each one,\nand save the valid ones. Read the repository again to use them.",
+        "operationId": "run_analysis_api_v1_studio_repositories__repo_id__analysis_post",
         "parameters": [
           {
             "description": "Stored repository id.",
@@ -5908,7 +6911,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParserResultResponse"
+                  "$ref": "#/components/schemas/AnalysisResultResponse"
                 }
               }
             },
@@ -5927,16 +6930,16 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "Write parser configs with the AI",
+        "summary": "Analyze a repository with the AI",
         "tags": [
           "v1"
         ]
       }
     },
-    "/api/v1/studio/repositories/{repo_id}/parsers/plan": {
+    "/api/v1/studio/repositories/{repo_id}/analysis/plan": {
       "post": {
-        "description": "List the files the AI would be asked about and estimate the tokens. Nothing is sent.",
-        "operationId": "plan_parsers_api_v1_studio_repositories__repo_id__parsers_plan_post",
+        "description": "List the project files, package names and file names the AI would be asked about and\nestimate the tokens. Nothing is sent.",
+        "operationId": "plan_analysis_api_v1_studio_repositories__repo_id__analysis_plan_post",
         "parameters": [
           {
             "description": "Stored repository id.",
@@ -5956,7 +6959,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ParserPlanResponse"
+                  "$ref": "#/components/schemas/AnalysisPlanResponse"
                 }
               }
             },
@@ -5975,7 +6978,7 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "Plan the AI parser step",
+        "summary": "Plan the AI analysis",
         "tags": [
           "v1"
         ]

@@ -41,6 +41,39 @@ class Manifest:
     version: str | None = None
     dependencies: tuple[str, ...] = ()
     dev_dependencies: tuple[str, ...] = ()
+    evidence: str = ""  # a line of the file (at most 120 characters) that shows what was read
+
+
+@dataclass(frozen=True)
+class Documentation:
+    """The documentation files at the top of a repository. Empty text means not found."""
+
+    readmes: tuple[str, ...] = ()
+    docs_dir: str = ""
+    changelog: str = ""
+    contributing: str = ""
+    license_file: str = ""
+    code_of_conduct: str = ""
+    security: str = ""
+
+
+@dataclass(frozen=True)
+class SkippedFile:
+    """A file that was not read, and why: ``secret``, or ``too large or unreadable``."""
+
+    path: str
+    reason: str
+
+
+@dataclass(frozen=True)
+class Framework:
+    """A framework in use, and the file or dependency that shows it (``evidence``)."""
+
+    id: str
+    name: str
+    category: str
+    evidence: str
+    path: str = ""
 
 
 @dataclass(frozen=True)
@@ -98,6 +131,10 @@ class RepoInfo:
     manifests: tuple[Manifest, ...] = ()
     is_monorepo: bool = False
     monorepo_signals: tuple[str, ...] = ()
+    frameworks: tuple[Framework, ...] = ()
+    tooling: tuple[Framework, ...] = ()  # build, test, lint, CI, container and package tools
+    documentation: Documentation = Documentation()
+    skipped: tuple[SkippedFile, ...] = ()  # project files that were not read
     paths: tuple[Entry, ...] = ()  # every file and folder read; not stored
 
 

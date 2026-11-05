@@ -6,8 +6,13 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Reading a repository now also shows its README, changelog, contributing and license files and docs folder, the line that shows each project file's package, and which files were left unread (secret-looking, over 200 KB or unreadable).
+- Settings has a new AI History tab: every AI call with its date, purpose, connection, model and tokens, a token table and chart per connection and model, filters (last day, week, month, year, custom), the full prompt and answer if you choose to keep them, and a Purge button. `kodalo settings ai history`, `usage`, `history-settings` and `purge-history` do the same. Entries older than 90 days (changeable) are removed automatically.
+- Reading a repository now also lists its tooling (build, test, lint and format, CI, containers and package tools such as Make, Ruff, GitHub Actions, Docker or uv); `Refresh with AI` learns more, and your own JSON files can add more.
+- Reading a repository now lists the frameworks and tools it uses (React, FastAPI, Vite and about 120 more) with what showed them; `Refresh with AI` also asks your default AI model about packages Kodalo does not know, and your own JSON files can add more.
 - New palettes: `Suggest with AI` fills in a name and colors that differ from your existing palettes, for you to review before creating.
 - Studio can ask your default AI model to teach Kodalo project files it does not know yet (`Refresh with AI` in the window, `--refresh-with-ai` on the command line). It shows the tokens it expects to use and asks before sending anything.
+- `Refresh with AI` now makes one request to your AI model instead of two, so it asks once and uses fewer tokens.
 - AI models start with sensible max tokens, temperature and timeout for their kind (Opus, Sonnet, Haiku, Gemini, GPT).
 - AI Connections setting: connect Claude API, Claude Code, ChatGPT API or Gemini API, with API keys kept in the system keychain, a default model per connection, and tests that check each connection works, in `kodalo settings ai` and the Settings screen.
 - Reading a repository also reports its notable folders, whether it is a monorepo, and the package name, version and dependencies of its project files (npm, Python, Rust, Go, Java, .NET and more); rescan stored repositories to fill them in.
@@ -24,4 +29,5 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Using Claude Code as the AI connection now sends only Kodalo's own question, so a call uses about 1,700 tokens instead of about 37,000.
 - Kodalo starts a little faster.

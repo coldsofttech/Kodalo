@@ -1,0 +1,237 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "ruff",
+      "name": "Ruff",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "ruff"
+      ],
+      "files": [
+        "ruff.toml",
+        ".ruff.toml"
+      ]
+    },
+    {
+      "id": "mypy",
+      "name": "mypy",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "mypy"
+      ],
+      "files": [
+        "mypy.ini",
+        ".mypy.ini"
+      ]
+    },
+    {
+      "id": "black",
+      "name": "Black",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "black"
+      ]
+    },
+    {
+      "id": "flake8",
+      "name": "Flake8",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "flake8"
+      ],
+      "files": [
+        ".flake8"
+      ]
+    },
+    {
+      "id": "pylint",
+      "name": "Pylint",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pylint"
+      ],
+      "files": [
+        ".pylintrc",
+        "pylintrc"
+      ]
+    },
+    {
+      "id": "pyright",
+      "name": "Pyright",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pyright"
+      ],
+      "files": [
+        "pyrightconfig.json"
+      ]
+    },
+    {
+      "id": "eslint",
+      "name": "ESLint",
+      "category": "lint_format",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "eslint"
+      ],
+      "files": [
+        ".eslintrc*",
+        "eslint.config.*"
+      ]
+    },
+    {
+      "id": "prettier",
+      "name": "Prettier",
+      "category": "lint_format",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "prettier"
+      ],
+      "files": [
+        ".prettierrc*",
+        "prettier.config.*"
+      ]
+    },
+    {
+      "id": "biome",
+      "name": "Biome",
+      "category": "lint_format",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "@biomejs/biome"
+      ],
+      "files": [
+        "biome.json",
+        "biome.jsonc"
+      ]
+    },
+    {
+      "id": "stylelint",
+      "name": "Stylelint",
+      "category": "lint_format",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "stylelint"
+      ],
+      "files": [
+        ".stylelintrc*",
+        "stylelint.config.*"
+      ]
+    },
+    {
+      "id": "editorconfig",
+      "name": "EditorConfig",
+      "category": "lint_format",
+      "files": [
+        ".editorconfig"
+      ]
+    },
+    {
+      "id": "pre-commit",
+      "name": "pre-commit",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pre-commit"
+      ],
+      "files": [
+        ".pre-commit-config.yaml",
+        ".pre-commit-hooks.yaml"
+      ]
+    },
+    {
+      "id": "clang-format",
+      "name": "clang-format",
+      "category": "lint_format",
+      "files": [
+        ".clang-format",
+        ".clang-tidy"
+      ]
+    },
+    {
+      "id": "golangci-lint",
+      "name": "golangci-lint",
+      "category": "lint_format",
+      "files": [
+        ".golangci.yml",
+        ".golangci.yaml",
+        ".golangci.toml"
+      ]
+    },
+    {
+      "id": "rustfmt",
+      "name": "rustfmt",
+      "category": "lint_format",
+      "files": [
+        "rustfmt.toml",
+        ".rustfmt.toml",
+        "clippy.toml"
+      ]
+    },
+    {
+      "id": "rubocop",
+      "name": "RuboCop",
+      "category": "lint_format",
+      "ecosystems": [
+        "ruby"
+      ],
+      "dependencies": [
+        "rubocop"
+      ],
+      "files": [
+        ".rubocop.yml"
+      ]
+    },
+    {
+      "id": "isort",
+      "name": "isort",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "isort"
+      ]
+    },
+    {
+      "id": "bandit",
+      "name": "Bandit",
+      "category": "lint_format",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "bandit"
+      ]
+    }
+  ]
+}

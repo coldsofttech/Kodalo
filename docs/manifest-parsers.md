@@ -60,7 +60,7 @@ A config holds at most 20 entries per list, and each pattern at most 300 charact
 
 ## Writing configs with AI
 
-For top-level project files no config covers, `Refresh with AI` in Studio (or `kodalo studio read <repo> --refresh-with-ai`) asks the default AI connection and model for a config. The same instructions go to every provider: they are the bundled `src/kodalo/core/ai/prompts/repo/parser-config.SKILL.md`, which doubles as a Claude Code skill file. To keep cost low it sends one request with at most 5 files, 1.5 KB each, caps the answer (700 tokens per file, and the model's own max tokens when lower), and shows the estimate before sending. Replies must be JSON; each config is validated, must not reuse an existing `id`, and must read something from the real file before it is saved to `parsers/`.
+For top-level project files no config covers, `Refresh with AI` in Studio (or `kodalo studio read <repo> --refresh-with-ai`) asks the default AI connection and model for a config. The same instructions go to every provider: they are the bundled `src/kodalo/core/ai/prompts/repo/repo-analyzer.SKILL.md`, which doubles as a Claude Code skill file and also covers frameworks and tooling (see [framework-detection.md](framework-detection.md)), so one request and one answer serve all three. To keep cost low it sends at most 5 files, 1.5 KB each, caps the answer (700 tokens per file plus room for frameworks and tools, and the model's own max tokens when lower), and shows the estimate before sending. Replies must be JSON; each config is validated, must not reuse an existing `id`, and must read something from the real file before it is saved to `parsers/`.
 
 ## Adding a stack
 

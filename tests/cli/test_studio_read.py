@@ -21,6 +21,8 @@ def test_read_local_folder_list_and_show(tmp_path: Path) -> None:
     (folder / "tests").mkdir()
     (folder / "pyproject.toml").write_text("[project]")
     (folder / "turbo.json").write_text("{}")
+    (folder / "README.md").write_text("# proj")
+    (folder / "docs").mkdir()
     runner.invoke(
         app, ["--data-dir", str(data), "settings", "github", "set", "local_folder", "--folder", "."]
     )
@@ -33,17 +35,23 @@ def test_read_local_folder_list_and_show(tmp_path: Path) -> None:
     assert code == 0
     info = json.loads(out)
     assert info["languages"][0]["name"] == "Python"
-    assert [d["path"] for d in info["notable_dirs"]] == ["tests"]
+    assert sorted(d["path"] for d in info["notable_dirs"]) == ["docs", "tests"]
     assert [m["path"] for m in info["manifests"]] == ["pyproject.toml"]
     assert info["is_monorepo"] is True
     assert info["monorepo_signals"] == ["turbo.json"]
     assert "paths" not in info
+    assert info["documentation"]["readmes"] == ["README.md"]
+    assert info["documentation"]["docs_dir"] == "docs"
+    assert info["skipped"] == []
 
     assert invoke(data, "read", str(folder))[0] == 0  # stored, no details needed
     assert "me/proj" in invoke(data, "list")[1]
     shown = invoke(data, "show", info["id"])[1]
     assert "Notable folders" in shown
     assert "turbo.json" in shown
+    assert "Documentation" in shown
+    assert "README.md" in shown
+    assert "Not read" in shown
     assert json.loads(invoke(data, "show", info["id"], "--json")[1])["name"] == "proj"
     assert invoke(data, "show", "nope")[0] == 1
 

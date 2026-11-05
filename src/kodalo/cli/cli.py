@@ -10,7 +10,9 @@ from rich.text import Text
 from kodalo.cli import brand, output, settings, studio
 from kodalo.cli.state import State, get_state
 from kodalo.core import __version__
+from kodalo.core.ai import purge_expired_history
 from kodalo.core.doctor import passed, run_checks
+from kodalo.core.storage import default_data_dir
 
 app = typer.Typer(
     name="kodalo",
@@ -72,6 +74,7 @@ def main(
         raise typer.BadParameter("--verbose and --quiet cannot be used together.")
     output.configure(no_color=no_color, verbose=verbose)
     ctx.obj = State(verbose=verbose, quiet=quiet, data_dir=data_dir)
+    purge_expired_history(data_dir or default_data_dir())
 
 
 @app.command()

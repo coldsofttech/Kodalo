@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "spring-boot",
+      "name": "Spring Boot",
+      "category": "web",
+      "dependencies": [
+        "spring-boot*",
+        "org.springframework.boot*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "spring",
+      "name": "Spring Framework",
+      "category": "web",
+      "dependencies": [
+        "spring-core",
+        "spring-context",
+        "spring-webmvc"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "quarkus",
+      "name": "Quarkus",
+      "category": "web",
+      "dependencies": [
+        "quarkus-*",
+        "io.quarkus*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "micronaut",
+      "name": "Micronaut",
+      "category": "web",
+      "dependencies": [
+        "micronaut-*",
+        "io.micronaut*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "ktor",
+      "name": "Ktor",
+      "category": "web",
+      "dependencies": [
+        "ktor-*",
+        "io.ktor*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "junit",
+      "name": "JUnit",
+      "category": "testing",
+      "dependencies": [
+        "junit*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "android",
+      "name": "Android",
+      "category": "mobile",
+      "dependencies": [
+        "com.android.tools.build*",
+        "androidx.*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ],
+      "files": [
+        "AndroidManifest.xml"
+      ]
+    },
+    {
+      "id": "jetpack-compose",
+      "name": "Jetpack Compose",
+      "category": "ui",
+      "dependencies": [
+        "androidx.compose*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    },
+    {
+      "id": "hibernate",
+      "name": "Hibernate",
+      "category": "data",
+      "dependencies": [
+        "hibernate-core",
+        "org.hibernate*"
+      ],
+      "ecosystems": [
+        "jvm"
+      ]
+    }
+  ]
+}

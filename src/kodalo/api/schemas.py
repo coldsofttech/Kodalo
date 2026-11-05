@@ -4,7 +4,15 @@ from typing import Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from kodalo.core.ai import AiConnection, AiModel
+from kodalo.core.ai import (
+    AiCallDetail,
+    AiCallRecord,
+    AiConnection,
+    AiHistorySettings,
+    AiModel,
+    HistoryPage,
+    Usage,
+)
 from kodalo.core.ai import ConnectionCheck as AiCheck
 from kodalo.core.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
 from kodalo.core.brand.logos import MAX_LOGO_BYTES
@@ -13,7 +21,13 @@ from kodalo.core.doctor import Check
 from kodalo.core.github import ConnectionCheck, GitHubSettings
 from kodalo.core.layout import Layout, LayoutSettings
 from kodalo.core.palette import Palette
-from kodalo.core.repo import LocalDetails, ParserPlan, ParserResult, RepoInfo, Suggestion
+from kodalo.core.repo import (
+    AnalyzerPlan,
+    AnalyzerResult,
+    LocalDetails,
+    RepoInfo,
+    Suggestion,
+)
 from kodalo.core.studio import Source
 
 
@@ -645,6 +659,36 @@ class ManifestResponse(BaseModel):
     version: str | None = Field(max_length=256, examples=["1.0.0"])
     dependencies: list[str] = Field(max_length=50, description="Package names, at most 50.")
     dev_dependencies: list[str] = Field(max_length=50, description="Test and tooling packages.")
+    evidence: str = Field(
+        max_length=128,
+        description="A line of the file, at most 120 characters, that shows what was read.",
+        examples=['name = "kodalo"'],
+    )
+
+
+class DocumentationResponse(BaseModel):
+    readmes: list[str] = Field(max_length=20, description="README files at the top level.")
+    docs_dir: str = Field(max_length=512, description="The documentation folder, if any.")
+    changelog: str = Field(max_length=512, examples=["CHANGELOG.md"])
+    contributing: str = Field(max_length=512, examples=["CONTRIBUTING.md"])
+    license_file: str = Field(max_length=512, examples=["LICENSE"])
+    code_of_conduct: str = Field(max_length=512)
+    security: str = Field(max_length=512)
+
+
+class SkippedFileResponse(BaseModel):
+    path: str = Field(max_length=512, examples=[".env"])
+    reason: str = Field(max_length=32, examples=["secret", "too large or unreadable"])
+
+
+class FrameworkResponse(BaseModel):
+    id: str = Field(max_length=64, examples=["fastapi"])
+    name: str = Field(max_length=64, examples=["FastAPI"])
+    category: str = Field(max_length=24, examples=["web", "lint_format"])
+    evidence: str = Field(
+        max_length=128, description="What shows it.", examples=['pyproject.toml: "fastapi"']
+    )
+    path: str = Field(max_length=1024, description="The file that shows it.")
 
 
 class RepoResponse(BaseModel):
@@ -677,11 +721,25 @@ class RepoResponse(BaseModel):
     manifests: list[ManifestResponse] = Field(
         max_length=200, description="Project files such as package.json, and lockfiles."
     )
+    frameworks: list[FrameworkResponse] = Field(
+        max_length=200, description="Frameworks and libraries in use, each with its evidence."
+    )
+    tooling: list[FrameworkResponse] = Field(
+        max_length=200,
+        description="Build, test, lint and format, CI, container and package tools in use.",
+    )
     is_monorepo: bool = Field(description="Whether the repository holds several projects.")
     monorepo_signals: list[str] = Field(
         max_length=50,
         description="Why it was judged a monorepo.",
         examples=[["turbo.json"]],
+    )
+    documentation: DocumentationResponse = Field(
+        description="README, changelog, contributing, license and docs folder, by file name."
+    )
+    skipped: list[SkippedFileResponse] = Field(
+        max_length=200,
+        description="Project files that were not read (secret-looking, over 200 KB or unreadable).",
     )
 
     @classmethod
@@ -723,49 +781,224 @@ class RepoResponse(BaseModel):
                     version=m.version,
                     dependencies=list(m.dependencies),
                     dev_dependencies=list(m.dev_dependencies),
+                    evidence=m.evidence,
                 )
                 for m in info.manifests
             ],
+            frameworks=[
+                FrameworkResponse(
+                    id=f.id, name=f.name, category=f.category, evidence=f.evidence, path=f.path
+                )
+                for f in info.frameworks
+            ],
+            tooling=[
+                FrameworkResponse(
+                    id=t.id, name=t.name, category=t.category, evidence=t.evidence, path=t.path
+                )
+                for t in info.tooling
+            ],
             is_monorepo=info.is_monorepo,
             monorepo_signals=list(info.monorepo_signals),
+            documentation=DocumentationResponse(
+                readmes=list(info.documentation.readmes),
+                docs_dir=info.documentation.docs_dir,
+                changelog=info.documentation.changelog,
+                contributing=info.documentation.contributing,
+                license_file=info.documentation.license_file,
+                code_of_conduct=info.documentation.code_of_conduct,
+                security=info.documentation.security,
+            ),
+            skipped=[SkippedFileResponse(path=s.path, reason=s.reason) for s in info.skipped],
         )
 
 
-class ParserPlanResponse(BaseModel):
-    """What asking the AI for parser configs would send and cost. Nothing has been sent yet."""
+class AnalysisPlanResponse(BaseModel):
+    """What asking the AI to analyze a repository would send and cost. Nothing has been sent yet."""
 
     provider: str = Field(max_length=32, description="Empty when there is nothing to do.")
     label: str = Field(max_length=64, examples=["Claude API"])
     model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
-    files: list[str] = Field(max_length=5, description="Project files that would be sent.")
-    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[1200])
+    files: list[str] = Field(
+        max_length=5, description="Project files whose start would be sent to write parsers."
+    )
+    dependencies: list[str] = Field(
+        max_length=80, description="Package names no framework config covers; only names are sent."
+    )
+    names: list[str] = Field(max_length=40, description="Top-level file names that would be sent.")
+    tool_files: list[str] = Field(
+        max_length=40, description="Top-level names no tooling config covers; only names are sent."
+    )
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[2100])
     max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
 
     @classmethod
-    def from_core(cls, plan: ParserPlan) -> Self:
+    def from_core(cls, plan: AnalyzerPlan) -> Self:
         return cls(
             provider=plan.provider,
             label=plan.label,
             model=plan.model,
             files=list(plan.files),
+            dependencies=list(plan.dependencies),
+            names=list(plan.names),
+            tool_files=list(plan.tool_files),
             input_tokens=plan.input_tokens,
             max_output_tokens=plan.max_output_tokens,
         )
 
 
-class ParserResultResponse(BaseModel):
-    """What asking the AI for parser configs did."""
+class AnalysisResultResponse(BaseModel):
+    """What asking the AI to analyze a repository did."""
 
-    added: list[str] = Field(max_length=5, description="Ids of the configs that were saved.")
-    skipped: list[str] = Field(max_length=20, description="Plain sentences about what was left.")
+    parsers: list[str] = Field(max_length=5, description="Ids of the parser configs saved.")
+    frameworks: list[str] = Field(max_length=20, description="Ids of the frameworks saved.")
+    tools: list[str] = Field(max_length=20, description="Ids of the tooling configs saved.")
+    skipped: list[str] = Field(max_length=60, description="Plain sentences about what was left.")
     input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
     output_tokens: int = Field(ge=0, description="Tokens the provider counted for the answer.")
 
     @classmethod
-    def from_core(cls, result: ParserResult) -> Self:
+    def from_core(cls, result: AnalyzerResult) -> Self:
         return cls(
-            added=list(result.added),
+            parsers=list(result.parsers),
+            frameworks=list(result.frameworks),
+            tools=list(result.tools),
             skipped=[s[:300] for s in result.skipped],
             input_tokens=result.input_tokens,
             output_tokens=result.output_tokens,
         )
+
+
+AiPeriod = Literal["day", "week", "month", "year", "all", "custom"]
+
+
+class AiHistorySettingsResponse(BaseModel):
+    """How the AI history is kept."""
+
+    store_text: bool = Field(description="Whether the text of prompts and answers is kept.")
+    retention_days: int = Field(
+        ge=0, le=3650, description="Entries older than this many days are removed; 0 keeps them."
+    )
+
+    @classmethod
+    def from_core(cls, value: AiHistorySettings) -> Self:
+        return cls(store_text=value.store_text, retention_days=value.retention_days)
+
+
+class AiHistorySettingsUpdate(BaseModel):
+    """Changes to the AI history settings. A field left out keeps its saved value."""
+
+    store_text: bool | None = Field(default=None, description="Keep the text of calls.")
+    retention_days: int | None = Field(default=None, ge=0, le=3650, examples=[90])
+
+
+class AiCallResponse(BaseModel):
+    """One call to an AI provider, without its text."""
+
+    id: str = Field(max_length=36)
+    created_at: str = Field(max_length=32, examples=["2026-11-04T20:15:09+00:00"])
+    title: str = Field(max_length=128, examples=["Suggest a palette"])
+    purpose: str = Field(max_length=24, examples=["palette"])
+    provider: str = Field(max_length=16, examples=["claude_api"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    status: str = Field(max_length=8, examples=["ok"])
+    error: str = Field(max_length=256, description="Why the call failed; empty when it worked.")
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+    has_text: bool = Field(description="Whether the prompt and answer text was kept.")
+
+    @classmethod
+    def from_core(cls, call: AiCallRecord) -> Self:
+        return cls(
+            id=call.id,
+            created_at=call.created_at,
+            title=call.title,
+            purpose=call.purpose,
+            provider=call.provider,
+            model=call.model,
+            status=call.status,
+            error=call.error,
+            input_tokens=call.input_tokens,
+            output_tokens=call.output_tokens,
+            has_text=call.has_text,
+        )
+
+
+class AiCallDetailResponse(AiCallResponse):
+    """One call with what was sent and what came back, when the text was kept."""
+
+    prompt_text: str | None = Field(max_length=200_000, description="What was sent.")
+    reply_text: str | None = Field(max_length=200_000, description="What came back.")
+
+    @classmethod
+    def from_detail(cls, detail: AiCallDetail) -> Self:
+        base = AiCallResponse.from_core(detail.record).model_dump()
+        return cls(**base, prompt_text=detail.prompt_text, reply_text=detail.reply_text)
+
+
+class AiHistoryPageResponse(BaseModel):
+    """A page of calls, newest first."""
+
+    total: int = Field(ge=0, description="How many calls match the period in all.")
+    items: list[AiCallResponse] = Field(max_length=200)
+
+    @classmethod
+    def from_core(cls, page: HistoryPage) -> Self:
+        return cls(total=page.total, items=[AiCallResponse.from_core(c) for c in page.items])
+
+
+class AiUsageRowResponse(BaseModel):
+    """Calls and tokens for one connection and model."""
+
+    provider: str = Field(max_length=16, examples=["claude_api"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    calls: int = Field(ge=0)
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+
+
+class AiDayUsageResponse(BaseModel):
+    """Tokens used on one UTC day."""
+
+    day: str = Field(max_length=10, examples=["2026-11-04"])
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+
+
+class AiUsageResponse(BaseModel):
+    """Tokens used in a period, in all, per connection and model and per day."""
+
+    calls: int = Field(ge=0)
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+    rows: list[AiUsageRowResponse] = Field(max_length=500)
+    days: list[AiDayUsageResponse] = Field(max_length=3700)
+
+    @classmethod
+    def from_core(cls, usage: Usage) -> Self:
+        return cls(
+            calls=usage.calls,
+            input_tokens=usage.input_tokens,
+            output_tokens=usage.output_tokens,
+            rows=[
+                AiUsageRowResponse(
+                    provider=r.provider,
+                    model=r.model,
+                    calls=r.calls,
+                    input_tokens=r.input_tokens,
+                    output_tokens=r.output_tokens,
+                )
+                for r in usage.rows
+            ],
+            days=[
+                AiDayUsageResponse(
+                    day=d.day, input_tokens=d.input_tokens, output_tokens=d.output_tokens
+                )
+                for d in usage.days
+            ],
+        )
+
+
+class AiPurgeResponse(BaseModel):
+    """How many history entries a purge removed."""
+
+    deleted: int = Field(ge=0)

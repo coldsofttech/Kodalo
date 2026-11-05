@@ -3,10 +3,12 @@ import { checkGithub, getGithubSettings, getTheme, saveGithubSettings, saveTheme
 import { Button, NumberField, Select, TextField } from '../components/controls.jsx';
 import { setTheme as applyTheme } from '../theme.js';
 import AiConnections from './settings/AiConnections.jsx';
+import AiHistory from './settings/AiHistory.jsx';
 
 const TABS = [
   ['github', 'GitHub'],
   ['ai', 'AI Connections'],
+  ['ai-history', 'AI History'],
   ['appearance', 'Appearance'],
 ];
 
@@ -148,6 +150,16 @@ export default function SettingsPage() {
       {tab === 'ai' ? (
         <section className="panel" role="tabpanel" id="panel-ai" aria-labelledby="tab-ai">
           <AiConnections />
+        </section>
+      ) : null}
+      {tab === 'ai-history' ? (
+        <section
+          className="panel"
+          role="tabpanel"
+          id="panel-ai-history"
+          aria-labelledby="tab-ai-history"
+        >
+          <AiHistory />
         </section>
       ) : null}
       {tab === 'github' ? (

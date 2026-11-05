@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "uv",
+      "name": "uv",
+      "category": "package_distribution",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "uv"
+      ],
+      "files": [
+        "uv.lock"
+      ]
+    },
+    {
+      "id": "poetry",
+      "name": "Poetry",
+      "category": "package_distribution",
+      "files": [
+        "poetry.lock"
+      ]
+    },
+    {
+      "id": "pipenv",
+      "name": "Pipenv",
+      "category": "package_distribution",
+      "files": [
+        "Pipfile",
+        "Pipfile.lock"
+      ]
+    },
+    {
+      "id": "pip-requirements",
+      "name": "pip requirements",
+      "category": "package_distribution",
+      "files": [
+        "requirements*.txt"
+      ]
+    },
+    {
+      "id": "npm",
+      "name": "npm",
+      "category": "package_distribution",
+      "files": [
+        "package-lock.json",
+        ".npmrc"
+      ]
+    },
+    {
+      "id": "yarn",
+      "name": "Yarn",
+      "category": "package_distribution",
+      "files": [
+        "yarn.lock",
+        ".yarnrc",
+        "*.yarnrc.yml"
+      ]
+    },
+    {
+      "id": "pnpm",
+      "name": "pnpm",
+      "category": "package_distribution",
+      "files": [
+        "pnpm-lock.yaml",
+        "pnpm-workspace.yaml"
+      ]
+    },
+    {
+      "id": "bun",
+      "name": "Bun",
+      "category": "package_distribution",
+      "files": [
+        "bun.lockb",
+        "bun.lock"
+      ]
+    },
+    {
+      "id": "cargo",
+      "name": "Cargo",
+      "category": "package_distribution",
+      "files": [
+        "Cargo.lock"
+      ]
+    },
+    {
+      "id": "go-modules",
+      "name": "Go modules",
+      "category": "package_distribution",
+      "files": [
+        "go.sum"
+      ]
+    },
+    {
+      "id": "bundler",
+      "name": "Bundler",
+      "category": "package_distribution",
+      "files": [
+        "Gemfile.lock"
+      ]
+    },
+    {
+      "id": "composer",
+      "name": "Composer",
+      "category": "package_distribution",
+      "files": [
+        "composer.lock"
+      ]
+    },
+    {
+      "id": "nuget",
+      "name": "NuGet",
+      "category": "package_distribution",
+      "files": [
+        "nuget.config",
+        "NuGet.Config",
+        "packages.lock.json"
+      ]
+    },
+    {
+      "id": "manifest-in",
+      "name": "MANIFEST.in",
+      "category": "package_distribution",
+      "files": [
+        "MANIFEST.in"
+      ]
+    },
+    {
+      "id": "nsis",
+      "name": "NSIS installer",
+      "category": "package_distribution",
+      "files": [
+        "*.nsi",
+        "*.nsh"
+      ]
+    },
+    {
+      "id": "nfpm",
+      "name": "nFPM",
+      "category": "package_distribution",
+      "files": [
+        "nfpm.yaml"
+      ]
+    },
+    {
+      "id": "homebrew",
+      "name": "Homebrew formula",
+      "category": "package_distribution",
+      "paths": [
+        "Formula"
+      ]
+    },
+    {
+      "id": "changesets",
+      "name": "Changesets",
+      "category": "package_distribution",
+      "paths": [
+        ".changeset"
+      ]
+    }
+  ]
+}

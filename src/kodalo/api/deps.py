@@ -1,6 +1,7 @@
 """Shared objects handed to route handlers with ``Depends``."""
 
 import threading
+from contextlib import suppress
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -11,7 +12,7 @@ from kodalo.core.ai import AiConnections
 from kodalo.core.appearance import Appearance
 from kodalo.core.brand import BrandService
 from kodalo.core.github import GitHubConnectivity
-from kodalo.core.repo import ParserAssistant, RepoService
+from kodalo.core.repo import RepoAnalyzer, RepoService
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -31,7 +32,7 @@ class Services:
     repos: RepoService
     appearance: Appearance
     ai: AiConnections
-    parsers: ParserAssistant
+    analyzer: RepoAnalyzer
 
 
 def data_dir() -> Path:
@@ -43,8 +44,15 @@ def data_dir() -> Path:
 def _build_services() -> Services:
     folder = data_dir()
     database = Database.open(database_path(folder))
-    repos = RepoService(database, parsers_dir=folder / "parsers")
+    repos = RepoService(
+        database,
+        parsers_dir=folder / "parsers",
+        frameworks_dir=folder / "frameworks",
+        tooling_dir=folder / "tooling",
+    )
     ai = AiConnections(database)
+    with suppress(Exception):  # old history is removed when the services start
+        ai.history.purge_expired()
     return Services(
         database,
         BrandService(database, folder),
@@ -52,7 +60,7 @@ def _build_services() -> Services:
         repos,
         Appearance(database),
         ai,
-        ParserAssistant(repos, ai, folder / "parsers"),
+        RepoAnalyzer(repos, ai, folder / "parsers", folder / "frameworks", folder / "tooling"),
     )
 
 
@@ -102,10 +110,10 @@ def get_repo_service() -> RepoService:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 
-def get_parser_assistant() -> ParserAssistant:
-    """Return the AI parser assistant, opening the database on first use."""
+def get_repo_analyzer() -> RepoAnalyzer:
+    """Return the AI repository analyzer, opening the database on first use."""
     try:
-        return _services().parsers
+        return _services().analyzer
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 

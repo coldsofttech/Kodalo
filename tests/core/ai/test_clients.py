@@ -4,11 +4,12 @@ import shutil
 import subprocess
 import urllib.error
 import urllib.request
+from pathlib import Path
 from typing import Any
 
 import pytest
 
-from kodalo.core.ai import AiConnectionError, clients
+from kodalo.core.ai import AiConnectionError, GenerateRequest, clients
 from kodalo.core.ai.providers import CLAUDE_CODE_MODELS
 
 
@@ -106,3 +107,39 @@ def test_claude_code_installed(monkeypatch: pytest.MonkeyPatch) -> None:
     result = clients.probe("claude_code", "", "")
     assert result.models == list(CLAUDE_CODE_MODELS)
     assert "2.1.0" in result.detail
+
+
+def test_claude_code_runs_lean_from_an_empty_folder(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, object] = {}
+
+    class Done:
+        returncode = 0
+        stdout = json.dumps(
+            {"result": "ok", "usage": {"input_tokens": 2, "cache_creation_input_tokens": 650}}
+        )
+
+    def run(command: list[str], **kwargs: object) -> Done:
+        seen["command"] = command
+        seen["kwargs"] = kwargs
+        seen["instructions"] = Path(command[command.index("--system-prompt-file") + 1]).read_text(
+            encoding="utf-8"
+        )
+        return Done()
+
+    monkeypatch.setattr(shutil, "which", lambda _name: "claude")
+    monkeypatch.setattr(subprocess, "run", run)
+    request = GenerateRequest("claude_code", "", "", "haiku", "SYSTEM", "PROMPT", 100, None, None)
+    reply = clients.generate(request)
+    command = seen["command"]
+    assert isinstance(command, list)
+    assert command[command.index("--tools") + 1] == ""
+    assert command[command.index("--setting-sources") + 1] == ""
+    for flag in ("--strict-mcp-config", "--disable-slash-commands", "--no-session-persistence"):
+        assert flag in command
+    assert "SYSTEM" not in " ".join(command)
+    assert seen["instructions"] == "SYSTEM"
+    kwargs = seen["kwargs"]
+    assert isinstance(kwargs, dict)
+    assert kwargs["input"] == "PROMPT"
+    assert kwargs["cwd"] != str(Path.cwd())
+    assert (reply.text, reply.input_tokens, reply.output_tokens) == ("ok", 652, 0)

@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "make",
+      "name": "Make",
+      "category": "build",
+      "files": [
+        "Makefile",
+        "makefile",
+        "GNUmakefile"
+      ]
+    },
+    {
+      "id": "just",
+      "name": "just",
+      "category": "build",
+      "files": [
+        "justfile",
+        "Justfile",
+        ".justfile"
+      ]
+    },
+    {
+      "id": "taskfile",
+      "name": "Task",
+      "category": "build",
+      "files": [
+        "Taskfile.yml",
+        "Taskfile.yaml"
+      ]
+    },
+    {
+      "id": "cmake",
+      "name": "CMake",
+      "category": "build",
+      "files": [
+        "CMakeLists.txt",
+        "CMakePresets.json"
+      ]
+    },
+    {
+      "id": "gradle-build",
+      "name": "Gradle",
+      "category": "build",
+      "files": [
+        "build.gradle",
+        "build.gradle.kts",
+        "settings.gradle",
+        "settings.gradle.kts",
+        "gradlew"
+      ]
+    },
+    {
+      "id": "maven-build",
+      "name": "Maven",
+      "category": "build",
+      "files": [
+        "pom.xml",
+        "mvnw"
+      ]
+    },
+    {
+      "id": "vite",
+      "name": "Vite",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "vite"
+      ],
+      "files": [
+        "vite.config.*"
+      ]
+    },
+    {
+      "id": "webpack",
+      "name": "webpack",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "webpack"
+      ],
+      "files": [
+        "webpack.config.*"
+      ]
+    },
+    {
+      "id": "rollup",
+      "name": "Rollup",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "rollup"
+      ],
+      "files": [
+        "rollup.config.*"
+      ]
+    },
+    {
+      "id": "tsc",
+      "name": "TypeScript",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "typescript"
+      ],
+      "files": [
+        "tsconfig*.json"
+      ]
+    },
+    {
+      "id": "nx",
+      "name": "Nx",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "nx"
+      ],
+      "files": [
+        "nx.json"
+      ]
+    },
+    {
+      "id": "turborepo",
+      "name": "Turborepo",
+      "category": "build",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "turbo"
+      ],
+      "files": [
+        "turbo.json"
+      ]
+    },
+    {
+      "id": "hatch",
+      "name": "Hatch",
+      "category": "build",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "hatchling",
+        "hatch"
+      ]
+    },
+    {
+      "id": "setuptools",
+      "name": "setuptools",
+      "category": "build",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "setuptools"
+      ],
+      "files": [
+        "setup.py",
+        "setup.cfg"
+      ]
+    },
+    {
+      "id": "tox",
+      "name": "tox",
+      "category": "build",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "tox"
+      ],
+      "files": [
+        "tox.ini"
+      ]
+    },
+    {
+      "id": "nox",
+      "name": "nox",
+      "category": "build",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "nox"
+      ],
+      "files": [
+        "noxfile.py"
+      ]
+    },
+    {
+      "id": "pyinstaller",
+      "name": "PyInstaller",
+      "category": "build",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pyinstaller"
+      ],
+      "files": [
+        "*.spec"
+      ]
+    }
+  ]
+}

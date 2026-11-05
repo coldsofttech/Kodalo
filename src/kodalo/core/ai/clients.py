@@ -6,10 +6,12 @@ Error messages never carry the key or anything the provider sent back.
 import json
 import shutil
 import subprocess
+import tempfile
 import urllib.error
 import urllib.request
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from kodalo.core.ai.errors import AiConnectionError
@@ -183,22 +185,32 @@ def generate(request: GenerateRequest) -> Generation:
 
 
 def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
+    """Run ``claude -p`` as a plain text model: no tools, no project instructions, no plugins,
+    MCP servers or saved session, from an empty folder. Without these a call carries about 28,000
+    tokens of Claude Code's own context; with them it carries well under a thousand."""
     program = shutil.which("claude")
     if program is None:
         raise AiConnectionError("Claude Code is not installed, or is not on your PATH.")
-    command = [program, "-p", "--output-format", "json", "--max-turns", "1"]
-    if request.model:
-        command += ["--model", request.model]
     try:
-        result = subprocess.run(  # noqa: S603
-            command,
-            input=f"{request.system}\n\n{request.prompt}",
-            capture_output=True,
-            text=True,
-            encoding="utf-8",
-            timeout=timeout,
-            check=False,
-        )
+        with tempfile.TemporaryDirectory(prefix="kodalo-ai-") as folder:
+            instructions = Path(folder) / "instructions.txt"
+            instructions.write_text(request.system, encoding="utf-8")
+            command = [program, "-p", "--output-format", "json", "--max-turns", "1"]
+            command += ["--tools", "", "--system-prompt-file", str(instructions)]
+            command += ["--strict-mcp-config", "--setting-sources", ""]
+            command += ["--disable-slash-commands", "--no-session-persistence"]
+            if request.model:
+                command += ["--model", request.model]
+            result = subprocess.run(  # noqa: S603
+                command,
+                input=request.prompt,
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                timeout=timeout,
+                check=False,
+                cwd=folder,
+            )
         data = json.loads(result.stdout)
     except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
         raise AiConnectionError("Claude Code did not answer.") from exc

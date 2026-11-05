@@ -63,6 +63,10 @@ Connect Kodalo to an AI provider: `claude_api` (Claude API), `claude_code` (the 
 | `settings ai test <provider>` | Check the connection. Exits with 1 when it does not work. |
 | `settings ai default <provider>` | Make a saved, enabled connection the default. |
 | `settings ai remove <provider>` | Forget a connection: settings, models and key. |
+| `settings ai history` | The calls made to AI providers, newest first: `--period day\|week\|month\|year\|all\|custom` (with `--from` and `--to` dates `2026-11-01`), `--limit`, `--offset`; `--show <id>` shows one entry with its text when it was kept. `--json` for machine-readable output. |
+| `settings ai usage` | Calls and tokens per connection and model, and per day, with the same `--period`, `--from` and `--to`. `--json` is available. |
+| `settings ai history-settings` | Show or change how history is kept: `--store-text` / `--no-store-text` (the text of prompts and answers, off by default) and `--retention-days N` (default 90; 0 keeps entries forever). |
+| `settings ai purge-history` | Remove the whole history after a confirmation (`--yes` skips it). |
 | `settings ai models list <provider>` | The saved models and their settings. |
 | `settings ai models refresh <provider>` | Ask the provider for its models and save them. Models you added by hand are kept. |
 | `settings ai models set <provider> <name>` | Add a model or change it: `--max-tokens` (1 to 1000000), `--temperature` (0 to 2), `--timeout` seconds (1 to 600). A new model starts with Kodalo's standard settings for its kind (opus, sonnet, haiku, gemini, gpt, or the app-wide ones) wherever an option is left out; for a saved model, options left out go back to the provider's own default. Refreshing gives new models the same standard settings and keeps the ones you changed. |
@@ -76,7 +80,7 @@ Start a post from a repository. Reading follows the GitHub mode: `gh_cli` and `w
 | Command | What it does |
 | --- | --- |
 | `studio source <value>` | Check the folder or address against the mode. `--json` for machine-readable output. Exits with 1 when it is not valid. |
-| `studio read <value>` | Read the repository and store it, with its notable folders, project files (package, version and dependencies; see [manifest-parsers.md](manifest-parsers.md), where you can also add your own file types) and whether it is a monorepo. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--json` for machine-readable output. |
+| `studio read <value>` | Read the repository and store it, with its notable folders, project files (package, version and dependencies; see [manifest-parsers.md](manifest-parsers.md), where you can also add your own file types) and whether it is a monorepo. It also shows the documentation files found (README, changelog, contributing, license, docs folder) and the files that were not read, with the reason. It also lists the frameworks and tooling in use with their evidence (see [framework-detection.md](framework-detection.md)); `--refresh-with-ai` also asks the default AI model about packages no config knows, in the same single question as the project files. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--json` for machine-readable output. |
 | `studio list` | List stored repositories. `--json` for machine-readable output. |
 | `studio show <id>` | Show one stored repository. `--json` for machine-readable output. |
 

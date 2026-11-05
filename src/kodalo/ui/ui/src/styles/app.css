@@ -841,3 +841,112 @@ fluent-switch {
   border: 1px solid var(--border);
   border-radius: var(--radius-m);
 }
+
+/* AI history: a link-like button in a table, the token chart and the details dialog. */
+.link {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: left;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.ai-history h2 {
+  margin-top: 1.5rem;
+}
+
+.ai-history .period {
+  align-items: flex-end;
+  gap: 1rem;
+}
+
+.ai-history tfoot th,
+.ai-history tfoot td {
+  font-weight: 600;
+  border-top: 2px solid var(--border);
+}
+
+.chart {
+  margin: 1rem 0 0;
+}
+
+.chart svg {
+  width: 100%;
+  max-width: 40rem;
+  height: auto;
+}
+
+.chart .bar-in,
+.key-in {
+  fill: var(--accent);
+  background: var(--accent);
+}
+
+.chart .bar-out,
+.key-out {
+  fill: var(--ok);
+  background: var(--ok);
+}
+
+.chart .axis {
+  fill: var(--muted);
+  font-size: 11px;
+}
+
+.chart figcaption {
+  color: var(--muted);
+}
+
+.key {
+  display: inline-block;
+  width: 0.75rem;
+  height: 0.75rem;
+  margin: 0 0.25rem 0 0.75rem;
+  border-radius: 2px;
+}
+
+.dialog {
+  position: fixed;
+  inset: 5vh 0 auto;
+  margin: 0 auto;
+  width: min(44rem, 92vw);
+  max-height: 88vh;
+  overflow: auto;
+  padding: 1.25rem 1.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  box-shadow:
+    var(--shadow),
+    0 0 0 100vmax rgb(0 0 0 / 45%);
+  z-index: 10;
+}
+
+.dialog .facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.25rem 1rem;
+}
+
+.dialog .facts dt {
+  color: var(--muted);
+}
+
+.dialog .facts dd {
+  margin: 0;
+}
+
+.dialog .text {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 14rem;
+  overflow: auto;
+  padding: 0.75rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+}

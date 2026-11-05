@@ -1,0 +1,156 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "github-actions",
+      "name": "GitHub Actions",
+      "category": "ci",
+      "paths": [
+        ".github/workflows"
+      ]
+    },
+    {
+      "id": "gitlab-ci",
+      "name": "GitLab CI",
+      "category": "ci",
+      "files": [
+        ".gitlab-ci.yml"
+      ]
+    },
+    {
+      "id": "jenkins",
+      "name": "Jenkins",
+      "category": "ci",
+      "files": [
+        "Jenkinsfile"
+      ]
+    },
+    {
+      "id": "azure-pipelines",
+      "name": "Azure Pipelines",
+      "category": "ci",
+      "files": [
+        "azure-pipelines.yml",
+        "azure-pipelines.yaml"
+      ]
+    },
+    {
+      "id": "circleci",
+      "name": "CircleCI",
+      "category": "ci",
+      "paths": [
+        ".circleci"
+      ]
+    },
+    {
+      "id": "travis-ci",
+      "name": "Travis CI",
+      "category": "ci",
+      "files": [
+        ".travis.yml"
+      ]
+    },
+    {
+      "id": "appveyor",
+      "name": "AppVeyor",
+      "category": "ci",
+      "files": [
+        "appveyor.yml",
+        ".appveyor.yml"
+      ]
+    },
+    {
+      "id": "bitbucket-pipelines",
+      "name": "Bitbucket Pipelines",
+      "category": "ci",
+      "files": [
+        "bitbucket-pipelines.yml"
+      ]
+    },
+    {
+      "id": "dependabot",
+      "name": "Dependabot",
+      "category": "ci",
+      "files": [
+        "dependabot.yml",
+        "dependabot.yaml"
+      ]
+    },
+    {
+      "id": "renovate",
+      "name": "Renovate",
+      "category": "ci",
+      "files": [
+        "renovate.json",
+        "renovate.json5",
+        ".renovaterc"
+      ]
+    },
+    {
+      "id": "docker",
+      "name": "Docker",
+      "category": "containers",
+      "files": [
+        "Dockerfile",
+        "Dockerfile.*",
+        "*.Dockerfile",
+        ".dockerignore"
+      ]
+    },
+    {
+      "id": "docker-compose",
+      "name": "Docker Compose",
+      "category": "containers",
+      "files": [
+        "docker-compose.yml",
+        "docker-compose.yaml",
+        "compose.yml",
+        "compose.yaml",
+        "docker-compose.*.yml"
+      ]
+    },
+    {
+      "id": "devcontainer",
+      "name": "Dev Containers",
+      "category": "containers",
+      "files": [
+        "devcontainer.json",
+        ".devcontainer.json"
+      ],
+      "paths": [
+        ".devcontainer"
+      ]
+    },
+    {
+      "id": "helm",
+      "name": "Helm",
+      "category": "containers",
+      "files": [
+        "Chart.yaml",
+        "helmfile.yaml"
+      ]
+    },
+    {
+      "id": "kubernetes",
+      "name": "Kubernetes",
+      "category": "containers",
+      "files": [
+        "skaffold.yaml",
+        "kustomization.yaml",
+        "kustomization.yml"
+      ],
+      "paths": [
+        "k8s",
+        "kubernetes"
+      ]
+    },
+    {
+      "id": "terraform",
+      "name": "Terraform",
+      "category": "containers",
+      "files": [
+        "*.tf"
+      ]
+    }
+  ]
+}

@@ -76,6 +76,46 @@ def test_github_manifests_are_read_and_stored(database: Database) -> None:
     assert service.get(info.id).manifests == info.manifests  # kept in the database
 
 
+def test_frameworks_are_found_with_evidence_and_stored(database: Database) -> None:
+    api = FakeApi(
+        _api(
+            {
+                "package.json": _file('{"name": "web", "dependencies": {"react": "1"}}'),
+                "vite.config.ts": _file("export default {}"),
+                "node_modules/express/package.json": _file('{"name": "express"}'),
+            }
+        )
+    )
+    service = RepoService(database, gh=api)
+
+    info = _read(service)
+
+    found = {f.id: (f.evidence, f.path) for f in info.frameworks}
+    assert found == {
+        "react": ('package.json: "react"', "package.json"),
+        "vite": ("vite.config.ts", "vite.config.ts"),
+    }
+    assert service.get(info.id).frameworks == info.frameworks
+
+
+def test_user_framework_configs_are_used_and_listed_in_warnings(
+    database: Database, tmp_path: Path
+) -> None:
+    folder = tmp_path / "frameworks"
+    folder.mkdir()
+    mine = {"id": "htmx", "name": "htmx", "category": "ui", "dependencies": ["htmx.org"]}
+    (folder / "htmx.json").write_text(
+        json.dumps({"schema_version": 1, "frameworks": [mine]}), encoding="utf-8"
+    )
+    (folder / "bad.json").write_text("[]", encoding="utf-8")
+    api = FakeApi(_api({"package.json": _file('{"dependencies": {"htmx.org": "1"}}')}))
+
+    info = _read(RepoService(database, gh=api, frameworks_dir=folder))
+
+    assert [f.id for f in info.frameworks] == ["htmx"]
+    assert any("bad.json" in warning for warning in info.warnings)
+
+
 def test_limit_reads_top_folders_first_and_says_so(database: Database) -> None:
     files = {
         "pkg/b/package.json": _file('{"name": "deep"}'),

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "aspnet-core",
+      "name": "ASP.NET Core",
+      "category": "web",
+      "dependencies": [
+        "Microsoft.AspNetCore*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ]
+    },
+    {
+      "id": "blazor",
+      "name": "Blazor",
+      "category": "ui",
+      "dependencies": [
+        "Microsoft.AspNetCore.Components*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ],
+      "files": [
+        "*.razor"
+      ]
+    },
+    {
+      "id": "maui",
+      "name": ".NET MAUI",
+      "category": "mobile",
+      "dependencies": [
+        "Microsoft.Maui*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ],
+      "files": [
+        "MauiProgram.cs"
+      ]
+    },
+    {
+      "id": "wpf",
+      "name": "WPF",
+      "category": "desktop",
+      "files": [
+        "App.xaml"
+      ]
+    },
+    {
+      "id": "entity-framework",
+      "name": "Entity Framework",
+      "category": "data",
+      "dependencies": [
+        "Microsoft.EntityFrameworkCore*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ]
+    },
+    {
+      "id": "xunit",
+      "name": "xUnit",
+      "category": "testing",
+      "dependencies": [
+        "xunit*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ]
+    },
+    {
+      "id": "nunit",
+      "name": "NUnit",
+      "category": "testing",
+      "dependencies": [
+        "nunit*"
+      ],
+      "ecosystems": [
+        "dotnet"
+      ]
+    }
+  ]
+}

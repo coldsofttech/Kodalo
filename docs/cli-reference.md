@@ -1019,6 +1019,10 @@ $ kodalo settings ai [OPTIONS] COMMAND [ARGS]...
 * `test`: Check that the connection works.
 * `default`: Make a provider the default connection.
 * `remove`: Forget a connection: its settings, models...
+* `history`: List the calls made to AI providers,...
+* `usage`: Show the tokens used per connection and...
+* `history-settings`: Show or change how the AI history is kept.
+* `purge-history`: Remove every entry of the AI history.
 * `models`: Manage the models of a connection.
 
 #### `kodalo settings ai list`
@@ -1131,6 +1135,77 @@ $ kodalo settings ai remove [OPTIONS] {provider}
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai history`
+
+List the calls made to AI providers, newest first, or show one with --show &lt;id&gt;.
+
+**Usage**:
+
+```console
+$ kodalo settings ai history [OPTIONS]
+```
+
+**Options**:
+
+* `--period <str>`: One of: day, week, month, year, all, custom. Default: all.  [default: all]
+* `--from <str>`: With --period custom: the first day, 2026-11-01.
+* `--to <str>`: With --period custom: the last day, 2026-11-30.
+* `--limit <int>`: Entries to show (1 to 200).  [default: 50]
+* `--offset <int>`: Entries to skip.  [default: 0]
+* `--show <str>`: Show one entry, with its text if it was kept.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai usage`
+
+Show the tokens used per connection and model, and per day.
+
+**Usage**:
+
+```console
+$ kodalo settings ai usage [OPTIONS]
+```
+
+**Options**:
+
+* `--period <str>`: One of: day, week, month, year, all, custom. Default: all.  [default: all]
+* `--from <str>`: With --period custom: the first day, 2026-11-01.
+* `--to <str>`: With --period custom: the last day, 2026-11-30.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai history-settings`
+
+Show or change how the AI history is kept. With no options, shows the current values.
+
+**Usage**:
+
+```console
+$ kodalo settings ai history-settings [OPTIONS]
+```
+
+**Options**:
+
+* `--store-text / --no-store-text`: Keep the text of prompts and answers (off by default).
+* `--retention-days <int>`: Remove entries older than this many days (default 90; 0 keeps them forever).
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings ai purge-history`
+
+Remove every entry of the AI history. This cannot be undone.
+
+**Usage**:
+
+```console
+$ kodalo settings ai purge-history [OPTIONS]
+```
+
+**Options**:
+
+* `-y, --yes`: Do not ask for confirmation.
 * `--help`: Show this message and exit.
 
 #### `kodalo settings ai models`
@@ -1393,7 +1468,7 @@ $ kodalo studio read [OPTIONS] {value}
 * `--private`: Local folder: it is private.
 * `--fork`: Local folder: it is a fork.
 * `--archived`: Local folder: it is archived.
-* `--refresh-with-ai`: Ask the default AI model to write parser configs for unknown project files.
+* `--refresh-with-ai`: Ask the default AI model to read unknown project files and find frameworks.
 * `-y, --yes`: With --refresh-with-ai: do not ask before sending.
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.

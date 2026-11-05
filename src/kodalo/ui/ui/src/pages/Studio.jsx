@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react';
 import {
   checkStudioSource,
-  generateParsers,
   getGithubSettings,
   openExternal,
-  planParsers,
+  planAnalysis,
   readRepository,
+  runAnalysis,
 } from '../api.js';
 import { Button, Switch, TextField } from '../components/controls.jsx';
 
@@ -38,6 +38,20 @@ const EMPTY_DETAILS = {
 
 /** @param {string | null | undefined} value */
 const orDash = (value) => (value ? value : '-');
+
+/** The documentation files that were found, as names (the docs folder ends with a slash). */
+function documentationNames(/** @type {any} */ docs) {
+  if (!docs) return [];
+  return [
+    ...docs.readmes,
+    docs.changelog,
+    docs.contributing,
+    docs.license_file,
+    docs.code_of_conduct,
+    docs.security,
+    docs.docs_dir ? `${docs.docs_dir}/` : '',
+  ].filter(Boolean);
+}
 
 /** A web address as a link that opens in the system's browser; other text is shown as it is. */
 function webLink(/** @type {string | null | undefined} */ url) {
@@ -94,6 +108,11 @@ function Dependencies(/** @type {{ manifest: any }} */ { manifest }) {
   );
 }
 
+/** Whether an analysis plan has anything to send: project files, package names or tooling names. */
+function hasWork(/** @type {any} */ plan) {
+  return plan.files.length > 0 || plan.dependencies.length > 0 || plan.tool_files.length > 0;
+}
+
 function AiStep(
   /** @type {{ repo: any, busy: boolean, onRun: (action: () => Promise<void>) => void, onDone: () => Promise<void>, onRefresh: () => void, onBack: () => void }} */ {
     repo,
@@ -110,24 +129,26 @@ function AiStep(
   const ask = () =>
     onRun(async () => {
       setMessage('');
-      const found = await planParsers(repo.id);
-      if (found.files.length === 0) {
-        setMessage('Every project file is already understood, so there is nothing to ask the AI.');
+      const next = await planAnalysis(repo.id);
+      if (!hasWork(next)) {
+        setMessage('Everything is already understood, so there is nothing to ask the AI.');
         return;
       }
-      setPlan(found);
+      setPlan(next);
     });
 
   const proceed = () =>
     onRun(async () => {
       setPlan(null);
-      const result = await generateParsers(repo.id);
-      const notes = result.skipped.join(' ');
+      const result = await runAnalysis(repo.id);
+      const saved = result.parsers.length + result.frameworks.length + result.tools.length;
       setMessage(
-        `Saved ${result.added.length} parser(s). Used ${result.input_tokens} tokens in and ` +
-          `${result.output_tokens} out. ${notes}`.trim(),
+        [
+          `Saved ${result.parsers.length} parser(s), ${result.frameworks.length} framework(s) and ${result.tools.length} tool(s).`,
+          ...result.skipped,
+        ].join(' '),
       );
-      if (result.added.length > 0) await onDone();
+      if (saved > 0) await onDone();
     });
 
   return (
@@ -146,13 +167,28 @@ function AiStep(
       {plan ? (
         <div role="group" aria-labelledby="ai-plan-title" className="confirm">
           <h3 id="ai-plan-title">Send to {plan.label}?</h3>
+          {plan.files.length > 0 ? (
+            <p>
+              Kodalo will send the start of {plan.files.join(', ')} to write parser settings. Lines
+              that look like secrets are removed first.
+            </p>
+          ) : null}
+          {plan.dependencies.length > 0 || plan.tool_files.length > 0 ? (
+            <>
+              <p>
+                Kodalo will send these names, never file contents, to find out which are frameworks
+                and tools.
+              </p>
+              <p>Package names: {plan.dependencies.join(', ') || 'none'}.</p>
+              <p>
+                Top-level file names: {[...new Set([...plan.names, ...plan.tool_files])].join(', ')}
+                .
+              </p>
+            </>
+          ) : null}
           <p>
-            Kodalo will send the start of {plan.files.join(', ')} to {plan.label} ({plan.model}) to
-            write parser settings. Lines that look like secrets are removed first.
-          </p>
-          <p>
-            About {plan.input_tokens} tokens sent, and at most {plan.max_output_tokens} tokens in
-            the answer.
+            Everything goes to {plan.label} ({plan.model}). About {plan.input_tokens} tokens sent,
+            and at most {plan.max_output_tokens} tokens in the answer.
           </p>
           <div className="row actions">
             <Button appearance="accent" disabled={busy} onClick={proceed}>
@@ -200,6 +236,13 @@ function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
     ['Last pushed', localTime(repo.last_pushed_at)],
     ['Files', String(repo.file_count)],
     ['Monorepo', repo.is_monorepo ? `Yes (${repo.monorepo_signals.join(', ')})` : 'No'],
+    ['Documentation', orDash(documentationNames(repo.documentation).join(', '))],
+    [
+      'Not read',
+      orDash(
+        (repo.skipped ?? []).map((/** @type {any} */ s) => `${s.path} (${s.reason})`).join(', '),
+      ),
+    ],
     ['Read with', repo.access_method],
     ['Last read', orDash(repo.last_scanned_at)],
   ];
@@ -281,6 +324,60 @@ function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
           </tbody>
         </table>
       )}
+      <h3>Frameworks</h3>
+      {repo.frameworks.length === 0 ? (
+        <p className="hint">No frameworks were recognised.</p>
+      ) : (
+        <table className="checks">
+          <caption className="visually-hidden">Frameworks</caption>
+          <thead>
+            <tr>
+              <th scope="col">Framework</th>
+              <th scope="col">Category</th>
+              <th scope="col">Found in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repo.frameworks.map((/** @type {any} */ framework) => (
+              <tr key={framework.id}>
+                <th scope="row">{framework.name}</th>
+                <td>
+                  <span className="topic">{framework.category}</span>
+                </td>
+                <td>{framework.evidence}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+      <h3>Tooling</h3>
+      {repo.tooling.length === 0 ? (
+        <p className="hint">
+          No build, test, lint, CI, container or package tools were recognised.
+        </p>
+      ) : (
+        <table className="checks">
+          <caption className="visually-hidden">Tooling</caption>
+          <thead>
+            <tr>
+              <th scope="col">Tool</th>
+              <th scope="col">Category</th>
+              <th scope="col">Found in</th>
+            </tr>
+          </thead>
+          <tbody>
+            {repo.tooling.map((/** @type {any} */ tool) => (
+              <tr key={tool.id}>
+                <th scope="row">{tool.name}</th>
+                <td>
+                  <span className="topic">{tool.category}</span>
+                </td>
+                <td>{tool.evidence}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
       <h3>Project files</h3>
       {repo.manifests.length === 0 ? (
         <p className="hint">No project files were found.</p>
@@ -293,6 +390,7 @@ function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
               <th scope="col">Ecosystem</th>
               <th scope="col">Package</th>
               <th scope="col">Dependencies</th>
+              <th scope="col">Evidence</th>
             </tr>
           </thead>
           <tbody>
@@ -311,6 +409,7 @@ function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
                 <td>
                   <Dependencies manifest={manifest} />
                 </td>
+                <td>{orDash(manifest.evidence)}</td>
               </tr>
             ))}
           </tbody>

@@ -1,21 +1,20 @@
-"""Ask the default AI model to write parser configs for project files Kodalo does not know yet.
+"""The parser part of the AI repository analysis: finding unknown project files and saving configs.
 
 Only the top-level files that no config covers are looked at, and only the first few lines of each
-(with secret-looking lines removed) are sent. The answer must be JSON in the parser config format;
-every config is checked and tried on the real file before it is saved to the user's parsers folder.
-See ``docs/manifest-parsers.md``.
+(with secret-looking lines removed) are sent. The configs in the answer must be in the parser config
+format; every one is checked and tried on the real file before it is saved to the user's parsers
+folder. The AI call itself is in ``ai_analyzer``. See ``docs/manifest-parsers.md``.
 """
 
 import fnmatch
 import json
 import re
 from dataclasses import dataclass
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
-from kodalo.core.ai import AiConnections, AiInvalidError
 from kodalo.core.github import GitHubSettings
+from kodalo.core.repo.documentation import SECRET_FILES
 from kodalo.core.repo.manifest_config import (
     ConfigError,
     ManifestConfig,
@@ -38,7 +37,7 @@ _EXTENSIONS = frozenset(
 _NAMES = frozenset({"gemfile", "pipfile", "podfile", "cartfile", "rakefile", "build", "workspace"})
 _SKIP = ("readme*", "license*", "licence*", "changelog*", "contributing*", "security*", "notice*")
 _SECRET_LINE = re.compile(r"token|secret|passw|api[_-]?key|authorization|credential", re.IGNORECASE)
-_SECRET_FILE = (".env*", "*.pem", "*.key", "id_rsa*", "*secret*", "*credential*")
+_SECRET_FILE = SECRET_FILES
 
 
 @dataclass(frozen=True)
@@ -51,32 +50,12 @@ class FileSample:
 
 
 @dataclass(frozen=True)
-class ParserPlan:
-    """What a run would do and cost, for the user to approve before anything is sent."""
-
-    provider: str
-    label: str
-    model: str
-    files: tuple[str, ...]
-    input_tokens: int
-    max_output_tokens: int
-
-
-@dataclass(frozen=True)
-class ParserResult:
-    """What a run did: the configs saved, the files skipped (with why) and the tokens used."""
+class ParserSaved:
+    """The configs saved (with the file each one was checked on) and what was left alone."""
 
     added: tuple[str, ...]
     skipped: tuple[str, ...]
-    input_tokens: int
-    output_tokens: int
-
-
-def system_prompt() -> str:
-    """The instructions sent to every provider: the bundled skill file without its front matter."""
-    prompt = resources.files("kodalo.core.ai") / "prompts" / "repo" / "parser-config.SKILL.md"
-    text = prompt.read_text(encoding="utf-8")
-    return text.split("---", 2)[2].strip() if text.startswith("---") else text.strip()
+    configs: tuple[tuple[ManifestConfig, str], ...]
 
 
 def candidates(info: RepoInfo, configs: tuple[ManifestConfig, ...]) -> list[str]:
@@ -141,14 +120,14 @@ def _check(data: Any, samples: list[FileSample], known: set[str]) -> tuple[Manif
 
 
 class ParserAssistant:
-    """Plans and runs the AI step for one stored repository."""
+    """Finds the project files that need a config and saves the configs the AI wrote."""
 
-    def __init__(self, repos: RepoService, ai: AiConnections, parsers_dir: Path) -> None:
+    def __init__(self, repos: RepoService, parsers_dir: Path) -> None:
         self._repos = repos
-        self._ai = ai
         self._parsers_dir = parsers_dir
 
-    def _samples(self, settings: GitHubSettings, info: RepoInfo) -> list[FileSample]:
+    def samples(self, settings: GitHubSettings, info: RepoInfo) -> list[FileSample]:
+        """The project files no config covers, with the part of each that would be sent."""
         samples: list[FileSample] = []
         for path in candidates(info, self._repos.configs().configs):
             text = self._repos.read_text(settings, info, path)
@@ -156,42 +135,13 @@ class ParserAssistant:
                 samples.append(FileSample(path, text, redact(text)))
         return samples
 
-    def plan(self, settings: GitHubSettings, repo_id: str) -> ParserPlan:
-        """Work out which files need a config and what asking would cost. Nothing is sent."""
-        return self._plan(self._samples(settings, self._repos.get(repo_id)))
-
-    def _plan(self, samples: list[FileSample]) -> ParserPlan:
-        if not samples:
-            return ParserPlan("", "", "", (), 0, 0)
-        target = self._ai.default_target()
-        output = OUTPUT_TOKENS_PER_FILE * len(samples)
-        return ParserPlan(
-            provider=target.provider,
-            label=target.label,
-            model=target.model,
-            files=tuple(s.path for s in samples),
-            input_tokens=estimate_tokens(system_prompt(), build_prompt(samples)),
-            max_output_tokens=min(output, target.max_tokens or output),
-        )
-
-    def apply(self, settings: GitHubSettings, repo_id: str) -> ParserResult:
-        """Ask the model once for all files, and save every config that passes the checks."""
-        samples = self._samples(settings, self._repos.get(repo_id))
-        if not samples:
-            return ParserResult((), (), 0, 0)
-        reply = self._ai.generate(
-            system_prompt(), build_prompt(samples), self._plan(samples).max_output_tokens
-        )
-        data = _reply_json(reply.text)
-        items = data.get("configs") if isinstance(data, dict) else None
-        if not isinstance(items, list):
-            raise AiInvalidError(
-                "The AI did not answer in the expected format, so nothing was changed."
-            )
+    def save(self, items: list[Any], samples: list[FileSample]) -> ParserSaved:
+        """Check every config on its file and save the valid ones."""
         known = {c.id for c in self._repos.configs().configs}
         added: list[str] = []
         covered: set[str] = set()
         skipped: list[str] = []
+        configs: list[tuple[ManifestConfig, str]] = []
         for item in items[:MAX_FILES]:
             try:
                 config, path = _check(item, samples, known)
@@ -204,5 +154,6 @@ class ParserAssistant:
             known.add(config.id)
             covered.add(path)
             added.append(config.id)
+            configs.append((config, path))
         skipped += [f"{s.path} was left alone." for s in samples if s.path not in covered]
-        return ParserResult(tuple(added), tuple(skipped), reply.input_tokens, reply.output_tokens)
+        return ParserSaved(tuple(added), tuple(skipped), tuple(configs))

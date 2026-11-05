@@ -1,0 +1,419 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "fastapi",
+      "name": "FastAPI",
+      "category": "web",
+      "dependencies": [
+        "fastapi"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "django",
+      "name": "Django",
+      "category": "web",
+      "dependencies": [
+        "django"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "files": [
+        "manage.py"
+      ]
+    },
+    {
+      "id": "flask",
+      "name": "Flask",
+      "category": "web",
+      "dependencies": [
+        "flask"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "starlette",
+      "name": "Starlette",
+      "category": "web",
+      "dependencies": [
+        "starlette"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "tornado",
+      "name": "Tornado",
+      "category": "web",
+      "dependencies": [
+        "tornado"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "aiohttp",
+      "name": "aiohttp",
+      "category": "web",
+      "dependencies": [
+        "aiohttp"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "pyramid",
+      "name": "Pyramid",
+      "category": "web",
+      "dependencies": [
+        "pyramid"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "sanic",
+      "name": "Sanic",
+      "category": "web",
+      "dependencies": [
+        "sanic"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "litestar",
+      "name": "Litestar",
+      "category": "web",
+      "dependencies": [
+        "litestar"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "streamlit",
+      "name": "Streamlit",
+      "category": "ui",
+      "dependencies": [
+        "streamlit"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "gradio",
+      "name": "Gradio",
+      "category": "ui",
+      "dependencies": [
+        "gradio"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "typer",
+      "name": "Typer",
+      "category": "cli",
+      "dependencies": [
+        "typer"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "click",
+      "name": "Click",
+      "category": "cli",
+      "dependencies": [
+        "click"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "qt-for-python",
+      "name": "Qt for Python",
+      "category": "desktop",
+      "dependencies": [
+        "pyqt5",
+        "pyqt6",
+        "pyside2",
+        "pyside6"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "customtkinter",
+      "name": "CustomTkinter",
+      "category": "desktop",
+      "dependencies": [
+        "customtkinter"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "kivy",
+      "name": "Kivy",
+      "category": "mobile",
+      "dependencies": [
+        "kivy"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "sqlalchemy",
+      "name": "SQLAlchemy",
+      "category": "data",
+      "dependencies": [
+        "sqlalchemy"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "pydantic",
+      "name": "Pydantic",
+      "category": "data",
+      "dependencies": [
+        "pydantic"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "pandas",
+      "name": "pandas",
+      "category": "data",
+      "dependencies": [
+        "pandas"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "numpy",
+      "name": "NumPy",
+      "category": "data",
+      "dependencies": [
+        "numpy"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "polars",
+      "name": "Polars",
+      "category": "data",
+      "dependencies": [
+        "polars"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "airflow",
+      "name": "Apache Airflow",
+      "category": "data",
+      "dependencies": [
+        "apache-airflow"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "dbt",
+      "name": "dbt",
+      "category": "data",
+      "dependencies": [
+        "dbt-core"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "scrapy",
+      "name": "Scrapy",
+      "category": "data",
+      "dependencies": [
+        "scrapy"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "files": [
+        "scrapy.cfg"
+      ]
+    },
+    {
+      "id": "pytorch",
+      "name": "PyTorch",
+      "category": "ml",
+      "dependencies": [
+        "torch"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "tensorflow",
+      "name": "TensorFlow",
+      "category": "ml",
+      "dependencies": [
+        "tensorflow",
+        "tensorflow-*"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "keras",
+      "name": "Keras",
+      "category": "ml",
+      "dependencies": [
+        "keras"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "scikit-learn",
+      "name": "scikit-learn",
+      "category": "ml",
+      "dependencies": [
+        "scikit-learn"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "transformers",
+      "name": "Hugging Face Transformers",
+      "category": "ml",
+      "dependencies": [
+        "transformers"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "langchain",
+      "name": "LangChain",
+      "category": "ml",
+      "dependencies": [
+        "langchain",
+        "langchain-*"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "pytest",
+      "name": "pytest",
+      "category": "testing",
+      "dependencies": [
+        "pytest"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "files": [
+        "pytest.ini",
+        "conftest.py"
+      ]
+    },
+    {
+      "id": "mkdocs",
+      "name": "MkDocs",
+      "category": "build",
+      "dependencies": [
+        "mkdocs"
+      ],
+      "ecosystems": [
+        "python"
+      ],
+      "files": [
+        "mkdocs.yml"
+      ]
+    },
+    {
+      "id": "sphinx",
+      "name": "Sphinx",
+      "category": "build",
+      "dependencies": [
+        "sphinx"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "pyinstaller",
+      "name": "PyInstaller",
+      "category": "build",
+      "dependencies": [
+        "pyinstaller"
+      ],
+      "ecosystems": [
+        "python"
+      ]
+    },
+    {
+      "id": "rich",
+      "name": "Rich",
+      "category": "cli",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "rich"
+      ]
+    },
+    {
+      "id": "textual",
+      "name": "Textual",
+      "category": "cli",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "textual"
+      ]
+    }
+  ]
+}

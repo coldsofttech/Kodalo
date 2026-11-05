@@ -26,6 +26,7 @@ ORIGINS = ("repository", "inferred", "user_added")
 FEATURE_STATUSES = ("verified", "partially_verified", "documented_only", "planned")
 AI_PROVIDERS = ("claude_api", "claude_code", "chatgpt_api", "gemini_api")
 AI_MODEL_SOURCES = ("fetched", "manual")
+AI_CALL_STATUSES = ("ok", "failed")
 SETTING_SCOPES = ("global", "product")
 SETTING_MODES = ("inherit", "override", "own")
 SETTING_DATA_TYPES = ("string", "integer", "boolean", "float", "json")
@@ -335,6 +336,28 @@ class AiConnectionRow(_Row, Base):
     )
 
 
+class AiCall(_Row, Base):
+    """One call to an AI provider, kept as history. The text is kept only when the user allows
+    it, so ``prompt_text`` and ``reply_text`` are usually empty. No secret is ever stored here."""
+
+    __tablename__ = "ai_calls"
+    __table_args__ = (
+        CheckConstraint(in_values("status", AI_CALL_STATUSES), name="status"),
+        Index("ix_ai_calls_created_at", "created_at"),
+    )
+
+    title: Mapped[str] = mapped_column(String(128))
+    purpose: Mapped[str] = mapped_column(String(24))
+    provider: Mapped[str] = mapped_column(String(16))
+    model: Mapped[str] = mapped_column(String(128))
+    status: Mapped[str] = mapped_column(String(8))
+    error: Mapped[str] = mapped_column(String(256), default="", server_default="")
+    input_tokens: Mapped[int] = mapped_column(default=0, server_default="0")
+    output_tokens: Mapped[int] = mapped_column(default=0, server_default="0")
+    prompt_text: Mapped[str | None] = mapped_column(Text)
+    reply_text: Mapped[str | None] = mapped_column(Text)
+
+
 class AiModelRow(_Row, Base):
     """A model of an AI connection, with its generation defaults. ``fetched`` rows come from the
     provider; ``manual`` rows are typed in and survive a refresh. At most one model per connection
@@ -382,6 +405,8 @@ class Repository(_Row, Base):
     tree_truncated: Mapped[bool] = mapped_column(default=False, server_default="0")
     file_count: Mapped[int] = mapped_column(default=0, server_default="0")
     warnings_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    documentation_json: Mapped[str] = mapped_column(Text, default="{}", server_default="{}")
+    skipped_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     local_path: Mapped[str] = mapped_column(String(1024), default="", server_default="")
     is_monorepo: Mapped[bool] = mapped_column(default=False, server_default="0")
     monorepo_signals_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
@@ -411,6 +436,16 @@ class Repository(_Row, Base):
         back_populates="repository",
         cascade="all, delete-orphan",
         order_by="RepositoryManifest.path",
+    )
+    frameworks: Mapped[list["RepositoryFramework"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryFramework.position",
+    )
+    tooling: Mapped[list["RepositoryTool"]] = relationship(
+        back_populates="repository",
+        cascade="all, delete-orphan",
+        order_by="RepositoryTool.position",
     )
 
 
@@ -486,6 +521,7 @@ class RepositoryManifest(_Row, Base):
     is_lockfile: Mapped[bool] = mapped_column(default=False)
     package_name: Mapped[str | None] = mapped_column(String(256))
     version: Mapped[str | None] = mapped_column(String(256))
+    evidence: Mapped[str] = mapped_column(String(128), default="", server_default="")
 
     repository: Mapped["Repository"] = relationship(back_populates="manifests")
     dependencies: Mapped[list["RepositoryDependency"]] = relationship(
@@ -493,6 +529,40 @@ class RepositoryManifest(_Row, Base):
         cascade="all, delete-orphan",
         order_by="RepositoryDependency.position",
     )
+
+
+class RepositoryFramework(_Row, Base):
+    """A framework found in a repository, with the file or dependency that shows it."""
+
+    __tablename__ = "repository_frameworks"
+    __table_args__ = (UniqueConstraint("repository_id", "framework_id"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    framework_id: Mapped[str] = mapped_column(String(64))
+    name: Mapped[str] = mapped_column(String(64))
+    category: Mapped[str] = mapped_column(String(16))
+    evidence: Mapped[str] = mapped_column(String(128))
+    path: Mapped[str] = mapped_column(String(1024), default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+    repository: Mapped["Repository"] = relationship(back_populates="frameworks")
+
+
+class RepositoryTool(_Row, Base):
+    """A build, test, lint, CI, container or package tool found in a repository."""
+
+    __tablename__ = "repository_tooling"
+    __table_args__ = (UniqueConstraint("repository_id", "tool_id"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    tool_id: Mapped[str] = mapped_column(String(64))
+    name: Mapped[str] = mapped_column(String(64))
+    category: Mapped[str] = mapped_column(String(24))
+    evidence: Mapped[str] = mapped_column(String(128))
+    path: Mapped[str] = mapped_column(String(1024), default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+    repository: Mapped["Repository"] = relationship(back_populates="tooling")
 
 
 class RepositoryDependency(_Row, Base):

@@ -52,7 +52,7 @@ class LayoutRules:
 
 def analyze(entries: Iterable[Entry], rules: LayoutRules) -> Layout:
     """Return the notable folders, project files and monorepo verdict for ``entries``."""
-    kept = [e for e in entries if not _ignored(e.path, rules.ignored)]
+    kept = without_ignored(entries, rules.ignored)
     notable = _notable_dirs(kept, rules.directories)
     manifests = _manifests(kept, rules.manifests)
     uncounted = tuple(n.path for n in notable if n.purpose in _UNCOUNTED_PURPOSES)
@@ -63,6 +63,11 @@ def analyze(entries: Iterable[Entry], rules: LayoutRules) -> Layout:
         is_monorepo=bool(signals),
         monorepo_signals=tuple(signals),
     )
+
+
+def without_ignored(entries: Iterable[Entry], ignored: frozenset[str]) -> list[Entry]:
+    """Leave out everything inside a folder named in ``ignored`` (``node_modules`` and so on)."""
+    return [e for e in entries if not _ignored(e.path, ignored)]
 
 
 def _ignored(path: str, ignored: frozenset[str]) -> bool:

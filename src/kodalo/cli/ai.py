@@ -12,7 +12,9 @@ from rich.table import Table
 from kodalo.cli import output
 from kodalo.cli.state import get_state
 from kodalo.core.ai import (
+    PERIODS,
     PROVIDER_IDS,
+    AiCallRecord,
     AiConnection,
     AiConnectionError,
     AiConnections,
@@ -20,6 +22,7 @@ from kodalo.core.ai import (
     AiModel,
     AiNotFoundError,
     AiSecretError,
+    resolve_period,
 )
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
@@ -296,3 +299,193 @@ def models_remove_command(
     with _connections(ctx) as ai:
         ai.remove_model(provider, name)
     output.console.print(f"Removed {name}.")
+
+
+PeriodOption = Annotated[
+    str, typer.Option("--period", help=f"One of: {', '.join(PERIODS)}. Default: all.")
+]
+FromOption = Annotated[
+    str | None, typer.Option("--from", help="With --period custom: the first day, 2026-11-01.")
+]
+ToOption = Annotated[
+    str | None, typer.Option("--to", help="With --period custom: the last day, 2026-11-30.")
+]
+
+
+def _call_data(call: AiCallRecord) -> dict[str, Any]:
+    return {
+        "id": call.id,
+        "created_at": call.created_at,
+        "title": call.title,
+        "purpose": call.purpose,
+        "provider": call.provider,
+        "model": call.model,
+        "status": call.status,
+        "error": call.error,
+        "input_tokens": call.input_tokens,
+        "output_tokens": call.output_tokens,
+        "has_text": call.has_text,
+    }
+
+
+@app.command("history")
+def history_command(
+    ctx: typer.Context,
+    period: PeriodOption = "all",
+    start: FromOption = None,
+    end: ToOption = None,
+    limit: Annotated[int, typer.Option("--limit", help="Entries to show (1 to 200).")] = 50,
+    offset: Annotated[int, typer.Option("--offset", help="Entries to skip.")] = 0,
+    show: Annotated[
+        str | None, typer.Option("--show", help="Show one entry, with its text if it was kept.")
+    ] = None,
+    json_output: JsonOption = False,
+) -> None:
+    """List the calls made to AI providers, newest first, or show one with --show <id>."""
+    with _connections(ctx) as connections:
+        if show is not None:
+            detail = connections.history.get(show)
+            data = {**_call_data(detail.record), "prompt": detail.prompt_text}
+            data["reply"] = detail.reply_text
+            if json_output:
+                output.console.print_json(data=data)
+                return
+            table = Table(show_header=False)
+            for key, value in data.items():
+                table.add_row(key, "-" if value in (None, "") else str(value))
+            output.console.print(table)
+            return
+        page = connections.history.list(resolve_period(period, start, end), limit, offset)
+    if json_output:
+        output.console.print_json(
+            data={"total": page.total, "items": [_call_data(c) for c in page.items]}
+        )
+        return
+    table = Table(caption=f"{len(page.items)} of {page.total}")
+    for column in ("When (UTC)", "Title", "Purpose", "Connection", "Model", "Status", "In", "Out"):
+        table.add_column(column)
+    for call in page.items:
+        table.add_row(
+            call.created_at,
+            call.title,
+            call.purpose,
+            call.provider,
+            call.model,
+            call.status if not call.error else f"{call.status}: {call.error}",
+            str(call.input_tokens),
+            str(call.output_tokens),
+        )
+    output.console.print(table)
+    output.err_console.print("Use --show <id> with --json to see an entry's id and text.")
+
+
+@app.command("usage")
+def usage_command(
+    ctx: typer.Context,
+    period: PeriodOption = "all",
+    start: FromOption = None,
+    end: ToOption = None,
+    json_output: JsonOption = False,
+) -> None:
+    """Show the tokens used per connection and model, and per day."""
+    with _connections(ctx) as connections:
+        usage = connections.history.usage(resolve_period(period, start, end))
+    if json_output:
+        output.console.print_json(
+            data={
+                "calls": usage.calls,
+                "input_tokens": usage.input_tokens,
+                "output_tokens": usage.output_tokens,
+                "rows": [
+                    {
+                        "provider": r.provider,
+                        "model": r.model,
+                        "calls": r.calls,
+                        "input_tokens": r.input_tokens,
+                        "output_tokens": r.output_tokens,
+                    }
+                    for r in usage.rows
+                ],
+                "days": [
+                    {"day": d.day, "input_tokens": d.input_tokens, "output_tokens": d.output_tokens}
+                    for d in usage.days
+                ],
+            }
+        )
+        return
+    table = Table()
+    for column in ("Connection", "Model", "Calls", "Tokens in", "Tokens out", "Total"):
+        table.add_column(column, justify="left" if column in ("Connection", "Model") else "right")
+    for row in usage.rows:
+        total = row.input_tokens + row.output_tokens
+        table.add_row(
+            row.provider,
+            row.model or "-",
+            str(row.calls),
+            str(row.input_tokens),
+            str(row.output_tokens),
+            str(total),
+        )
+    table.add_row(
+        "All",
+        "",
+        str(usage.calls),
+        str(usage.input_tokens),
+        str(usage.output_tokens),
+        str(usage.input_tokens + usage.output_tokens),
+    )
+    output.console.print(table)
+
+
+@app.command("history-settings")
+def history_settings_command(
+    ctx: typer.Context,
+    store_text: Annotated[
+        bool | None,
+        typer.Option(
+            "--store-text/--no-store-text",
+            help="Keep the text of prompts and answers (off by default).",
+        ),
+    ] = None,
+    retention_days: Annotated[
+        int | None,
+        typer.Option(
+            "--retention-days",
+            help="Remove entries older than this many days (default 90; 0 keeps them forever).",
+        ),
+    ] = None,
+    json_output: JsonOption = False,
+) -> None:
+    """Show or change how the AI history is kept. With no options, shows the current values."""
+    with _connections(ctx) as connections:
+        history = connections.history
+        if store_text is None and retention_days is None:
+            current = history.settings()
+        else:
+            current = history.save_settings(store_text, retention_days)
+    if json_output:
+        output.console.print_json(
+            data={"store_text": current.store_text, "retention_days": current.retention_days}
+        )
+        return
+    table = Table(show_header=False)
+    table.add_row("Keep prompt and answer text", "yes" if current.store_text else "no")
+    table.add_row(
+        "Remove entries after",
+        "never" if current.retention_days == 0 else f"{current.retention_days} days",
+    )
+    output.console.print(table)
+
+
+@app.command("purge-history")
+def purge_history_command(
+    ctx: typer.Context,
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Do not ask for confirmation.")] = False,
+) -> None:
+    """Remove every entry of the AI history. This cannot be undone."""
+    if not yes and not typer.confirm("Remove the whole AI history? This cannot be undone."):
+        output.err_console.print("Nothing was removed.")
+        raise typer.Exit(code=1)
+    with _connections(ctx) as connections:
+        deleted = connections.history.purge_all()
+    output.err_console.print(f"Removed {deleted} entries.")

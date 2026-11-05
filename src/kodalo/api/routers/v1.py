@@ -14,18 +14,27 @@ from kodalo.api.deps import (
     get_appearance,
     get_brand_service,
     get_github_connectivity,
-    get_parser_assistant,
+    get_repo_analyzer,
     get_repo_service,
 )
 from kodalo.api.schemas import (
+    AiCallDetailResponse,
     AiCheckResponse,
     AiConnectionResponse,
     AiConnectionUpdate,
     AiDefaultConnection,
     AiDefaultModel,
+    AiHistoryPageResponse,
+    AiHistorySettingsResponse,
+    AiHistorySettingsUpdate,
     AiModelResponse,
     AiModelUpdate,
+    AiPeriod,
     AiProvider,
+    AiPurgeResponse,
+    AiUsageResponse,
+    AnalysisPlanResponse,
+    AnalysisResultResponse,
     BrandCreate,
     BrandDuplicate,
     BrandExport,
@@ -55,8 +64,6 @@ from kodalo.api.schemas import (
     PaletteResponse,
     PaletteSuggestion,
     PaletteUpdate,
-    ParserPlanResponse,
-    ParserResultResponse,
     RepoReadRequest,
     RepoResponse,
     StudioSourceRequest,
@@ -70,6 +77,8 @@ from kodalo.core.ai import (
     AiInvalidError,
     AiNotFoundError,
     AiSecretError,
+    Period,
+    resolve_period,
 )
 from kodalo.core.appearance import Appearance, AppearanceInvalidError
 from kodalo.core.brand import (
@@ -112,7 +121,7 @@ from kodalo.core.palette import (
 )
 from kodalo.core.palette.suggest import PaletteSuggester
 from kodalo.core.repo import (
-    ParserAssistant,
+    RepoAnalyzer,
     RepoDetailsError,
     RepoNotFoundError,
     RepoReadError,
@@ -131,7 +140,7 @@ AiSetting = Annotated[AiConnections, Depends(get_ai_connections)]
 AiProviderPath = Annotated[AiProvider, Path(description="The AI provider.")]
 AiModelName = Annotated[str, Path(min_length=1, max_length=128, description="The model name.")]
 Repos = Annotated[RepoService, Depends(get_repo_service)]
-Parsers = Annotated[ParserAssistant, Depends(get_parser_assistant)]
+Analyzer = Annotated[RepoAnalyzer, Depends(get_repo_analyzer)]
 BrandPath = Annotated[str, Path(max_length=64, description="Brand profile id.")]
 Variant = Annotated[
     Literal["light", "dark"],
@@ -448,6 +457,89 @@ def remove_ai_model(provider: AiProviderPath, name: AiModelName, ai: AiSetting) 
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
+AI_HISTORY = "/settings/ai/history"
+MAX_OFFSET = 10_000_000
+PeriodQuery = Annotated[AiPeriod, Query(description="The time window.")]
+StartQuery = Annotated[
+    str | None, Query(max_length=10, description="First day of a custom period, 2026-11-01.")
+]
+EndQuery = Annotated[
+    str | None, Query(max_length=10, description="Last day of a custom period, 2026-11-30.")
+]
+
+
+def _period(period: str, start: str | None, end: str | None) -> Period:
+    with _ai_errors():
+        return resolve_period(period, start, end)
+
+
+@router.get(f"{AI_HISTORY}/settings", summary="Get the AI history settings", responses=COMMON)
+def get_ai_history_settings(ai: AiSetting) -> AiHistorySettingsResponse:
+    """Return whether the text of calls is kept and after how many days entries are removed."""
+    return AiHistorySettingsResponse.from_core(ai.history.settings())
+
+
+@router.put(
+    f"{AI_HISTORY}/settings", summary="Set the AI history settings", responses=COMMON | AI_INVALID
+)
+def set_ai_history_settings(
+    body: AiHistorySettingsUpdate, ai: AiSetting
+) -> AiHistorySettingsResponse:
+    """Choose whether to keep the text of calls and how long entries are kept (0 forever)."""
+    with _ai_errors():
+        return AiHistorySettingsResponse.from_core(
+            ai.history.save_settings(body.store_text, body.retention_days)
+        )
+
+
+@router.get(AI_HISTORY, summary="List the AI calls", responses=COMMON | AI_INVALID)
+def list_ai_history(
+    ai: AiSetting,
+    period: PeriodQuery = "all",
+    start: StartQuery = None,
+    end: EndQuery = None,
+    limit: Annotated[int, Query(ge=1, le=200)] = 50,
+    offset: Annotated[int, Query(ge=0, le=MAX_OFFSET)] = 0,
+) -> AiHistoryPageResponse:
+    """Return the calls made to AI providers in the period, newest first, without their text."""
+    window = _period(period, start, end)
+    with _ai_errors():
+        return AiHistoryPageResponse.from_core(ai.history.list(window, limit, offset))
+
+
+@router.get(
+    f"{AI_HISTORY}/{{call_id}}",
+    summary="Get one AI call",
+    responses=COMMON | AI_INVALID | AI_NOT_FOUND,
+)
+def get_ai_call(
+    call_id: Annotated[str, Path(min_length=1, max_length=36, description="The entry id.")],
+    ai: AiSetting,
+) -> AiCallDetailResponse:
+    """Return one call with what was sent and what came back, when the text was kept."""
+    with _ai_errors():
+        return AiCallDetailResponse.from_detail(ai.history.get(call_id))
+
+
+@router.delete(AI_HISTORY, summary="Purge the AI history", responses=COMMON)
+def purge_ai_history(ai: AiSetting) -> AiPurgeResponse:
+    """Remove every entry of the history. Token totals start again from zero."""
+    return AiPurgeResponse(deleted=ai.history.purge_all())
+
+
+@router.get("/settings/ai/usage", summary="Get the AI token usage", responses=COMMON | AI_INVALID)
+def get_ai_usage(
+    ai: AiSetting,
+    period: PeriodQuery = "all",
+    start: StartQuery = None,
+    end: EndQuery = None,
+) -> AiUsageResponse:
+    """Return the calls and tokens used in the period per connection and model and per day."""
+    window = _period(period, start, end)
+    with _ai_errors():
+        return AiUsageResponse.from_core(ai.history.usage(window))
+
+
 @router.get("/settings/theme", summary="Get the window theme", responses=COMMON)
 def get_theme(appearance: ThemeSetting) -> ThemeResponse:
     """Return the theme the window uses. The default, system, follows the operating system."""
@@ -526,26 +618,27 @@ def get_repository(repo_id: RepoPath, repos: Repos) -> RepoResponse:
 
 
 @router.post(
-    "/studio/repositories/{repo_id}/parsers/plan",
-    summary="Plan the AI parser step",
+    "/studio/repositories/{repo_id}/analysis/plan",
+    summary="Plan the AI analysis",
     responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
 )
-def plan_parsers(repo_id: RepoPath, github: GitHub, parsers: Parsers) -> ParserPlanResponse:
-    """List the files the AI would be asked about and estimate the tokens. Nothing is sent."""
+def plan_analysis(repo_id: RepoPath, github: GitHub, analyzer: Analyzer) -> AnalysisPlanResponse:
+    """List the project files, package names and file names the AI would be asked about and
+    estimate the tokens. Nothing is sent."""
     with _studio_errors(), _ai_errors():
-        return ParserPlanResponse.from_core(parsers.plan(github.get(), repo_id))
+        return AnalysisPlanResponse.from_core(analyzer.plan(github.get(), repo_id))
 
 
 @router.post(
-    "/studio/repositories/{repo_id}/parsers",
-    summary="Write parser configs with the AI",
+    "/studio/repositories/{repo_id}/analysis",
+    summary="Analyze a repository with the AI",
     responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
 )
-def generate_parsers(repo_id: RepoPath, github: GitHub, parsers: Parsers) -> ParserResultResponse:
-    """Ask the default AI model for configs for the project files no config covers, check each
-    one on the real file, and save the valid ones. Read the repository again to use them."""
+def run_analysis(repo_id: RepoPath, github: GitHub, analyzer: Analyzer) -> AnalysisResultResponse:
+    """Ask the default AI model once for parser, framework and tooling configs, check each one,
+    and save the valid ones. Read the repository again to use them."""
     with _studio_errors(), _ai_errors():
-        return ParserResultResponse.from_core(parsers.apply(github.get(), repo_id))
+        return AnalysisResultResponse.from_core(analyzer.apply(github.get(), repo_id))
 
 
 # Reference data -----------------------------------------------------------------------------

@@ -230,14 +230,14 @@ export const checkStudioSource = (source) =>
 /** @param {{ source: string, refresh?: boolean, details?: object }} body */
 export const readRepository = (body) =>
   request('/api/v1/studio/repositories', { method: 'POST', json: body });
-/** What asking the AI for parser configs would send and cost; nothing is sent. */
-export const planParsers = (/** @type {string} */ repoId) =>
-  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/parsers/plan`, {
+/** What asking the AI to analyze a repository would send and cost; nothing is sent. */
+export const planAnalysis = (/** @type {string} */ repoId) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis/plan`, {
     method: 'POST',
   });
-/** Ask the AI for parser configs and save the valid ones. */
-export const generateParsers = (/** @type {string} */ repoId) =>
-  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/parsers`, {
+/** Ask the AI once for parser, framework and tooling configs and save the valid ones. */
+export const runAnalysis = (/** @type {string} */ repoId) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis`, {
     method: 'POST',
   });
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
@@ -271,3 +271,31 @@ export const removeAiModel = (provider, name) =>
 /** @param {string} provider @param {string} name */
 export const setDefaultAiModel = (provider, name) =>
   request(`${AI}/${provider}/default-model`, { method: 'PUT', json: { name } });
+
+const AI_SETTINGS = '/api/v1/settings/ai';
+/** @param {{ period: string, start?: string, end?: string, limit?: number, offset?: number }} filter */
+const aiQuery = ({ period, start, end, limit, offset }) => {
+  const query = new URLSearchParams({ period });
+  if (period === 'custom' && start) query.set('start', start);
+  if (period === 'custom' && end) query.set('end', end);
+  if (limit !== undefined) query.set('limit', String(limit));
+  if (offset) query.set('offset', String(offset));
+  return query.toString();
+};
+export const getAiHistorySettings = () => request(`${AI_SETTINGS}/history/settings`);
+/** @param {{ store_text?: boolean, retention_days?: number }} body */
+export const saveAiHistorySettings = (body) =>
+  request(`${AI_SETTINGS}/history/settings`, { method: 'PUT', json: body });
+/** The calls made to AI providers in a period, newest first, without their text. */
+export const listAiHistory = (/** @type {Parameters<typeof aiQuery>[0]} */ filter) =>
+  request(`${AI_SETTINGS}/history?${aiQuery(filter)}`);
+/** One call with what was sent and what came back, when the text was kept. */
+export const getAiCall = (/** @type {string} */ id) =>
+  request(`${AI_SETTINGS}/history/${encodeURIComponent(id)}`);
+/** Remove every entry of the AI history. */
+export const purgeAiHistory = () => request(`${AI_SETTINGS}/history`, { method: 'DELETE' });
+/** The tokens used in a period per connection and model and per day. */
+export const getAiUsage = (/** @type {Parameters<typeof aiQuery>[0]} */ filter) =>
+  request(
+    `${AI_SETTINGS}/usage?${aiQuery({ period: filter.period, start: filter.start, end: filter.end })}`,
+  );

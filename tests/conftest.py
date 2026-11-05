@@ -39,6 +39,14 @@ def _memory_keychain(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
 
 
 @pytest.fixture(autouse=True)
+def _own_data_folder(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Keep every test away from the real data folder, even when a command is run without
+    ``--data-dir``."""
+    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path / "local-app-data"))
+    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path / "local-app-data"))
+
+
+@pytest.fixture(autouse=True)
 def _fresh_state(tmp_path: Path) -> Iterator[None]:
     """Give every API test its own empty data folder."""
     deps.configure(tmp_path / "api-data")
