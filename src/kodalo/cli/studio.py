@@ -220,8 +220,8 @@ def _ask_ai(
     result = assistant.apply(settings, repo_id)
     output.err_console.print(
         f"Saved {result.installation} installation method(s), {result.capabilities} "
-        f"capabilities and {result.use_cases} use case(s); used {result.input_tokens} tokens "
-        f"in, {result.output_tokens} out."
+        f"capabilities, {result.features} feature(s) and {result.use_cases} use case(s); used "
+        f"{result.input_tokens} tokens in, {result.output_tokens} out."
     )
     for line in result.skipped:
         output.err_console.print(f"[yellow]{line}[/yellow]")
@@ -252,6 +252,11 @@ def _show_readme(info: RepoInfo, analysis: ReadmeAnalysis, as_json: bool) -> Non
                 (c.name, c.description or "-", c.note or "-", c.evidence.file or "-")
                 for c in analysis.capabilities
             ],
+        ),
+        (
+            "Features",
+            ("Feature", "Description", "Based on"),
+            [(f.name, f.description or "-", f.evidence.quote or "-") for f in analysis.features],
         ),
         (
             "Use cases",

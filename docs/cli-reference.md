@@ -1384,7 +1384,7 @@ $ kodalo settings github set [OPTIONS] {mode}
 * `--folder <str>`: Folder holding your repositories (for local_folder).
 * `--manifest-limit <int>`: How many project files (package.json ...) to read from GitHub, 1 to 100.
 * `--document-limit <int>`: How many documents (the README and the docs it links to) to read, 1 to 50.
-* `--document-max-kb <int>`: How much of each document to read, in KB, 1 to 200.
+* `--document-max-kb <int>`: How much of each document to read, in KB, 1 to 2000.
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 

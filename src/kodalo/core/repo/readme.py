@@ -26,6 +26,7 @@ from kodalo.core.storage.models import (
     Repository,
     RepositoryCapability,
     RepositoryDocument,
+    RepositoryFeature,
     RepositoryInstall,
     RepositoryReadme,
     RepositoryUseCase,
@@ -108,6 +109,13 @@ class Capability:
 
 
 @dataclass(frozen=True)
+class Feature:
+    name: str
+    description: str = ""
+    evidence: Evidence = Evidence(status=INFERRED)
+
+
+@dataclass(frozen=True)
 class UseCase:
     title: str
     description: str = ""
@@ -137,6 +145,7 @@ class ReadmeAnalysis:
     warnings: tuple[str, ...]
     analyzed_at: str
     use_cases_at: str | None = None
+    features: tuple[Feature, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -485,6 +494,7 @@ class ReadmeService:
         installs: list[Installation] | None,
         capable: list[Capability] | None,
         use_cases: list[UseCase] | None,
+        features: list[Feature] | None = None,
     ) -> ReadmeAnalysis:
         """Replace the parts the AI wrote; ``None`` keeps a part as it was."""
         with self._database.session() as session:
@@ -527,6 +537,20 @@ class ReadmeService:
                     )
                     for n, c in enumerate(capable)
                 )
+            if features is not None:
+                session.execute(delete(RepositoryFeature).where(_of(RepositoryFeature, repo_id)))
+                session.add_all(
+                    RepositoryFeature(
+                        repository_id=repo_id,
+                        name=f.name,
+                        description=f.description,
+                        file=f.evidence.file,
+                        quote=f.evidence.quote,
+                        status=f.evidence.status,
+                        position=n,
+                    )
+                    for n, f in enumerate(features)
+                )
             if use_cases is not None:
                 session.execute(delete(RepositoryUseCase).where(_of(RepositoryUseCase, repo_id)))
                 session.add_all(
@@ -552,7 +576,7 @@ def _of(model: Any, repo_id: str) -> Any:
 
 
 def _clear(session: Session, repo_id: str) -> None:
-    """Remove the README row and what the deterministic read produces. Use cases stay."""
+    """Remove the README row and what the deterministic read produces. Features and use cases stay."""
     for model in (RepositoryReadme, RepositoryDocument, RepositoryInstall, RepositoryCapability):
         session.execute(delete(model).where(model.repository_id == repo_id))
 
@@ -573,6 +597,11 @@ def _analysis(session: Session, row: RepositoryReadme) -> ReadmeAnalysis:
         select(RepositoryCapability)
         .where(RepositoryCapability.repository_id == repo_id)
         .order_by(RepositoryCapability.position)
+    ).all()
+    featured = session.scalars(
+        select(RepositoryFeature)
+        .where(RepositoryFeature.repository_id == repo_id)
+        .order_by(RepositoryFeature.position)
     ).all()
     cases = session.scalars(
         select(RepositoryUseCase)
@@ -604,4 +633,7 @@ def _analysis(session: Session, row: RepositoryReadme) -> ReadmeAnalysis:
         warnings=tuple(json.loads(row.warnings_json)),
         analyzed_at=row.analyzed_at or "",
         use_cases_at=row.use_cases_at,
+        features=tuple(
+            Feature(r.name, r.description, Evidence(r.file, r.quote, r.status)) for r in featured
+        ),
     )

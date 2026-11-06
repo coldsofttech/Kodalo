@@ -625,6 +625,20 @@ class RepositoryCapability(_Row, Base):
     position: Mapped[int] = mapped_column(default=0)
 
 
+class RepositoryFeature(_Row, Base):
+    """A product feature the AI grouped from the capabilities, with the evidence of the first."""
+
+    __tablename__ = "repository_features"
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(128))
+    description: Mapped[str] = mapped_column(String(512), default="", server_default="")
+    file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    quote: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    status: Mapped[str] = mapped_column(String(16), default="inferred", server_default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+
 class RepositoryUseCase(_Row, Base):
     """A use case the AI worked out from the capabilities, with the capability it rests on."""
 

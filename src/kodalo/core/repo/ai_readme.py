@@ -2,9 +2,9 @@
 
 The documents are the ones the README analysis already chose (the README and the docs it links to),
 read again with the same limits, with the lines that look like secrets removed. The model returns
-the purpose, the ways to install, the capabilities and the use cases. Nothing without evidence is
-kept: an installation method or capability is saved only when its quote is found in the file it
-names, and a use case only when it rests on a saved capability. A part the model left empty, or
+the purpose, the ways to install, the capabilities, the features and the use cases. Nothing without
+evidence is kept: an installation method or capability is saved only when its quote is found in the
+file it names, and a feature or use case only when it rests on a saved capability. A part the model left empty, or
 whose items all failed the check, keeps what was found before. See ``docs/readme-analysis.md``.
 """
 
@@ -23,6 +23,7 @@ from kodalo.core.repo.readme import (
     MAX_CAPABILITIES,
     Capability,
     Evidence,
+    Feature,
     Installation,
     ReadmeAnalysis,
     ReadmeService,
@@ -31,8 +32,9 @@ from kodalo.core.repo.readme import (
 )
 
 MAX_USE_CASES = 6
+MAX_FEATURES = 12
 MAX_OUTPUT_TOKENS = 4000
-_KEYS = ("purpose", "installation", "capabilities", "use_cases")
+_KEYS = ("purpose", "installation", "capabilities", "features", "use_cases")
 
 
 @dataclass(frozen=True)
@@ -57,6 +59,7 @@ class ReadmeResult:
     skipped: tuple[str, ...]
     input_tokens: int
     output_tokens: int
+    features: int = 0
 
 
 def system_prompt() -> str:
@@ -133,6 +136,7 @@ class ReadmeAssistant:
         skipped: list[str] = []
         installs = _installs(data.get("installation"), texts, skipped)
         capable = _capabilities(data.get("capabilities"), texts, skipped)
+        featured = _features(data.get("features"), capable, skipped)
         cases = _use_cases(data.get("use_cases"), capable, skipped)
         purpose = data.get("purpose")
         tagline = summary = file = ""
@@ -148,6 +152,7 @@ class ReadmeAssistant:
             installs or None,
             capable or None,
             cases or None,
+            featured or None,
         )
         return ReadmeResult(
             len(installs),
@@ -156,6 +161,7 @@ class ReadmeAssistant:
             tuple(skipped),
             reply.input_tokens,
             reply.output_tokens,
+            len(featured),
         )
 
 
@@ -200,6 +206,29 @@ def _capabilities(value: object, texts: dict[str, str], skipped: list[str]) -> l
         description, note = _text(item.get("description"), 512), _text(item.get("note"), 256)
         found.setdefault(name.casefold(), Capability(name, description, note, evidence))
     return list(found.values())[:MAX_CAPABILITIES]
+
+
+def _features(value: object, capable: list[Capability], skipped: list[str]) -> list[Feature]:
+    by_name = {c.name.casefold(): c for c in capable}
+    found: dict[str, Feature] = {}
+    for item in _items(value):
+        name = _text(item.get("name"), 128)
+        names = item.get("capabilities")
+        asked = [n for n in names if isinstance(n, str)] if isinstance(names, list) else []
+        cited = [by_name[n.casefold()] for n in asked if n.casefold() in by_name]
+        if not name or not cited or len(cited) != len(asked):
+            skipped.append(f"{name or 'A feature'}: it does not rest on a saved capability")
+            continue
+        evidence = cited[0].evidence
+        found.setdefault(
+            name.casefold(),
+            Feature(
+                name,
+                _text(item.get("description"), 300),
+                Evidence(evidence.file, evidence.quote, INFERRED),
+            ),
+        )
+    return list(found.values())[:MAX_FEATURES]
 
 
 def _use_cases(value: object, capable: list[Capability], skipped: list[str]) -> list[UseCase]:

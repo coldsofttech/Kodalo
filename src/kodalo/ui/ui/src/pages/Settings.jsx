@@ -205,7 +205,7 @@ export default function SettingsPage() {
             label="Most of each document to read (KB)"
             value={documentMaxKb}
             min={1}
-            max={200}
+            max={2000}
             onChange={setDocumentMaxKb}
             hint="A longer document is cut off here and a note says so."
           />

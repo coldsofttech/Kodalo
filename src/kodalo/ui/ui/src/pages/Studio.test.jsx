@@ -189,6 +189,7 @@ const README = {
       evidence: { file: 'README.md', quote: '- Service', status: 'documented' },
     },
   ],
+  features: [],
   use_cases: [],
   documents: [
     { path: 'README.md', status: 'read', reason: '', size: 100 },
@@ -227,6 +228,7 @@ describe('StudioPage README step', () => {
         return {
           installation: 1,
           capabilities: 2,
+          features: 0,
           use_cases: 1,
           skipped: [],
           input_tokens: 400,
@@ -256,7 +258,7 @@ describe('StudioPage README step', () => {
 
     await userEvent.click(screen.getByText('Proceed'));
     expect(
-      await screen.findByText(/Saved 1 installation method\(s\), 2 capabilities and 1 use case/),
+      await screen.findByText(/Saved 1 installation method\(s\), 2 capabilities, 0 feature\(s\) and 1 use case/),
     ).toBeInTheDocument();
     expect(await screen.findByText('Free disk space')).toBeInTheDocument();
     expect(calls.filter((call) => call.path.endsWith('/readme/analysis')).length).toBe(1);

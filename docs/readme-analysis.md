@@ -15,7 +15,7 @@ Two settings (GitHub settings, `kodalo settings github set`) bound the work:
 | Setting | Default | Range |
 | --- | --- | --- |
 | Documents to read (`document_limit`) | 10 | 1 to 50 |
-| Most of each document to read (`document_max_kb`) | 200 KB | 1 to 200 |
+| Most of each document to read (`document_max_kb`) | 200 KB | 1 to 2000 |
 
 A document over the size limit is cut and a warning says so.
 

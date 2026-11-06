@@ -376,7 +376,7 @@ class GitHubSettingsResponse(BaseModel):
     )
     document_max_kb: int = Field(
         ge=1,
-        le=200,
+        le=2000,
         description="How much of each document to read, in KB. The rest is left out.",
         examples=[200],
     )
@@ -399,7 +399,7 @@ class GitHubSettingsUpdate(BaseModel):
     local_folder: str | None = Field(default=None, max_length=1024, examples=["C:/Users/me/code"])
     manifest_limit: int | None = Field(default=None, ge=1, le=100, examples=[10])
     document_limit: int | None = Field(default=None, ge=1, le=50, examples=[10])
-    document_max_kb: int | None = Field(default=None, ge=1, le=200, examples=[200])
+    document_max_kb: int | None = Field(default=None, ge=1, le=2000, examples=[200])
 
 
 class GitHubCheckResponse(BaseModel):
@@ -929,6 +929,12 @@ class CapabilityResponse(BaseModel):
     evidence: EvidenceResponse
 
 
+class FeatureResponse(BaseModel):
+    name: str = Field(max_length=128, examples=["Scheduled cleanup"])
+    description: str = Field(max_length=512)
+    evidence: EvidenceResponse
+
+
 class UseCaseResponse(BaseModel):
     title: str = Field(max_length=128, examples=["Free disk space before a release"])
     description: str = Field(max_length=512)
@@ -951,6 +957,9 @@ class ReadmeResponse(BaseModel):
     purpose_file: str = Field(max_length=1024, examples=["README.md"])
     installation: list[InstallationResponse] = Field(max_length=40)
     capabilities: list[CapabilityResponse] = Field(max_length=30)
+    features: list[FeatureResponse] = Field(
+        max_length=12, description="Empty until the AI is asked for them."
+    )
     use_cases: list[UseCaseResponse] = Field(
         max_length=6, description="Empty until the AI is asked for them."
     )
@@ -983,6 +992,14 @@ class ReadmeResponse(BaseModel):
                     evidence=EvidenceResponse.from_core(c.evidence),
                 )
                 for c in analysis.capabilities
+            ],
+            features=[
+                FeatureResponse(
+                    name=f.name,
+                    description=f.description,
+                    evidence=EvidenceResponse.from_core(f.evidence),
+                )
+                for f in analysis.features
             ],
             use_cases=[
                 UseCaseResponse(
@@ -1036,6 +1053,7 @@ class ReadmeResultResponse(BaseModel):
 
     installation: int = Field(ge=0, description="Installation methods saved.")
     capabilities: int = Field(ge=0, description="Capabilities saved.")
+    features: int = Field(ge=0, description="Features saved.")
     use_cases: int = Field(ge=0, description="Use cases saved.")
     skipped: list[str] = Field(max_length=100, description="Plain sentences about what was left.")
     input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
@@ -1046,6 +1064,7 @@ class ReadmeResultResponse(BaseModel):
         return cls(
             installation=result.installation,
             capabilities=result.capabilities,
+            features=result.features,
             use_cases=result.use_cases,
             skipped=[s[:300] for s in result.skipped],
             input_tokens=result.input_tokens,

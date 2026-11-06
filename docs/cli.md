@@ -48,7 +48,7 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | Command | What it does |
 | --- | --- |
 | `settings github show` | Show the current mode, folder, number of project files to read and the document limits. `--refresh-with-ai` asks the default AI model for parser configs for project files no config covers: it prints the files and the expected tokens and asks first (`--yes` skips the question), then reads again with the new configs. `--json` for machine-readable output. |
-| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `studio read --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 200 KB (default 200). |
+| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `studio read --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 2000 KB (default 200). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
 
 ### `settings ai`

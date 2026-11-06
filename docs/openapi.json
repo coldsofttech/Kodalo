@@ -1966,6 +1966,33 @@
         "title": "EvidenceResponse",
         "type": "object"
       },
+      "FeatureResponse": {
+        "properties": {
+          "description": {
+            "maxLength": 512,
+            "title": "Description",
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "#/components/schemas/EvidenceResponse"
+          },
+          "name": {
+            "examples": [
+              "Scheduled cleanup"
+            ],
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description",
+          "evidence"
+        ],
+        "title": "FeatureResponse",
+        "type": "object"
+      },
       "FontRef": {
         "additionalProperties": false,
         "properties": {
@@ -2134,7 +2161,7 @@
             "examples": [
               200
             ],
-            "maximum": 200.0,
+            "maximum": 2000.0,
             "minimum": 1.0,
             "title": "Document Max Kb",
             "type": "integer"
@@ -2204,7 +2231,7 @@
           "document_max_kb": {
             "anyOf": [
               {
-                "maximum": 200.0,
+                "maximum": 2000.0,
                 "minimum": 1.0,
                 "type": "integer"
               },
@@ -3488,6 +3515,15 @@
             "title": "Documents",
             "type": "array"
           },
+          "features": {
+            "description": "Empty until the AI is asked for them.",
+            "items": {
+              "$ref": "#/components/schemas/FeatureResponse"
+            },
+            "maxItems": 12,
+            "title": "Features",
+            "type": "array"
+          },
           "installation": {
             "items": {
               "$ref": "#/components/schemas/InstallationResponse"
@@ -3560,6 +3596,7 @@
           "purpose_file",
           "installation",
           "capabilities",
+          "features",
           "use_cases",
           "documents",
           "warnings",
@@ -3576,6 +3613,12 @@
             "description": "Capabilities saved.",
             "minimum": 0.0,
             "title": "Capabilities",
+            "type": "integer"
+          },
+          "features": {
+            "description": "Features saved.",
+            "minimum": 0.0,
+            "title": "Features",
             "type": "integer"
           },
           "input_tokens": {
@@ -3615,6 +3658,7 @@
         "required": [
           "installation",
           "capabilities",
+          "features",
           "use_cases",
           "skipped",
           "input_tokens",

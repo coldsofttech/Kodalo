@@ -47,6 +47,7 @@ TABLES = {
     "repository_documents",
     "repository_installs",
     "repository_capabilities",
+    "repository_features",
     "repository_use_cases",
     "ai_calls",
     "ignored_directories",

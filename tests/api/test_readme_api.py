@@ -98,4 +98,4 @@ def test_document_limits_are_settings(repo: tuple[TestClient, str]) -> None:
         assert (
             client.put(SETTINGS, json={"mode": "gh_cli", "document_limit": bad}).status_code == 422
         )
-    assert client.put(SETTINGS, json={"mode": "gh_cli", "document_max_kb": 201}).status_code == 422
+    assert client.put(SETTINGS, json={"mode": "gh_cli", "document_max_kb": 2001}).status_code == 422

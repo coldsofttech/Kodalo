@@ -9,12 +9,14 @@ import {
   runAnalysis,
 } from '../api.js';
 import { Button, Switch, TextField } from '../components/controls.jsx';
+import FocusView from './FocusView.jsx';
 import ReadmeView from './ReadmeView.jsx';
 
 const STEPS = [
   ['source', 'Source'],
   ['repository', 'Repository'],
   ['analyze', 'Analyze'],
+  ['focus', 'Focus'],
   ['ideas', 'Ideas'],
   ['post', 'Post'],
 ];
@@ -448,6 +450,8 @@ export default function StudioPage({ visible, onOpenSettings }) {
   const [details, setDetails] = useState(EMPTY_DETAILS);
   const [repo, setRepo] = useState(/** @type {any} */ (null));
   const [readme, setReadme] = useState(/** @type {any} */ (null));
+  const [postType, setPostType] = useState('');
+  const [focus, setFocus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -645,7 +649,26 @@ export default function StudioPage({ visible, onOpenSettings }) {
           onRun={run}
           onChange={setReadme}
           onRefresh={() => analyze(true)}
+          onNext={() => setStep('focus')}
           onBack={() => setStep('repository')}
+        />
+      ) : null}
+
+      {step === 'focus' && repo ? (
+        <FocusView
+          postType={postType}
+          onChange={(value) => {
+            setPostType(value);
+            if (value !== 'feature') setFocus('');
+          }}
+          readme={readme}
+          focus={focus}
+          onFocus={setFocus}
+          onNext={() => setStep('ideas')}
+          onBack={() => {
+            setFocus(''); // the analysis may be refreshed, so the saved pick could point elsewhere
+            setStep('analyze');
+          }}
         />
       ) : null}
 

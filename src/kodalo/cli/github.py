@@ -96,7 +96,7 @@ def set_command(
     document_max_kb: Annotated[
         int | None,
         typer.Option(
-            "--document-max-kb", help="How much of each document to read, in KB, 1 to 200."
+            "--document-max-kb", help="How much of each document to read, in KB, 1 to 2000."
         ),
     ] = None,
     as_json: JsonOption = False,

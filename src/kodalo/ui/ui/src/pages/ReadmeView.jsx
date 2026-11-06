@@ -11,9 +11,18 @@ const orDash = (value) => value || '-';
  * it finds with a quote.
  *
  * @param {{ repo: any, readme: any, busy: boolean, onRun: (action: () => Promise<void>) => void,
- *   onChange: (readme: any) => void, onRefresh: () => void, onBack: () => void }} props
+ *   onChange: (readme: any) => void, onRefresh: () => void, onNext: () => void, onBack: () => void }} props
  */
-export default function ReadmeView({ repo, readme, busy, onRun, onChange, onRefresh, onBack }) {
+export default function ReadmeView({
+  repo,
+  readme,
+  busy,
+  onRun,
+  onChange,
+  onRefresh,
+  onNext,
+  onBack,
+}) {
   const [plan, setPlan] = useState(/** @type {any} */ (null));
   const [message, setMessage] = useState('');
 
@@ -34,7 +43,7 @@ export default function ReadmeView({ repo, readme, busy, onRun, onChange, onRefr
       const result = await runReadmeAnalysis(repo.id);
       setMessage(
         [
-          `Saved ${result.installation} installation method(s), ${result.capabilities} capabilities and ${result.use_cases} use case(s).`,
+          `Saved ${result.installation} installation method(s), ${result.capabilities} capabilities, ${result.features} feature(s) and ${result.use_cases} use case(s).`,
           ...result.skipped,
         ].join(' '),
       );
@@ -107,6 +116,22 @@ export default function ReadmeView({ repo, readme, busy, onRun, onChange, onRefr
         </table>
       )}
 
+      <h3>Features</h3>
+      {readme.features.length === 0 ? (
+        <p className="hint">
+          Features group the capabilities, so the AI writes them. Press Refresh with AI to ask;
+          nothing is sent until you agree.
+        </p>
+      ) : (
+        <ul>
+          {readme.features.map((/** @type {any} */ item, /** @type {number} */ index) => (
+            <li key={`${item.name}-${index}`}>
+              <strong>{item.name}</strong> {item.description}
+            </li>
+          ))}
+        </ul>
+      )}
+
       <h3>Use cases</h3>
       {readme.use_cases.length === 0 ? (
         <p className="hint">
@@ -152,11 +177,14 @@ export default function ReadmeView({ repo, readme, busy, onRun, onChange, onRefr
       ))}
 
       <div className="row actions">
-        <Button appearance="accent" disabled={busy} onClick={onRefresh}>
+        <Button disabled={busy} onClick={onRefresh}>
           Refresh
         </Button>
         <Button disabled={busy || plan !== null} onClick={ask}>
           Refresh with AI
+        </Button>
+        <Button appearance="accent" disabled={busy} onClick={onNext}>
+          Next
         </Button>
         <Button disabled={busy} onClick={onBack}>
           Back
@@ -168,7 +196,7 @@ export default function ReadmeView({ repo, readme, busy, onRun, onChange, onRefr
           <p>
             Kodalo will send the text of these {plan.documents.length} documents, with lines that
             look like secrets removed: {plan.documents.join(', ')}. The AI writes the purpose,
-            installation methods, capabilities and use cases; each one is kept only if its quote is
+            installation methods, capabilities, features and use cases; each one is kept only if its quote is
             in the document.
           </p>
           <p>

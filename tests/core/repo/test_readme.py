@@ -272,7 +272,8 @@ def test_document_settings_are_saved_and_checked(database: Database) -> None:
     with pytest.raises(GitHubInvalidError):
         connectivity.save("gh_cli", document_limit=0)
     with pytest.raises(GitHubInvalidError):
-        connectivity.save("gh_cli", document_max_kb=201)
+        connectivity.save("gh_cli", document_max_kb=2001)
+    assert connectivity.save("gh_cli", document_max_kb=2000).document_max_kb == 2000
 
 
 class _Ai:

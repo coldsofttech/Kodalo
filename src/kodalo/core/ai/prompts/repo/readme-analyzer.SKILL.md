@@ -12,6 +12,7 @@ Answer with ONE JSON object and nothing else (no prose, no code fences):
   "purpose": {"tagline": "...", "summary": "...", "file": "README.md"},
   "installation": [{"method": "pip", "command": "pip install x", "note": "", "file": "README.md", "quote": "pip install x"}],
   "capabilities": [{"name": "...", "description": "...", "note": "", "file": "docs/cli.md", "quote": "..."}],
+  "features": [{"name": "...", "description": "...", "capabilities": ["<a capability name from your list>"]}],
   "use_cases": [{"title": "...", "description": "...", "capabilities": ["<a capability name from your list>"]}]
 }
 ```
@@ -23,5 +24,6 @@ Rules:
 - `purpose`: `tagline` is one sentence (at most 200 characters) and `summary` is one to three plain sentences about what the product is for. `file` is the document it comes from.
 - `installation`: one entry per documented way to install or get the product (a package manager, an installer, a container, building from source). `method` is a short name such as `pip`, `uv`, `npm`, `Homebrew`, `Scoop`, `winget`, `Docker`, `Installer` or `From source`. `command` is the exact command when there is one, otherwise empty.
 - `capabilities`: what the product is documented to do, one entry per distinct capability: at most 30, each `name` at most 8 words and each `description` one plain sentence. Merge items that say the same thing. Do not list how it is built, tested or released as a capability. If a document calls something planned, experimental or not yet implemented, still list it and write `Planned or experimental` in `note`; otherwise leave `note` empty.
+- `features`: the product-level features a user would name, each grouping one or more related capabilities: at most 12. `name` is at most 6 words and `description` one plain sentence. `capabilities` names the capabilities, exactly as in your `capabilities` list, that make up the feature, at least one. A feature made only of planned capabilities must say so in its description.
 - `use_cases`: 3 to 6 situations in which someone would reach for the product and what they do with it. `title` is at most 8 words, `description` one or two sentences. `capabilities` names the capabilities, exactly as in your `capabilities` list, that the use case rests on, at least one. A use case that rests on a planned capability must say so in its description.
 - Write no marketing copy, hooks or slogans. Ignore badges, images and links to other sites.
