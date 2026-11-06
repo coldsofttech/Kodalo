@@ -353,6 +353,39 @@ def test_the_ai_reads_the_documents_and_only_evidence_is_kept(database: Database
     assert saved.use_cases_at
 
 
+def test_features_keep_only_checked_details(database: Database) -> None:
+    reply = {
+        **REPLY,
+        "features": [
+            {"name": "Cache cleanup", "description": "Removes caches.", "importance": "headline",
+             "maturity": "stable", "capabilities": ["Clean caches"],
+             "use_cases": ["free disk space", "Made up"],
+             "claims": [
+                 {"type": "performance", "text": "remove package manager caches", "reason": "x"},
+                 {"type": "number", "text": "97 rules", "reason": "not in the documents"},
+                 {"type": "bogus", "text": "remove package manager caches", "reason": "x"},
+             ]},
+            {"name": "Odd values", "importance": "huge", "maturity": "soon",
+             "capabilities": ["Planned thing"]},
+            {"name": "Unbacked", "capabilities": ["Invented"]},
+        ],
+    }  # fmt: skip
+    assistant, service, _, repo_id = _assistant(database, reply)
+
+    result = assistant.apply(GitHubSettings("gh_cli"), repo_id)
+
+    saved = service.get(repo_id)
+    assert saved is not None
+    assert result.features == 2
+    first, second = saved.features
+    assert (first.importance, first.maturity) == ("headline", "stable")
+    assert first.use_cases == ("Free disk space",)
+    assert [(c.type, c.text) for c in first.claims] == [
+        ("performance", "remove package manager caches")
+    ]
+    assert (second.importance, second.maturity) == ("supporting", "unspecified")
+
+
 def test_a_part_the_ai_leaves_out_keeps_what_was_found(database: Database) -> None:
     assistant, service, _, repo_id = _assistant(database, {"capabilities": []})
     before = service.get(repo_id)

@@ -255,8 +255,17 @@ def _show_readme(info: RepoInfo, analysis: ReadmeAnalysis, as_json: bool) -> Non
         ),
         (
             "Features",
-            ("Feature", "Description", "Based on"),
-            [(f.name, f.description or "-", f.evidence.quote or "-") for f in analysis.features],
+            ("Feature", "Importance", "Maturity", "Description", "Careful with"),
+            [
+                (
+                    f.name,
+                    f.importance,
+                    f.maturity,
+                    f.description or "-",
+                    "; ".join(c.text for c in f.claims) or "-",
+                )
+                for f in analysis.features
+            ],
         ),
         (
             "Use cases",

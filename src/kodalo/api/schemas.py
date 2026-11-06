@@ -1,6 +1,6 @@
 """Request and response models. They define the API contract in the OpenAPI document."""
 
-from typing import Literal, Self
+from typing import Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -32,6 +32,7 @@ from kodalo.core.repo import (
     RepoInfo,
     Suggestion,
 )
+from kodalo.core.repo.readme import CLAIM_TYPES, IMPORTANCE, MATURITY
 from kodalo.core.studio import Source
 
 
@@ -929,9 +930,30 @@ class CapabilityResponse(BaseModel):
     evidence: EvidenceResponse
 
 
+def _pick(value: str, allowed: tuple[str, ...], default: str) -> Any:
+    """The value when it is one of the allowed ones, so a stored odd value cannot break a reply."""
+    return value if value in allowed else default
+
+
+class ClaimFlagResponse(BaseModel):
+    type: Literal["number", "absolute", "comparison", "performance", "compatibility"]
+    text: str = Field(max_length=120, examples=["97 rules"])
+    reason: str = Field(max_length=200, description="Why it should be repeated with care.")
+
+
 class FeatureResponse(BaseModel):
     name: str = Field(max_length=128, examples=["Scheduled cleanup"])
     description: str = Field(max_length=512)
+    importance: Literal["headline", "supporting", "minor"] = Field(
+        description="A ranking aid: how central the feature is to the product."
+    )
+    maturity: Literal["stable", "experimental", "planned", "unspecified"]
+    claims: list[ClaimFlagResponse] = Field(
+        max_length=5, description="Statements to repeat only with care."
+    )
+    use_cases: list[str] = Field(
+        max_length=6, description="Titles of the use cases the documents tie to the feature."
+    )
     evidence: EvidenceResponse
 
 
@@ -997,6 +1019,15 @@ class ReadmeResponse(BaseModel):
                 FeatureResponse(
                     name=f.name,
                     description=f.description,
+                    importance=_pick(f.importance, IMPORTANCE, "supporting"),
+                    maturity=_pick(f.maturity, MATURITY, "unspecified"),
+                    claims=[
+                        ClaimFlagResponse(
+                            type=_pick(c.type, CLAIM_TYPES, "number"), text=c.text, reason=c.reason
+                        )
+                        for c in f.claims
+                    ],
+                    use_cases=list(f.use_cases),
                     evidence=EvidenceResponse.from_core(f.evidence),
                 )
                 for f in analysis.features

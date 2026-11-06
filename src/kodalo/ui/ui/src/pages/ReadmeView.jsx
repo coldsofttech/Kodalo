@@ -126,7 +126,21 @@ export default function ReadmeView({
         <ul>
           {readme.features.map((/** @type {any} */ item, /** @type {number} */ index) => (
             <li key={`${item.name}-${index}`}>
-              <strong>{item.name}</strong> {item.description}
+              <strong>{item.name}</strong>
+              <span className="topic">{item.importance}</span>
+              {item.maturity !== 'unspecified' ? (
+                <span className="topic">{item.maturity}</span>
+              ) : null}{' '}
+              {item.description}
+              {item.use_cases.length > 0 ? (
+                <span className="hint"> Used in: {item.use_cases.join(', ')}.</span>
+              ) : null}
+              {item.claims.length > 0 ? (
+                <span className="hint">
+                  {' '}
+                  Repeat with care: {item.claims.map((/** @type {any} */ c) => c.text).join('; ')}.
+                </span>
+              ) : null}
             </li>
           ))}
         </ul>

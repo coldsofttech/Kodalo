@@ -10,7 +10,7 @@ import json
 import posixpath
 import re
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from typing import Any, TypeVar
 
 from sqlalchemy import delete, select
@@ -108,11 +108,29 @@ class Capability:
     evidence: Evidence = Evidence()
 
 
+IMPORTANCE = ("headline", "supporting", "minor")
+MATURITY = ("stable", "experimental", "planned", "unspecified")
+CLAIM_TYPES = ("number", "absolute", "comparison", "performance", "compatibility")
+
+
+@dataclass(frozen=True)
+class ClaimFlag:
+    """A statement about a feature that should not be repeated without care."""
+
+    type: str
+    text: str
+    reason: str = ""
+
+
 @dataclass(frozen=True)
 class Feature:
     name: str
     description: str = ""
     evidence: Evidence = Evidence(status=INFERRED)
+    importance: str = "supporting"
+    maturity: str = "unspecified"
+    claims: tuple[ClaimFlag, ...] = ()
+    use_cases: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -547,6 +565,10 @@ class ReadmeService:
                         file=f.evidence.file,
                         quote=f.evidence.quote,
                         status=f.evidence.status,
+                        importance=f.importance,
+                        maturity=f.maturity,
+                        claims_json=json.dumps([asdict(c) for c in f.claims]),
+                        use_cases_json=json.dumps(list(f.use_cases)),
                         position=n,
                     )
                     for n, f in enumerate(features)
@@ -576,7 +598,7 @@ def _of(model: Any, repo_id: str) -> Any:
 
 
 def _clear(session: Session, repo_id: str) -> None:
-    """Remove the README row and what the deterministic read produces. Features and use cases stay."""
+    """Remove the README row and what the deterministic read makes. Features and use cases stay."""
     for model in (RepositoryReadme, RepositoryDocument, RepositoryInstall, RepositoryCapability):
         session.execute(delete(model).where(model.repository_id == repo_id))
 
@@ -634,6 +656,15 @@ def _analysis(session: Session, row: RepositoryReadme) -> ReadmeAnalysis:
         analyzed_at=row.analyzed_at or "",
         use_cases_at=row.use_cases_at,
         features=tuple(
-            Feature(r.name, r.description, Evidence(r.file, r.quote, r.status)) for r in featured
+            Feature(
+                r.name,
+                r.description,
+                Evidence(r.file, r.quote, r.status),
+                r.importance,
+                r.maturity,
+                tuple(ClaimFlag(**c) for c in json.loads(r.claims_json)),
+                tuple(json.loads(r.use_cases_json)),
+            )
+            for r in featured
         ),
     )

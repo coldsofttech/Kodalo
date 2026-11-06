@@ -1645,6 +1645,42 @@
         "title": "CapabilityResponse",
         "type": "object"
       },
+      "ClaimFlagResponse": {
+        "properties": {
+          "reason": {
+            "description": "Why it should be repeated with care.",
+            "maxLength": 200,
+            "title": "Reason",
+            "type": "string"
+          },
+          "text": {
+            "examples": [
+              "97 rules"
+            ],
+            "maxLength": 120,
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "number",
+              "absolute",
+              "comparison",
+              "performance",
+              "compatibility"
+            ],
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text",
+          "reason"
+        ],
+        "title": "ClaimFlagResponse",
+        "type": "object"
+      },
       "ColorPair": {
         "additionalProperties": false,
         "properties": {
@@ -1968,6 +2004,15 @@
       },
       "FeatureResponse": {
         "properties": {
+          "claims": {
+            "description": "Statements to repeat only with care.",
+            "items": {
+              "$ref": "#/components/schemas/ClaimFlagResponse"
+            },
+            "maxItems": 5,
+            "title": "Claims",
+            "type": "array"
+          },
           "description": {
             "maxLength": 512,
             "title": "Description",
@@ -1976,6 +2021,26 @@
           "evidence": {
             "$ref": "#/components/schemas/EvidenceResponse"
           },
+          "importance": {
+            "description": "A ranking aid: how central the feature is to the product.",
+            "enum": [
+              "headline",
+              "supporting",
+              "minor"
+            ],
+            "title": "Importance",
+            "type": "string"
+          },
+          "maturity": {
+            "enum": [
+              "stable",
+              "experimental",
+              "planned",
+              "unspecified"
+            ],
+            "title": "Maturity",
+            "type": "string"
+          },
           "name": {
             "examples": [
               "Scheduled cleanup"
@@ -1983,11 +2048,24 @@
             "maxLength": 128,
             "title": "Name",
             "type": "string"
+          },
+          "use_cases": {
+            "description": "Titles of the use cases the documents tie to the feature.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Use Cases",
+            "type": "array"
           }
         },
         "required": [
           "name",
           "description",
+          "importance",
+          "maturity",
+          "claims",
+          "use_cases",
           "evidence"
         ],
         "title": "FeatureResponse",

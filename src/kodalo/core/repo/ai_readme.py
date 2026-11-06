@@ -4,8 +4,9 @@ The documents are the ones the README analysis already chose (the README and the
 read again with the same limits, with the lines that look like secrets removed. The model returns
 the purpose, the ways to install, the capabilities, the features and the use cases. Nothing without
 evidence is kept: an installation method or capability is saved only when its quote is found in the
-file it names, and a feature or use case only when it rests on a saved capability. A part the model left empty, or
-whose items all failed the check, keeps what was found before. See ``docs/readme-analysis.md``.
+file it names, and a feature or use case only when it rests on a saved capability. A part the
+model left empty, or whose items all failed the check, keeps what was found before. See
+``docs/readme-analysis.md``.
 """
 
 import re
@@ -18,10 +19,14 @@ from kodalo.core.github import GitHubSettings
 from kodalo.core.repo.ai_parsers import _SECRET_LINE, _reply_json, estimate_tokens
 from kodalo.core.repo.errors import RepoNotFoundError
 from kodalo.core.repo.readme import (
+    CLAIM_TYPES,
     DOCUMENTED,
+    IMPORTANCE,
     INFERRED,
+    MATURITY,
     MAX_CAPABILITIES,
     Capability,
+    ClaimFlag,
     Evidence,
     Feature,
     Installation,
@@ -33,7 +38,8 @@ from kodalo.core.repo.readme import (
 
 MAX_USE_CASES = 6
 MAX_FEATURES = 12
-MAX_OUTPUT_TOKENS = 4000
+MAX_CLAIMS = 5
+MAX_OUTPUT_TOKENS = 6000
 _KEYS = ("purpose", "installation", "capabilities", "features", "use_cases")
 
 
@@ -136,8 +142,8 @@ class ReadmeAssistant:
         skipped: list[str] = []
         installs = _installs(data.get("installation"), texts, skipped)
         capable = _capabilities(data.get("capabilities"), texts, skipped)
-        featured = _features(data.get("features"), capable, skipped)
         cases = _use_cases(data.get("use_cases"), capable, skipped)
+        featured = _features(data.get("features"), capable, cases, texts, skipped)
         purpose = data.get("purpose")
         tagline = summary = file = ""
         if isinstance(purpose, dict):
@@ -208,8 +214,29 @@ def _capabilities(value: object, texts: dict[str, str], skipped: list[str]) -> l
     return list(found.values())[:MAX_CAPABILITIES]
 
 
-def _features(value: object, capable: list[Capability], skipped: list[str]) -> list[Feature]:
+def _claims(value: object, texts: dict[str, str]) -> tuple[ClaimFlag, ...]:
+    """The flagged statements whose text really is in one of the documents."""
+    found: dict[str, ClaimFlag] = {}
+    for item in _items(value):
+        kind, text = _text(item.get("type"), 16), _text(item.get("text"), 120)
+        if (
+            kind in CLAIM_TYPES
+            and text
+            and any(_squash(text) in _squash(t) for t in texts.values())
+        ):
+            found.setdefault(text.casefold(), ClaimFlag(kind, text, _text(item.get("reason"), 200)))
+    return tuple(found.values())[:MAX_CLAIMS]
+
+
+def _features(
+    value: object,
+    capable: list[Capability],
+    cases: list[UseCase],
+    texts: dict[str, str],
+    skipped: list[str],
+) -> list[Feature]:
     by_name = {c.name.casefold(): c for c in capable}
+    titles = {u.title.casefold(): u.title for u in cases}
     found: dict[str, Feature] = {}
     for item in _items(value):
         name = _text(item.get("name"), 128)
@@ -220,12 +247,22 @@ def _features(value: object, capable: list[Capability], skipped: list[str]) -> l
             skipped.append(f"{name or 'A feature'}: it does not rest on a saved capability")
             continue
         evidence = cited[0].evidence
+        importance, maturity = _text(item.get("importance"), 16), _text(item.get("maturity"), 16)
+        linked = item.get("use_cases")
         found.setdefault(
             name.casefold(),
             Feature(
                 name,
                 _text(item.get("description"), 300),
                 Evidence(evidence.file, evidence.quote, INFERRED),
+                importance if importance in IMPORTANCE else "supporting",
+                maturity if maturity in MATURITY else "unspecified",
+                _claims(item.get("claims"), texts),
+                tuple(
+                    titles[t.casefold()]
+                    for t in (linked if isinstance(linked, list) else [])
+                    if isinstance(t, str) and t.casefold() in titles
+                ),
             ),
         )
     return list(found.values())[:MAX_FEATURES]

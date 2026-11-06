@@ -7,7 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Added
 
 - Studio has a new Focus step after Analyze to choose a Tool / Utility post or a Feature post, and for a Feature post, the feature, use case or capability to focus on.
-- Refresh with AI now also lists the product's features, alongside its capabilities and use cases.
+- Refresh with AI now also lists the product's features, alongside its capabilities and use cases, with how important and mature each is, the use cases it serves and claims to repeat with care.
 - The most of each document to read can now be set up to 2000 KB (it stopped at 200).
 - Studio's Repository step has a Next button that reads the README and the docs it links to and shows what the product is for, how to install it and what it can do; Refresh with AI reads those pages with your AI model for a cleaner summary and use cases, after asking first. Two new settings control how many documents are read and how much of each.
 - Reading a repository now also shows its README, changelog, contributing and license files and docs folder, the line that shows each project file's package, and which files were left unread (secret-looking, over 200 KB or unreadable).

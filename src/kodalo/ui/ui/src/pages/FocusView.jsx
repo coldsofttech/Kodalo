@@ -13,6 +13,8 @@ export const POST_TYPES = [
   },
 ];
 
+const IMPORTANCE = ['headline', 'supporting', 'minor'];
+
 /** The groups of the dropdown, each with the key of its list in the README analysis. */
 const FOCUS_GROUPS = [
   ['features', 'Features', 'name'],
@@ -36,12 +38,27 @@ export default function FocusView({
   const groups = FOCUS_GROUPS.map(([key, label, field]) => ({
     key,
     label,
-    items: (readme?.[key] ?? []).map((/** @type {any} */ item, /** @type {number} */ index) => ({
-      value: `${key}:${index}`,
-      text: item[field],
-    })),
+    items: (readme?.[key] ?? [])
+      .map((/** @type {any} */ item, /** @type {number} */ index) => ({
+        value: `${key}:${index}`,
+        text: item[field],
+        rank: key === 'features' ? Math.max(0, IMPORTANCE.indexOf(item.importance)) : 0,
+      }))
+      .sort((a, b) => a.rank - b.rank), // headline features first; the sort is stable
   })).filter((group) => group.items.length > 0);
   const choose = postType === 'feature';
+  const [kind, position] = focus.split(':');
+  const picked = kind === 'features' ? readme?.features?.[Number(position)] : null;
+  const cautions = picked
+    ? [
+        picked.maturity === 'planned' || picked.maturity === 'experimental'
+          ? `The documents call this ${picked.maturity}.`
+          : '',
+        picked.claims.length > 0
+          ? `Repeat with care: ${picked.claims.map((/** @type {any} */ c) => c.text).join('; ')}.`
+          : '',
+      ].filter(Boolean)
+    : [];
   return (
     <>
       <h2>What is this post about?</h2>
@@ -82,6 +99,11 @@ export default function FocusView({
           </Select>
         )
       ) : null}
+      {cautions.map((line) => (
+        <p key={line} className="hint">
+          {line}
+        </p>
+      ))}
       <div className="row actions">
         <Button appearance="accent" disabled={!postType || (choose && !focus)} onClick={onNext}>
           Next

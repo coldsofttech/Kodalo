@@ -34,10 +34,11 @@ Each installation method and capability carries evidence: the file and a quote o
 
 The fixed rules above depend on how a README is laid out, and documents differ, so the AI can read the documents itself. The request is shown first and sent only after confirmation (the window's `Proceed`, the command line's question, or `--yes`): the list of documents and the expected tokens. It holds the text of the documents the first pass read, read again with the same limits, with lines that look like secrets removed, and nothing else. The prompt is `src/kodalo/core/ai/prompts/repo/readme-analyzer.SKILL.md`.
 
-The model returns the purpose, the installation methods, the capabilities and the use cases. Nothing without evidence is kept:
+The model returns the purpose, the installation methods, the capabilities, the features and the use cases. Nothing without evidence is kept:
 
 - An installation method or capability is saved only when its quote (at most 120 characters) is found in the file it names. Whitespace and case are ignored when comparing.
 - A use case is saved only when every capability it names was saved. Its evidence is the first of those capabilities, with the status `inferred`.
+- A feature is saved only when every capability it names was saved, like a use case. Its `importance` (`headline`, `supporting`, `minor`) and `maturity` (`stable`, `experimental`, `planned`, `unspecified`) fall back to `supporting` and `unspecified` when the model gives anything else. Its `use_cases` keep only titles of saved use cases. Its `claims` (`number`, `absolute`, `comparison`, `performance`, `compatibility`; at most 5) are kept only when their text is found in one of the documents sent; Studio shows them as "Repeat with care".
 - The purpose is kept when it has a summary; its file must be one of the documents sent.
 - A part the model left empty, or whose items all failed these checks, keeps what was found before. What was left out is listed with the reason.
 
@@ -45,7 +46,7 @@ The call is added to the AI history with the purpose `studio`.
 
 ## Storage
 
-The analysis is kept in five tables (migration `0017`): `repository_readmes` (purpose, warnings and when it was read), `repository_documents`, `repository_installs`, `repository_capabilities` and `repository_use_cases`. Reading again (Refresh) replaces the documents, installation methods and capabilities with the first-pass result and keeps the use cases; press `Refresh with AI` again to rewrite them all. Deleting a repository deletes its analysis.
+The analysis is kept in six tables (migrations `0017`, `0018` and `0019`): `repository_readmes` (purpose, warnings and when it was read), `repository_documents`, `repository_installs`, `repository_capabilities`, `repository_features` and `repository_use_cases`. Reading again (Refresh) replaces the documents, installation methods and capabilities with the first-pass result and keeps the features and use cases; press `Refresh with AI` again to rewrite them all. Deleting a repository deletes its analysis.
 
 ## Where it lives
 

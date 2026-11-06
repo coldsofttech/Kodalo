@@ -636,6 +636,10 @@ class RepositoryFeature(_Row, Base):
     file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
     quote: Mapped[str] = mapped_column(String(128), default="", server_default="")
     status: Mapped[str] = mapped_column(String(16), default="inferred", server_default="")
+    importance: Mapped[str] = mapped_column(String(16), default="supporting", server_default="")
+    maturity: Mapped[str] = mapped_column(String(16), default="unspecified", server_default="")
+    claims_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    use_cases_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     position: Mapped[int] = mapped_column(default=0)
 
 

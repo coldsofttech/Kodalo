@@ -23,6 +23,7 @@ from kodalo.core.repo.models import (
 )
 from kodalo.core.repo.readme import (
     Capability,
+    ClaimFlag,
     Document,
     Evidence,
     Feature,
@@ -37,6 +38,7 @@ __all__ = [
     "AnalyzerPlan",
     "AnalyzerResult",
     "Capability",
+    "ClaimFlag",
     "Document",
     "Documentation",
     "Entry",
