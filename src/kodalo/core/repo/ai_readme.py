@@ -14,8 +14,7 @@ from dataclasses import dataclass
 from importlib import resources
 from typing import Any
 
-from kodalo.core.ai import AiConnections, AiInvalidError
-from kodalo.core.github import GitHubSettings
+from kodalo.core.ai import AiConnections
 from kodalo.core.repo.ai_parsers import _SECRET_LINE, _reply_json, estimate_tokens
 from kodalo.core.repo.errors import RepoNotFoundError
 from kodalo.core.repo.readme import (
@@ -35,6 +34,8 @@ from kodalo.core.repo.readme import (
     UseCase,
     quote,
 )
+from kodalo.core.settings.ai import AiInvalidError
+from kodalo.core.settings.github import GitHubSettings
 
 MAX_USE_CASES = 6
 MAX_FEATURES = 12

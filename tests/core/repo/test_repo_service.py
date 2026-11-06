@@ -4,7 +4,6 @@ from typing import Any
 
 import pytest
 
-from kodalo.core.github import GitHubSettings
 from kodalo.core.repo import (
     LocalDetails,
     RepoDetailsError,
@@ -13,6 +12,7 @@ from kodalo.core.repo import (
     RepoService,
     suggest,
 )
+from kodalo.core.settings.github import GitHubSettings
 from kodalo.core.storage import Database, database_path
 from kodalo.core.studio import validate_source
 

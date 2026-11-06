@@ -13,7 +13,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from kodalo.core.github import GitHubSettings
 from kodalo.core.repo.documentation import SECRET_FILES
 from kodalo.core.repo.manifest_config import (
     ConfigError,
@@ -24,6 +23,7 @@ from kodalo.core.repo.manifest_config import (
 from kodalo.core.repo.manifest_parser import parse_manifest
 from kodalo.core.repo.models import RepoInfo
 from kodalo.core.repo.service import RepoService
+from kodalo.core.settings.github import GitHubSettings
 
 MAX_FILES = 5
 MAX_SAMPLE_BYTES = 1500

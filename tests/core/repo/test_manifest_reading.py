@@ -8,8 +8,8 @@ from typing import Any
 
 import pytest
 
-from kodalo.core.github import GitHubConnectivity, GitHubInvalidError, GitHubSettings
 from kodalo.core.repo import LocalDetails, RepoNotFoundError, RepoService
+from kodalo.core.settings.github import GitHubConnectivity, GitHubInvalidError, GitHubSettings
 from kodalo.core.storage import Database, database_path
 from kodalo.core.studio import validate_source
 

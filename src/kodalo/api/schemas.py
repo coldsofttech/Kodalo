@@ -4,15 +4,7 @@ from typing import Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from kodalo.core.ai import (
-    AiCallDetail,
-    AiCallRecord,
-    AiConnection,
-    AiHistorySettings,
-    AiModel,
-    HistoryPage,
-    Usage,
-)
+from kodalo.core.ai import AiConnection, AiModel
 from kodalo.core.ai import ConnectionCheck as AiCheck
 from kodalo.core.brands.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
 from kodalo.core.brands.brand.logos import MAX_LOGO_BYTES
@@ -21,7 +13,6 @@ from kodalo.core.brands.layout import Layout, LayoutSettings
 from kodalo.core.brands.palette import Palette
 from kodalo.core.brands.palette.suggest import PalettePlan
 from kodalo.core.doctor import Check
-from kodalo.core.github import ConnectionCheck, GitHubSettings
 from kodalo.core.repo import (
     AnalyzerPlan,
     AnalyzerResult,
@@ -37,6 +28,14 @@ from kodalo.core.repo import (
 )
 from kodalo.core.repo.ai_ideas import Claim
 from kodalo.core.repo.readme import CLAIM_TYPES, IMPORTANCE, MATURITY
+from kodalo.core.settings.ai import (
+    AiCallDetail,
+    AiCallRecord,
+    AiHistorySettings,
+    HistoryPage,
+    Usage,
+)
+from kodalo.core.settings.github import ConnectionCheck, GitHubSettings
 from kodalo.core.studio import Source
 
 

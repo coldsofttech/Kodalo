@@ -10,7 +10,6 @@ from typing import TypeVar
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kodalo.core.github import GitHubSettings
 from kodalo.core.repo.documentation import find_documentation, is_secret
 from kodalo.core.repo.errors import RepoDetailsError, RepoNotFoundError
 from kodalo.core.repo.framework_config import (
@@ -46,6 +45,7 @@ from kodalo.core.repo.models import (
     RepoInfo,
     SkippedFile,
 )
+from kodalo.core.settings.github import GitHubSettings
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import (
     DirectoryPattern,

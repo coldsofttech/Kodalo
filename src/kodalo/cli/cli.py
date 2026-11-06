@@ -5,10 +5,10 @@ from typing import Annotated
 
 import typer
 
-from kodalo.cli import brand, doctor, output, settings, studio
+from kodalo.cli import brands, doctor, output, settings, studio
 from kodalo.cli.state import State
 from kodalo.core import __version__
-from kodalo.core.ai import purge_expired_history
+from kodalo.core.settings.ai import purge_expired_history
 from kodalo.core.storage import default_data_dir
 
 app = typer.Typer(
@@ -20,7 +20,7 @@ app = typer.Typer(
     pretty_exceptions_enable=False,
 )
 
-app.add_typer(brand.app, name="brand")
+app.add_typer(brands.app, name="brand")
 app.add_typer(settings.app, name="settings")
 app.add_typer(studio.app, name="studio")
 app.command()(doctor.doctor)

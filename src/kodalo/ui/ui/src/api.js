@@ -186,12 +186,13 @@ export async function appInfo() {
  * Ask where to save a JSON file with the system's save dialog, then write it there.
  * @param {string} filename suggested name
  * @param {string} text file contents
+ * @param {string} [fileType] the save dialog's file type filter
  * @returns {Promise<'saved' | 'cancelled' | 'unavailable'>} `unavailable` outside the window
  */
-export async function saveJsonFile(filename, text) {
+export async function saveJsonFile(filename, text, fileType = 'JSON files (*.json)') {
   const chosen = await request('/api/bridge/save_file', {
     method: 'POST',
-    json: { filename, file_types: ['JSON files (*.json)'] },
+    json: { filename, file_types: [fileType] },
   });
   if (!chosen?.available) return 'unavailable';
   if (!chosen.result) return 'cancelled';

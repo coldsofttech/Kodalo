@@ -5,11 +5,12 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.ai import AiInvalidError, AiTarget, Generation
+from kodalo.core.ai import AiTarget, Generation
 from kodalo.core.repo import Entry, RepoAnalyzer, RepoInfo
 from kodalo.core.repo.ai_analyzer import system_prompt
 from kodalo.core.repo.framework_config import load_framework_configs, load_tooling_configs
 from kodalo.core.repo.manifest_config import load_configs
+from kodalo.core.settings.ai import AiInvalidError
 
 CARTFILE = 'github "Alamofire/Alamofire" ~> 5.0\ngithub "SnapKit/SnapKit"\n'
 PARSER = {

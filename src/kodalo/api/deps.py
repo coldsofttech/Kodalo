@@ -9,9 +9,7 @@ from pathlib import Path
 from fastapi import HTTPException, status
 
 from kodalo.core.ai import AiConnections
-from kodalo.core.appearance import Appearance
 from kodalo.core.brands.brand import BrandService
-from kodalo.core.github import GitHubConnectivity
 from kodalo.core.repo import (
     IdeasAssistant,
     ReadmeAssistant,
@@ -19,6 +17,8 @@ from kodalo.core.repo import (
     RepoAnalyzer,
     RepoService,
 )
+from kodalo.core.settings.appearance import Appearance
+from kodalo.core.settings.github import GitHubConnectivity
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().

@@ -11,13 +11,14 @@ from dataclasses import dataclass, replace
 from importlib import resources
 from pathlib import Path
 
-from kodalo.core.ai import AiConnections, AiInvalidError
-from kodalo.core.github import GitHubSettings
+from kodalo.core.ai import AiConnections
 from kodalo.core.repo import ai_frameworks as frameworks
 from kodalo.core.repo import ai_parsers as parsers
 from kodalo.core.repo.framework_config import FRAMEWORKS, TOOLING
 from kodalo.core.repo.manifest_parser import parse_manifest
 from kodalo.core.repo.service import RepoService
+from kodalo.core.settings.ai import AiInvalidError
+from kodalo.core.settings.github import GitHubSettings
 
 OUTPUT_TOKENS_PER_FRAMEWORK = 120
 

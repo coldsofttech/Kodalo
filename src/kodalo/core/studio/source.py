@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-from kodalo.core.github import GitHubSettings
+from kodalo.core.settings.github import GitHubSettings
 from kodalo.core.studio.errors import StudioInvalidError
 
 # The steps of the studio flow, in order. The first two are built so far.

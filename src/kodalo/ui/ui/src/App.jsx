@@ -6,7 +6,7 @@ import CanvasesPage from './pages/brands/Canvases.jsx';
 import LayoutsPage from './pages/brands/Layouts.jsx';
 import PalettesPage from './pages/brands/Palettes.jsx';
 import StudioPage from './pages/Studio.jsx';
-import SettingsPage from './pages/Settings.jsx';
+import SettingsPage from './pages/settings/Settings.jsx';
 
 /** Brands, Palettes, Canvases and Layouts sit in a collapsible Brands menu. */
 const BRANDS_MENU = 'brands-menu';

@@ -10,8 +10,7 @@ from rich.table import Table
 
 from kodalo.cli import output
 from kodalo.cli.state import get_state
-from kodalo.core.ai import AiConnectionError, AiConnections, AiInvalidError, AiSecretError
-from kodalo.core.github import GitHubConnectivity, GitHubSettings
+from kodalo.core.ai import AiConnections
 from kodalo.core.repo import (
     Documentation,
     LocalDetails,
@@ -24,6 +23,8 @@ from kodalo.core.repo import (
     RepoInfo,
     RepoService,
 )
+from kodalo.core.settings.ai import AiConnectionError, AiInvalidError, AiSecretError
+from kodalo.core.settings.github import GitHubConnectivity, GitHubSettings
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 from kodalo.core.studio import StudioInvalidError, validate_source
 

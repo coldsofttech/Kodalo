@@ -9,8 +9,9 @@ from typing import Any
 
 import pytest
 
-from kodalo.core.ai import AiConnectionError, GenerateRequest, clients
-from kodalo.core.ai.providers import CLAUDE_CODE_MODELS
+from kodalo.core.ai import GenerateRequest, clients
+from kodalo.core.settings.ai import AiConnectionError
+from kodalo.core.settings.ai.providers import CLAUDE_CODE_MODELS
 
 
 class _Response(io.BytesIO):

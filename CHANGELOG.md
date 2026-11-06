@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- AI history can be exported as CSV or JSON for the chosen period.
+- Settings is reorganised: GitHub has separate connection and reading-limit blocks, AI joins connections and history in one tab (history opens on demand), and buttons are icons.
+- Saving an AI connection turns it on and turns any other off, so only one is used at a time.
+- The AI history entry shows Success or Failed, right-aligns the numbers and has a close button in the corner.
 - Canvases have a social platform (Instagram or Custom) and warn, without blocking, when the size is not one the platform recommends.
 - A brand's logo can be hidden on every slide, and the footer moves left when the logo is at the bottom right.
 - Preview slides open full screen, with arrow keys to step through them.

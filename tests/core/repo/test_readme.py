@@ -8,8 +8,7 @@ from typing import Any
 
 import pytest
 
-from kodalo.core.ai import AiInvalidError, AiTarget, Generation
-from kodalo.core.github import GitHubConnectivity, GitHubInvalidError, GitHubSettings
+from kodalo.core.ai import AiTarget, Generation
 from kodalo.core.repo import (
     ReadmeAssistant,
     ReadmeService,
@@ -18,6 +17,8 @@ from kodalo.core.repo import (
 )
 from kodalo.core.repo import readme as rd
 from kodalo.core.repo.ai_readme import build_prompt, redact, system_prompt
+from kodalo.core.settings.ai import AiInvalidError
+from kodalo.core.settings.github import GitHubConnectivity, GitHubInvalidError, GitHubSettings
 from kodalo.core.storage import Database, database_path
 from kodalo.core.studio import validate_source
 

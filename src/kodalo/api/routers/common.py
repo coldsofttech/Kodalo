@@ -19,17 +19,7 @@ from kodalo.api.deps import (
 from kodalo.api.schemas import (
     AiProvider,
 )
-from kodalo.core.ai import (
-    AiConnectionError,
-    AiConnections,
-    AiInvalidError,
-    AiNotFoundError,
-    AiSecretError,
-)
-from kodalo.core.appearance import Appearance
-from kodalo.core.github import (
-    GitHubConnectivity,
-)
+from kodalo.core.ai import AiConnections
 from kodalo.core.repo import (
     IdeasAssistant,
     ReadmeAssistant,
@@ -39,6 +29,16 @@ from kodalo.core.repo import (
     RepoNotFoundError,
     RepoReadError,
     RepoService,
+)
+from kodalo.core.settings.ai import (
+    AiConnectionError,
+    AiInvalidError,
+    AiNotFoundError,
+    AiSecretError,
+)
+from kodalo.core.settings.appearance import Appearance
+from kodalo.core.settings.github import (
+    GitHubConnectivity,
 )
 from kodalo.core.studio import StudioInvalidError
 

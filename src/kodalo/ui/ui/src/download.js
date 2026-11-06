@@ -9,16 +9,29 @@ import { saveJsonFile } from './api.js';
  * @returns {Promise<boolean>} false when the user cancelled the dialog
  */
 export async function saveJson(document_, filename) {
-  const text = JSON.stringify(document_, null, 2);
+  return saveText(JSON.stringify(document_, null, 2), filename, {
+    mime: 'application/json',
+    label: 'JSON files (*.json)',
+  });
+}
+
+/**
+ * Let the user choose where to save `text`.
+ * @param {string} text
+ * @param {string} filename
+ * @param {{ mime: string, label: string }} type the media type and the save dialog's filter
+ * @returns {Promise<boolean>} false when the user cancelled the dialog
+ */
+export async function saveText(text, filename, type) {
   let outcome = 'unavailable';
   try {
-    outcome = await saveJsonFile(filename, text);
+    outcome = await saveJsonFile(filename, text, type.label);
   } catch (failure) {
     // A page opened in a browser has no bridge; any other failure is the user's to see.
     if (!(failure instanceof TypeError)) throw failure;
   }
   if (outcome !== 'unavailable') return outcome === 'saved';
-  const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
+  const url = URL.createObjectURL(new Blob([text], { type: type.mime }));
   const link = document.createElement('a');
   link.href = url;
   link.download = filename;

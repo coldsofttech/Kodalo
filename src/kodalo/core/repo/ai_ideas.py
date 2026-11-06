@@ -13,10 +13,11 @@ from dataclasses import dataclass
 from importlib import resources
 from typing import Any
 
-from kodalo.core.ai import AiConnections, AiInvalidError
+from kodalo.core.ai import AiConnections
 from kodalo.core.repo.ai_parsers import _reply_json, estimate_tokens
 from kodalo.core.repo.errors import RepoNotFoundError
 from kodalo.core.repo.readme import Feature, ReadmeAnalysis, ReadmeService
+from kodalo.core.settings.ai import AiInvalidError
 
 POST_TYPES = ("tool", "feature")
 FOCUS_KINDS = ("features", "use_cases", "capabilities")

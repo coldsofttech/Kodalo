@@ -16,11 +16,11 @@ from typing import Any, TypeVar
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
-from kodalo.core.github import GitHubSettings
 from kodalo.core.repo.documentation import is_secret
 from kodalo.core.repo.errors import RepoNotFoundError
 from kodalo.core.repo.models import RepoInfo
 from kodalo.core.repo.service import RepoService
+from kodalo.core.settings.github import GitHubSettings
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import (
     Repository,

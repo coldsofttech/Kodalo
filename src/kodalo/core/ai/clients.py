@@ -14,8 +14,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from kodalo.core.ai.errors import AiConnectionError
-from kodalo.core.ai.providers import CLAUDE_CODE_MODELS
+from kodalo.core.settings.ai.errors import AiConnectionError
+from kodalo.core.settings.ai.providers import CLAUDE_CODE_MODELS
 
 _TIMEOUT = 15
 _MAX_BYTES = 4_000_000

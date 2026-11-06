@@ -10,15 +10,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kodalo.core.ai.clients import GenerateRequest, Generation, Generator, Prober, generate, probe
-from kodalo.core.ai.defaults import defaults_for
-from kodalo.core.ai.errors import (
+from kodalo.core.settings.ai.defaults import defaults_for
+from kodalo.core.settings.ai.errors import (
     AiConnectionError,
     AiInvalidError,
     AiNotFoundError,
 )
-from kodalo.core.ai.history import AiHistory
-from kodalo.core.ai.providers import PROVIDER_IDS, PROVIDERS, Kind, Provider, get_provider
-from kodalo.core.ai.secrets import KeychainSecrets, SecretStore
+from kodalo.core.settings.ai.history import AiHistory
+from kodalo.core.settings.ai.providers import PROVIDER_IDS, PROVIDERS, Kind, Provider, get_provider
+from kodalo.core.settings.ai.secrets import KeychainSecrets, SecretStore
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import AiConnectionRow, AiModelRow, utc_now
 

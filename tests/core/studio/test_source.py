@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.github import GitHubSettings
+from kodalo.core.settings.github import GitHubSettings
 from kodalo.core.studio import StudioInvalidError, validate_source
 
 CLI = GitHubSettings("gh_cli")
