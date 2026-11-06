@@ -218,7 +218,7 @@ export async function openExternal(url) {
 const GITHUB_SETTINGS = '/api/v1/settings/github';
 
 export const getGithubSettings = () => request(GITHUB_SETTINGS);
-/** @param {{ mode: string, local_folder?: string, manifest_limit?: number }} body */
+/** @param {{ mode: string, local_folder?: string, manifest_limit?: number, document_limit?: number, document_max_kb?: number }} body */
 export const saveGithubSettings = (body) => request(GITHUB_SETTINGS, { method: 'PUT', json: body });
 export const getTheme = () => request('/api/v1/settings/theme');
 /** @param {string} theme */
@@ -240,6 +240,19 @@ export const runAnalysis = (/** @type {string} */ repoId) =>
   request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis`, {
     method: 'POST',
   });
+const readmeUrl = (/** @type {string} */ repoId) =>
+  `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/readme`;
+/** Read the README and the docs it links to, without AI; a saved result is returned unless refreshed. */
+export const readReadme = (/** @type {string} */ repoId, refresh = false) =>
+  request(readmeUrl(repoId), { method: 'POST', json: { refresh } });
+/** The saved README analysis. */
+export const getReadme = (/** @type {string} */ repoId) => request(readmeUrl(repoId));
+/** What asking the AI to read the documents would send and cost; nothing is sent. */
+export const planReadmeAnalysis = (/** @type {string} */ repoId) =>
+  request(`${readmeUrl(repoId)}/analysis/plan`, { method: 'POST' });
+/** Ask the AI once to read the documents and save what it finds with evidence. */
+export const runReadmeAnalysis = (/** @type {string} */ repoId) =>
+  request(`${readmeUrl(repoId)}/analysis`, { method: 'POST' });
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
 
 const AI = '/api/v1/settings/ai/connections';

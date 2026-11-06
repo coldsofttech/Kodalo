@@ -565,6 +565,80 @@ class RepositoryTool(_Row, Base):
     repository: Mapped["Repository"] = relationship(back_populates="tooling")
 
 
+class RepositoryReadme(_Row, Base):
+    """What a repository's README and docs say it is: one row per repository."""
+
+    __tablename__ = "repository_readmes"
+
+    repository_id: Mapped[str] = mapped_column(
+        ForeignKey("repositories.id", ondelete="CASCADE"), unique=True
+    )
+    tagline: Mapped[str] = mapped_column(String(256), default="", server_default="")
+    summary: Mapped[str] = mapped_column(Text, default="", server_default="")
+    purpose_file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    warnings_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    analyzed_at: Mapped[str | None] = mapped_column(String(32))
+    use_cases_at: Mapped[str | None] = mapped_column(String(32))
+
+
+class RepositoryDocument(_Row, Base):
+    """A document the README analysis read, or chose not to read, with the reason."""
+
+    __tablename__ = "repository_documents"
+    __table_args__ = (UniqueConstraint("repository_id", "path"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    path: Mapped[str] = mapped_column(String(1024))
+    status: Mapped[str] = mapped_column(String(8))
+    reason: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    size: Mapped[int] = mapped_column(default=0, server_default="0")
+    position: Mapped[int] = mapped_column(default=0)
+
+
+class RepositoryInstall(_Row, Base):
+    """A documented way to install the product, with the line that shows it."""
+
+    __tablename__ = "repository_installs"
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    method: Mapped[str] = mapped_column(String(32))
+    command: Mapped[str] = mapped_column(String(512), default="", server_default="")
+    note: Mapped[str] = mapped_column(String(256), default="", server_default="")
+    file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    quote: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    status: Mapped[str] = mapped_column(String(16), default="documented", server_default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+
+class RepositoryCapability(_Row, Base):
+    """Something the documents say the product does."""
+
+    __tablename__ = "repository_capabilities"
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(128))
+    description: Mapped[str] = mapped_column(String(512), default="", server_default="")
+    note: Mapped[str] = mapped_column(String(256), default="", server_default="")
+    file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    quote: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    status: Mapped[str] = mapped_column(String(16), default="documented", server_default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+
+class RepositoryUseCase(_Row, Base):
+    """A use case the AI worked out from the capabilities, with the capability it rests on."""
+
+    __tablename__ = "repository_use_cases"
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    title: Mapped[str] = mapped_column(String(128))
+    description: Mapped[str] = mapped_column(String(512), default="", server_default="")
+    file: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    quote: Mapped[str] = mapped_column(String(128), default="", server_default="")
+    status: Mapped[str] = mapped_column(String(16), default="inferred", server_default="")
+    position: Mapped[int] = mapped_column(default=0)
+
+
 class RepositoryDependency(_Row, Base):
     """One package a project file depends on. ``is_dev`` marks test and tooling packages."""
 

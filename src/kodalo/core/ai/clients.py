@@ -184,6 +184,17 @@ def generate(request: GenerateRequest) -> Generation:
     raise AiConnectionError(f"Unknown provider: {request.provider}.")
 
 
+def _claude_code_failure(result: "subprocess.CompletedProcess[str]", data: Any) -> str:
+    """Why a ``claude -p`` call failed, in one short line (Claude Code's own words, if any)."""
+    reason = ""
+    if isinstance(data, dict) and data.get("is_error"):
+        reason = str(data.get("result", ""))
+    elif not isinstance(data, dict):
+        reason = (result.stderr or "").strip()
+    reason = " ".join(reason.split())[:200]
+    return f"Claude Code did not answer: {reason}" if reason else "Claude Code did not answer."
+
+
 def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
     """Run ``claude -p`` as a plain text model: no tools, no project instructions, no plugins,
     MCP servers or saved session, from an empty folder. Without these a call carries about 28,000
@@ -211,11 +222,19 @@ def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
                 check=False,
                 cwd=folder,
             )
+    except subprocess.TimeoutExpired as exc:
+        raise AiConnectionError(
+            f"Claude Code took longer than {timeout} seconds. Raise the model's timeout in "
+            "Settings > AI Connections, or send less."
+        ) from exc
+    except OSError as exc:
+        raise AiConnectionError("Claude Code could not be started.") from exc
+    try:
         data = json.loads(result.stdout)
-    except (OSError, subprocess.TimeoutExpired, ValueError) as exc:
-        raise AiConnectionError("Claude Code did not answer.") from exc
+    except ValueError:
+        data = None
     if result.returncode != 0 or not isinstance(data, dict) or data.get("is_error"):
-        raise AiConnectionError("Claude Code did not answer.")
+        raise AiConnectionError(_claude_code_failure(result, data))
     usage = _usage(data)
     received = sum(
         _count(usage, key)

@@ -34,6 +34,8 @@ export default function SettingsPage() {
   const [mode, setMode] = useState('gh_cli');
   const [folder, setFolder] = useState('');
   const [manifestLimit, setManifestLimit] = useState(10);
+  const [documentLimit, setDocumentLimit] = useState(10);
+  const [documentMaxKb, setDocumentMaxKb] = useState(200);
   const [error, setError] = useState('');
   const [saved, setSaved] = useState(false);
   const [result, setResult] = useState(
@@ -52,6 +54,8 @@ export default function SettingsPage() {
         setMode(settings.mode);
         setFolder(settings.local_folder);
         setManifestLimit(settings.manifest_limit);
+        setDocumentLimit(settings.document_limit);
+        setDocumentMaxKb(settings.document_max_kb);
         setTheme(appearance.theme);
       },
       (failure) => alive && setError(failure.message),
@@ -78,7 +82,13 @@ export default function SettingsPage() {
     run(async () => {
       setSaved(false);
       setResult(null);
-      await saveGithubSettings({ mode, local_folder: folder, manifest_limit: manifestLimit });
+      await saveGithubSettings({
+        mode,
+        local_folder: folder,
+        manifest_limit: manifestLimit,
+        document_limit: documentLimit,
+        document_max_kb: documentMaxKb,
+      });
       setSaved(true);
     });
 
@@ -182,6 +192,22 @@ export default function SettingsPage() {
             max={100}
             onChange={setManifestLimit}
             hint="How many project files (package.json, pyproject.toml ...) are read from a GitHub repository. Each one is a request to GitHub, so a lower number is faster."
+          />
+          <NumberField
+            label="Documents to read"
+            value={documentLimit}
+            min={1}
+            max={50}
+            onChange={setDocumentLimit}
+            hint="How many documents (the README and the docs it links to) are read to find out what a product does."
+          />
+          <NumberField
+            label="Most of each document to read (KB)"
+            value={documentMaxKb}
+            min={1}
+            max={200}
+            onChange={setDocumentMaxKb}
+            hint="A longer document is cut off here and a note says so."
           />
           <div className="row actions">
             <Button appearance="accent" disabled={busy} onClick={save}>

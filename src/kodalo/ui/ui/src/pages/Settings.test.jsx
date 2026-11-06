@@ -15,6 +15,11 @@ describe('SettingsPage', () => {
 
     const select = await screen.findByLabelText('Connect with');
     expect(await screen.findByLabelText('Project files to read')).toBeInTheDocument();
+    expect(screen.getByLabelText('Documents to read')).toHaveProperty('value', '10');
+    expect(screen.getByLabelText('Most of each document to read (KB)')).toHaveProperty(
+      'value',
+      '200',
+    );
     expect(select).toHaveProperty('value', 'gh_cli');
     await userEvent.selectOptions(select, 'web_fetch');
     await userEvent.click(screen.getByText('Save'));
@@ -23,6 +28,8 @@ describe('SettingsPage', () => {
       mode: 'web_fetch',
       local_folder: '',
       manifest_limit: 10,
+      document_limit: 10,
+      document_max_kb: 200,
     });
 
     await userEvent.click(screen.getByText('Test saved connection'));

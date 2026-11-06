@@ -12,7 +12,7 @@ from kodalo.core.ai import AiConnections
 from kodalo.core.appearance import Appearance
 from kodalo.core.brand import BrandService
 from kodalo.core.github import GitHubConnectivity
-from kodalo.core.repo import RepoAnalyzer, RepoService
+from kodalo.core.repo import ReadmeAssistant, ReadmeService, RepoAnalyzer, RepoService
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -33,6 +33,8 @@ class Services:
     appearance: Appearance
     ai: AiConnections
     analyzer: RepoAnalyzer
+    readme: ReadmeService
+    assistant: ReadmeAssistant
 
 
 def data_dir() -> Path:
@@ -53,6 +55,7 @@ def _build_services() -> Services:
     ai = AiConnections(database)
     with suppress(Exception):  # old history is removed when the services start
         ai.history.purge_expired()
+    readme = ReadmeService(database, repos)
     return Services(
         database,
         BrandService(database, folder),
@@ -61,6 +64,8 @@ def _build_services() -> Services:
         Appearance(database),
         ai,
         RepoAnalyzer(repos, ai, folder / "parsers", folder / "frameworks", folder / "tooling"),
+        readme,
+        ReadmeAssistant(readme, ai),
     )
 
 
@@ -114,6 +119,22 @@ def get_repo_analyzer() -> RepoAnalyzer:
     """Return the AI repository analyzer, opening the database on first use."""
     try:
         return _services().analyzer
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_readme_service() -> ReadmeService:
+    """Return the README analysis service, opening the database on first use."""
+    try:
+        return _services().readme
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_readme_assistant() -> ReadmeAssistant:
+    """Return the AI README assistant, opening the database on first use."""
+    try:
+        return _services().assistant
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 

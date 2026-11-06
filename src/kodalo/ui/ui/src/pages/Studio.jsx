@@ -4,10 +4,12 @@ import {
   getGithubSettings,
   openExternal,
   planAnalysis,
+  readReadme,
   readRepository,
   runAnalysis,
 } from '../api.js';
 import { Button, Switch, TextField } from '../components/controls.jsx';
+import ReadmeView from './ReadmeView.jsx';
 
 const STEPS = [
   ['source', 'Source'],
@@ -114,10 +116,11 @@ function hasWork(/** @type {any} */ plan) {
 }
 
 function AiStep(
-  /** @type {{ repo: any, busy: boolean, onRun: (action: () => Promise<void>) => void, onDone: () => Promise<void>, onRefresh: () => void, onBack: () => void }} */ {
+  /** @type {{ repo: any, busy: boolean, onRun: (action: () => Promise<void>) => void, onDone: () => Promise<void>, onRefresh: () => void, onNext: () => void, onBack: () => void }} */ {
     repo,
     busy,
     onRefresh,
+    onNext,
     onBack,
     onRun,
     onDone,
@@ -159,6 +162,9 @@ function AiStep(
         </Button>
         <Button disabled={busy || plan !== null} onClick={ask}>
           Refresh with AI
+        </Button>
+        <Button appearance="accent" disabled={busy || plan !== null} onClick={onNext}>
+          Next
         </Button>
         <Button disabled={busy} onClick={onBack}>
           Back
@@ -209,7 +215,7 @@ function AiStep(
   );
 }
 
-function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
+function RepositoryView({ repo, busy, onRefresh, onReload, onNext, onBack, onRun }) {
   const facts = [
     ['Address', webLink(repo.url)],
     ['Description', orDash(repo.description)],
@@ -424,6 +430,7 @@ function RepositoryView({ repo, busy, onRefresh, onReload, onBack, onRun }) {
         repo={repo}
         busy={busy}
         onRefresh={onRefresh}
+        onNext={onNext}
         onBack={onBack}
         onRun={onRun}
         onDone={onReload}
@@ -440,6 +447,7 @@ export default function StudioPage({ visible, onOpenSettings }) {
   const [source, setSource] = useState('');
   const [details, setDetails] = useState(EMPTY_DETAILS);
   const [repo, setRepo] = useState(/** @type {any} */ (null));
+  const [readme, setReadme] = useState(/** @type {any} */ (null));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -476,6 +484,13 @@ export default function StudioPage({ visible, onOpenSettings }) {
     setRepo(await readRepository({ source, ...extra }));
     setStep('repository');
   }
+
+  /** @param {boolean} refresh */
+  const analyze = (refresh) =>
+    run(async () => {
+      setReadme(await readReadme(repo.id, refresh));
+      setStep('analyze');
+    });
 
   const next = () =>
     run(async () => {
@@ -616,8 +631,21 @@ export default function StudioPage({ visible, onOpenSettings }) {
           busy={busy}
           onRefresh={() => run(() => read({ refresh: true }))}
           onReload={() => read({ refresh: true })}
+          onNext={() => analyze(false)}
           onBack={() => setStep('source')}
           onRun={run}
+        />
+      ) : null}
+
+      {step === 'analyze' && repo && readme ? (
+        <ReadmeView
+          repo={repo}
+          readme={readme}
+          busy={busy}
+          onRun={run}
+          onChange={setReadme}
+          onRefresh={() => analyze(true)}
+          onBack={() => setStep('repository')}
         />
       ) : null}
 

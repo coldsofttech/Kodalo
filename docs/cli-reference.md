@@ -1383,6 +1383,8 @@ $ kodalo settings github set [OPTIONS] {mode}
 
 * `--folder <str>`: Folder holding your repositories (for local_folder).
 * `--manifest-limit <int>`: How many project files (package.json ...) to read from GitHub, 1 to 100.
+* `--document-limit <int>`: How many documents (the README and the docs it links to) to read, 1 to 50.
+* `--document-max-kb <int>`: How much of each document to read, in KB, 1 to 200.
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 
@@ -1469,7 +1471,9 @@ $ kodalo studio read [OPTIONS] {value}
 * `--fork`: Local folder: it is a fork.
 * `--archived`: Local folder: it is archived.
 * `--refresh-with-ai`: Ask the default AI model to read unknown project files and find frameworks.
-* `-y, --yes`: With --refresh-with-ai: do not ask before sending.
+* `-y, --yes`: With an AI option: do not ask before sending.
+* `--readme`: Also read the README and the docs it links to: purpose, installation, capabilities. Without AI. Kept; --refresh reads it again.
+* `--readme-with-ai`: Ask the default AI model to read those documents and write the purpose, installation, capabilities and use cases (implies --readme).
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 

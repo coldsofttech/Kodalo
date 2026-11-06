@@ -462,7 +462,13 @@ export function createBackend(initial = []) {
     canvases: CANVASES.map((canvas) => ({ ...canvas })),
     layouts: LAYOUTS.map((layout) => ({ ...layout })),
     palettes: PALETTES.map((palette) => ({ ...palette })),
-    github: { mode: 'gh_cli', local_folder: '', manifest_limit: 10 },
+    github: {
+      mode: 'gh_cli',
+      local_folder: '',
+      manifest_limit: 10,
+      document_limit: 10,
+      document_max_kb: 200,
+    },
     ai: AI_PROVIDERS.map((provider) => makeAiConnection(...provider)),
     aiHistory: {
       calls: AI_CALLS.map((call) => ({ ...call })),

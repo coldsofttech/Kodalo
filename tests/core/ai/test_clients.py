@@ -143,3 +143,39 @@ def test_claude_code_runs_lean_from_an_empty_folder(monkeypatch: pytest.MonkeyPa
     assert kwargs["input"] == "PROMPT"
     assert kwargs["cwd"] != str(Path.cwd())
     assert (reply.text, reply.input_tokens, reply.output_tokens) == ("ok", 652, 0)
+
+
+def _claude_code(monkeypatch: pytest.MonkeyPatch, run: object) -> GenerateRequest:
+    monkeypatch.setattr(shutil, "which", lambda _name: "claude")
+    monkeypatch.setattr(subprocess, "run", run)
+    return GenerateRequest("claude_code", "", "", "haiku", "SYSTEM", "PROMPT", 100, None, 30)
+
+
+def test_claude_code_timeout_says_so(monkeypatch: pytest.MonkeyPatch) -> None:
+    def run(command: list[str], **kwargs: object) -> None:
+        raise subprocess.TimeoutExpired(command, 30)
+
+    request = _claude_code(monkeypatch, run)
+
+    with pytest.raises(AiConnectionError, match="took longer than 30 seconds"):
+        clients.generate(request)
+
+
+def test_claude_code_failure_gives_its_own_reason(monkeypatch: pytest.MonkeyPatch) -> None:
+    class Failed:
+        returncode = 1
+        stdout = ""
+        stderr = "Error: not signed in\n"
+
+    class Errored:
+        returncode = 0
+        stdout = json.dumps({"is_error": True, "result": "Prompt is too long"})
+        stderr = ""
+
+    request = _claude_code(monkeypatch, lambda command, **kwargs: Failed())
+    with pytest.raises(AiConnectionError, match="did not answer: Error: not signed in"):
+        clients.generate(request)
+
+    request = _claude_code(monkeypatch, lambda command, **kwargs: Errored())
+    with pytest.raises(AiConnectionError, match="did not answer: Prompt is too long"):
+        clients.generate(request)

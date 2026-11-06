@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Studio's Repository step has a Next button that reads the README and the docs it links to and shows what the product is for, how to install it and what it can do; Refresh with AI reads those pages with your AI model for a cleaner summary and use cases, after asking first. Two new settings control how many documents are read and how much of each.
 - Reading a repository now also shows its README, changelog, contributing and license files and docs folder, the line that shows each project file's package, and which files were left unread (secret-looking, over 200 KB or unreadable).
 - Settings has a new AI History tab: every AI call with its date, purpose, connection, model and tokens, a token table and chart per connection and model, filters (last day, week, month, year, custom), the full prompt and answer if you choose to keep them, and a Purge button. `kodalo settings ai history`, `usage`, `history-settings` and `purge-history` do the same. Entries older than 90 days (changeable) are removed automatically.
 - Reading a repository now also lists its tooling (build, test, lint and format, CI, containers and package tools such as Make, Ruff, GitHub Actions, Docker or uv); `Refresh with AI` learns more, and your own JSON files can add more.

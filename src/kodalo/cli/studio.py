@@ -16,6 +16,9 @@ from kodalo.core.repo import (
     Documentation,
     LocalDetails,
     Manifest,
+    ReadmeAnalysis,
+    ReadmeAssistant,
+    ReadmeService,
     RepoAnalyzer,
     RepoError,
     RepoInfo,
@@ -37,7 +40,7 @@ JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 @contextmanager
 def _open(
     ctx: typer.Context,
-) -> Iterator[tuple[GitHubSettings, RepoService, RepoAnalyzer]]:
+) -> Iterator[tuple[GitHubSettings, RepoService, RepoAnalyzer, ReadmeService, ReadmeAssistant]]:
     """Open the database for one command, turning expected failures into exit code 1."""
     data_dir = get_state(ctx).data_dir or default_data_dir()
     database: Database | None = None
@@ -53,7 +56,14 @@ def _open(
         analyzer = RepoAnalyzer(
             repos, ai, data_dir / "parsers", data_dir / "frameworks", data_dir / "tooling"
         )
-        yield GitHubConnectivity(database).get(), repos, analyzer
+        readme = ReadmeService(database, repos)
+        yield (
+            GitHubConnectivity(database).get(),
+            repos,
+            analyzer,
+            readme,
+            ReadmeAssistant(readme, ai),
+        )
     except (
         StorageError,
         StudioInvalidError,
@@ -136,7 +146,7 @@ def source_command(
     as_json: JsonOption = False,
 ) -> None:
     """Check a repository against the GitHub mode. Exits with 1 when it is not valid."""
-    with _open(ctx) as (settings, _, _a):
+    with _open(ctx) as (settings, *_):
         source = validate_source(settings, value)
     if as_json:
         output.console.print_json(data=dataclasses.asdict(source))
@@ -192,6 +202,76 @@ def _refresh_with_ai(
     return reread() if saved else None
 
 
+def _ask_ai(
+    assistant: ReadmeAssistant,
+    readmes: ReadmeService,
+    settings: GitHubSettings,
+    repo_id: str,
+    yes: bool,
+) -> ReadmeAnalysis | None:
+    """Plan, confirm once and run the one AI request. Return the analysis it improved."""
+    plan = assistant.plan(repo_id)
+    if not plan.documents:
+        output.err_console.print("No document was read, so there is nothing to send.")
+        return None
+    lines = [f"the text of {', '.join(plan.documents)} (secret-looking lines removed)"]
+    if not _approve(lines, (plan.input_tokens, plan.max_output_tokens), plan.label, yes):
+        return None
+    result = assistant.apply(settings, repo_id)
+    output.err_console.print(
+        f"Saved {result.installation} installation method(s), {result.capabilities} "
+        f"capabilities and {result.use_cases} use case(s); used {result.input_tokens} tokens "
+        f"in, {result.output_tokens} out."
+    )
+    for line in result.skipped:
+        output.err_console.print(f"[yellow]{line}[/yellow]")
+    return readmes.get(repo_id)
+
+
+def _show_readme(info: RepoInfo, analysis: ReadmeAnalysis, as_json: bool) -> None:
+    if as_json:
+        data = dataclasses.asdict(info)
+        del data["paths"]  # only used while reading
+        output.console.print_json(data={"repository": data, "readme": dataclasses.asdict(analysis)})
+        return
+    _show(info, False)
+    purpose = Table(show_header=False, title="Purpose")
+    purpose.add_row("Tagline", analysis.tagline or "-")
+    purpose.add_row("Summary", analysis.summary or "-")
+    output.console.print(purpose)
+    for title, headers, rows in (
+        (
+            "Installation",
+            ("Method", "Command", "Found in"),
+            [(i.method, i.command or "-", i.evidence.file or "-") for i in analysis.installation],
+        ),
+        (
+            "Capabilities",
+            ("Capability", "Description", "Note", "Found in"),
+            [
+                (c.name, c.description or "-", c.note or "-", c.evidence.file or "-")
+                for c in analysis.capabilities
+            ],
+        ),
+        (
+            "Use cases",
+            ("Use case", "Description", "Based on"),
+            [(u.title, u.description or "-", u.evidence.quote or "-") for u in analysis.use_cases],
+        ),
+        (
+            "Documents",
+            ("Document", "Status", "Reason"),
+            [(d.path, d.status, d.reason or "-") for d in analysis.documents],
+        ),
+    ):
+        table = Table(*headers, title=title)
+        for row in rows:
+            table.add_row(*row)
+        output.console.print(table)
+    for warning in analysis.warnings:
+        output.err_console.print(f"[yellow]{warning}[/yellow]")
+
+
 @app.command("read")
 def read_command(
     ctx: typer.Context,
@@ -226,7 +306,23 @@ def read_command(
     ] = False,
     yes: Annotated[
         bool,
-        typer.Option("--yes", "-y", help="With --refresh-with-ai: do not ask before sending."),
+        typer.Option("--yes", "-y", help="With an AI option: do not ask before sending."),
+    ] = False,
+    readme: Annotated[
+        bool,
+        typer.Option(
+            "--readme",
+            help="Also read the README and the docs it links to: purpose, installation, "
+            "capabilities. Without AI. Kept; --refresh reads it again.",
+        ),
+    ] = False,
+    readme_with_ai: Annotated[
+        bool,
+        typer.Option(
+            "--readme-with-ai",
+            help="Ask the default AI model to read those documents and write the purpose, "
+            "installation, capabilities and use cases (implies --readme).",
+        ),
     ] = False,
     as_json: JsonOption = False,
 ) -> None:
@@ -244,7 +340,8 @@ def read_command(
         is_archived=archived,
     )
     supplied = details != LocalDetails()
-    with _open(ctx) as (settings, repos, analyzer):
+    analysis: ReadmeAnalysis | None = None
+    with _open(ctx) as (settings, repos, analyzer, readmes, assistant):
         source = validate_source(settings, value)
         info = repos.read(settings, source, details if supplied else None, refresh=refresh)
         if refresh_with_ai:
@@ -260,13 +357,20 @@ def read_command(
                 )
                 or info
             )
-    _show(info, as_json)
+        if readme or readme_with_ai:
+            analysis = readmes.read(settings, info.id, refresh=refresh)
+            if readme_with_ai:
+                analysis = _ask_ai(assistant, readmes, settings, info.id, yes) or analysis
+    if analysis is None:
+        _show(info, as_json)
+        return
+    _show_readme(info, analysis, as_json)
 
 
 @app.command("list")
 def list_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
     """List the repositories that were read before."""
-    with _open(ctx) as (_, repos, _a):
+    with _open(ctx) as (_, repos, *_):
         items = repos.list_repos()
     if as_json:
         output.console.print_json(data=[dataclasses.asdict(i) for i in items])
@@ -292,6 +396,6 @@ def show_command(
     as_json: JsonOption = False,
 ) -> None:
     """Show a stored repository."""
-    with _open(ctx) as (_, repos, _a):
+    with _open(ctx) as (_, repos, *_):
         info = repos.get(repo_id)
     _show(info, as_json)

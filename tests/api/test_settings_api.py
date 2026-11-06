@@ -13,6 +13,8 @@ def test_default_save_and_check(tmp_path: Path) -> None:
         "mode": "gh_cli",
         "local_folder": "",
         "manifest_limit": 10,
+        "document_limit": 10,
+        "document_max_kb": 200,
     }
 
     saved = client.put(URL, json={"mode": "local_folder", "local_folder": str(tmp_path)})

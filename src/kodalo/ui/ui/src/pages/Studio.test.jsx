@@ -161,3 +161,138 @@ describe('StudioPage AI step', () => {
     expect(await screen.findByText(/nothing to ask the AI/)).toBeInTheDocument();
   });
 });
+
+const README = {
+  repository_id: 'r1',
+  tagline: 'Repo cleans things.',
+  summary: 'Repo cleans things. It is fast.',
+  purpose_file: 'README.md',
+  installation: [
+    {
+      method: 'pip',
+      command: 'pip install repo',
+      note: '',
+      evidence: { file: 'README.md', quote: 'pip install repo', status: 'documented' },
+    },
+  ],
+  capabilities: [
+    {
+      name: 'Clean caches',
+      description: 'remove caches',
+      note: '',
+      evidence: { file: 'README.md', quote: '- Clean caches', status: 'documented' },
+    },
+    {
+      name: 'Service',
+      description: '',
+      note: 'Planned or experimental',
+      evidence: { file: 'README.md', quote: '- Service', status: 'documented' },
+    },
+  ],
+  use_cases: [],
+  documents: [
+    { path: 'README.md', status: 'read', reason: '', size: 100 },
+    { path: 'SECURITY.md', status: 'skipped', reason: 'not about using the product', size: 0 },
+  ],
+  warnings: [],
+  analyzed_at: 'now',
+  use_cases_at: null,
+};
+const README_PLAN = {
+  provider: 'claude_api',
+  label: 'Claude API',
+  model: 'claude-haiku-5-5',
+  documents: ['README.md', 'docs/cli.md'],
+  input_tokens: 400,
+  max_output_tokens: 900,
+};
+
+describe('StudioPage README step', () => {
+  it('reads the README on Next, asks once before sending, and shows the use cases', async () => {
+    const backend = createBackend([]);
+    let saved = README;
+    const calls = mockApi((method, path, body) => {
+      if (path.endsWith('/readme/analysis/plan')) return README_PLAN;
+      if (path.endsWith('/readme/analysis')) {
+        saved = {
+          ...README,
+          use_cases: [
+            {
+              title: 'Free disk space',
+              description: 'Clean caches.',
+              evidence: { file: 'README.md', quote: '- Clean caches', status: 'inferred' },
+            },
+          ],
+        };
+        return {
+          installation: 1,
+          capabilities: 2,
+          use_cases: 1,
+          skipped: [],
+          input_tokens: 400,
+          output_tokens: 90,
+        };
+      }
+      if (path.endsWith('/readme') && method === 'GET') return saved;
+      if (path.endsWith('/readme')) return saved;
+      return backend.handler(method, path, body);
+    });
+    const { container } = render(<StudioPage visible onOpenSettings={() => undefined} />);
+    await openRepository();
+
+    await userEvent.click(screen.getByText('Next'));
+    expect(await screen.findByRole('heading', { name: 'What repo is' })).toBeInTheDocument();
+    expect(screen.getByText('pip install repo')).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /Clean caches remove caches README.md/ })).toBeVisible();
+    expect(screen.getByText('Planned or experimental')).toBeInTheDocument();
+    expect(screen.getByRole('row', { name: /SECURITY.md skipped/ })).toBeVisible();
+    expect(calls.at(-1).path).toMatch(/\/readme$/);
+    expect(calls.at(-1).body).toEqual({ refresh: false });
+
+    await userEvent.click(screen.getByText('Refresh with AI'));
+    expect(await screen.findByText(/About 400 tokens sent/)).toBeInTheDocument();
+    expect(calls.some((call) => call.path.endsWith('/readme/analysis'))).toBe(false);
+    expect(await axe(container)).toHaveNoViolations();
+
+    await userEvent.click(screen.getByText('Proceed'));
+    expect(
+      await screen.findByText(/Saved 1 installation method\(s\), 2 capabilities and 1 use case/),
+    ).toBeInTheDocument();
+    expect(await screen.findByText('Free disk space')).toBeInTheDocument();
+    expect(calls.filter((call) => call.path.endsWith('/readme/analysis')).length).toBe(1);
+  });
+
+  it('refreshes the documents and goes back to the repository', async () => {
+    const backend = createBackend([]);
+    const calls = mockApi((method, path, body) =>
+      path.endsWith('/readme') ? README : backend.handler(method, path, body),
+    );
+    render(<StudioPage visible onOpenSettings={() => undefined} />);
+    await openRepository();
+    await userEvent.click(screen.getByText('Next'));
+    await screen.findByRole('heading', { name: 'What repo is' });
+
+    await userEvent.click(screen.getByText('Refresh'));
+    await screen.findByRole('heading', { name: 'What repo is' });
+    expect(calls.filter((call) => call.path.endsWith('/readme')).at(-1).body.refresh).toBe(true);
+
+    await userEvent.click(screen.getByText('Back'));
+    expect(await screen.findByRole('heading', { name: 'o/repo' })).toBeInTheDocument();
+  });
+
+  it('says so when there is nothing to send', async () => {
+    const backend = createBackend([]);
+    mockApi((method, path, body) => {
+      if (path.endsWith('/readme/analysis/plan')) return { ...README_PLAN, documents: [] };
+      if (path.endsWith('/readme')) return { ...README, capabilities: [], installation: [] };
+      return backend.handler(method, path, body);
+    });
+    render(<StudioPage visible onOpenSettings={() => undefined} />);
+    await openRepository();
+    await userEvent.click(screen.getByText('Next'));
+
+    expect(await screen.findByText(/No features or commands were listed/)).toBeInTheDocument();
+    await userEvent.click(screen.getByText('Refresh with AI'));
+    expect(await screen.findByText(/so there is nothing to send/)).toBeInTheDocument();
+  });
+});

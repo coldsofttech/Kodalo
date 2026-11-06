@@ -49,6 +49,8 @@ def _show(settings: GitHubSettings, as_json: bool) -> None:
         "mode": settings.mode,
         "local_folder": settings.local_folder,
         "manifest_limit": settings.manifest_limit,
+        "document_limit": settings.document_limit,
+        "document_max_kb": settings.document_max_kb,
     }
     if as_json:
         output.console.print_json(data=data)
@@ -57,6 +59,8 @@ def _show(settings: GitHubSettings, as_json: bool) -> None:
     table.add_row("Mode", settings.mode)
     table.add_row("Local folder", settings.local_folder or "-")
     table.add_row("Project files to read", str(settings.manifest_limit))
+    table.add_row("Documents to read", str(settings.document_limit))
+    table.add_row("Most of each document", f"{settings.document_max_kb} KB")
     output.console.print(table)
 
 
@@ -82,11 +86,27 @@ def set_command(
             help="How many project files (package.json ...) to read from GitHub, 1 to 100.",
         ),
     ] = None,
+    document_limit: Annotated[
+        int | None,
+        typer.Option(
+            "--document-limit",
+            help="How many documents (the README and the docs it links to) to read, 1 to 50.",
+        ),
+    ] = None,
+    document_max_kb: Annotated[
+        int | None,
+        typer.Option(
+            "--document-max-kb", help="How much of each document to read, in KB, 1 to 200."
+        ),
+    ] = None,
     as_json: JsonOption = False,
 ) -> None:
     """Choose the way to reach GitHub."""
     with _connectivity(ctx) as connectivity:
-        _show(connectivity.save(mode, folder, manifest_limit), as_json)
+        _show(
+            connectivity.save(mode, folder, manifest_limit, document_limit, document_max_kb),
+            as_json,
+        )
 
 
 @app.command("check")

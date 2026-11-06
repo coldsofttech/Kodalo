@@ -25,6 +25,12 @@ FOLDER_KEY = "local_folder"
 MANIFEST_LIMIT_KEY = "manifest_limit"
 DEFAULT_MANIFEST_LIMIT = 10
 MAX_MANIFEST_LIMIT = 100
+DOCUMENT_LIMIT_KEY = "document_limit"
+DEFAULT_DOCUMENT_LIMIT = 10
+MAX_DOCUMENT_LIMIT = 50
+DOCUMENT_MAX_KB_KEY = "document_max_kb"
+DEFAULT_DOCUMENT_MAX_KB = 200
+MAX_DOCUMENT_MAX_KB = 200
 MAX_PATH = 1024
 _TIMEOUT = 10
 _RATE_LIMIT_URL = "https://api.github.com/rate_limit"
@@ -37,6 +43,8 @@ class GitHubSettings:
     mode: Mode = DEFAULT_MODE
     local_folder: str = ""
     manifest_limit: int = DEFAULT_MANIFEST_LIMIT
+    document_limit: int = DEFAULT_DOCUMENT_LIMIT
+    document_max_kb: int = DEFAULT_DOCUMENT_MAX_KB
 
 
 @dataclass(frozen=True)
@@ -60,13 +68,34 @@ class GitHubConnectivity:
             mode = self._load(session, MODE_KEY, DEFAULT_MODE)
             folder = self._load(session, FOLDER_KEY, "")
             limit = self._load_int(session, MANIFEST_LIMIT_KEY, DEFAULT_MANIFEST_LIMIT)
-        return GitHubSettings(mode=_valid_mode(mode), local_folder=folder, manifest_limit=limit)
+            documents = self._load_int(session, DOCUMENT_LIMIT_KEY, DEFAULT_DOCUMENT_LIMIT)
+            document_kb = self._load_int(session, DOCUMENT_MAX_KB_KEY, DEFAULT_DOCUMENT_MAX_KB)
+        return GitHubSettings(
+            mode=_valid_mode(mode),
+            local_folder=folder,
+            manifest_limit=limit,
+            document_limit=documents,
+            document_max_kb=document_kb,
+        )
 
     def save(
-        self, mode: str, local_folder: str | None = None, manifest_limit: int | None = None
+        self,
+        mode: str,
+        local_folder: str | None = None,
+        manifest_limit: int | None = None,
+        document_limit: int | None = None,
+        document_max_kb: int | None = None,
     ) -> GitHubSettings:
-        """Choose ``mode``. ``None`` for the folder or the limit keeps the saved one."""
+        """Choose ``mode``. ``None`` for the folder or a limit keeps the saved one."""
         mode = _valid_mode(mode)
+        if document_limit is not None and not 1 <= document_limit <= MAX_DOCUMENT_LIMIT:
+            raise GitHubInvalidError(
+                f"The number of documents to read must be from 1 to {MAX_DOCUMENT_LIMIT}."
+            )
+        if document_max_kb is not None and not 1 <= document_max_kb <= MAX_DOCUMENT_MAX_KB:
+            raise GitHubInvalidError(
+                f"The size to read of each document must be from 1 to {MAX_DOCUMENT_MAX_KB} KB."
+            )
         if manifest_limit is not None and not 1 <= manifest_limit <= MAX_MANIFEST_LIMIT:
             raise GitHubInvalidError(
                 f"The number of project files to read must be from 1 to {MAX_MANIFEST_LIMIT}."
@@ -80,11 +109,21 @@ class GitHubConnectivity:
         if mode == "local_folder" and not folder:
             raise GitHubInvalidError("Local folder mode needs a folder.")
         limit = current.manifest_limit if manifest_limit is None else manifest_limit
+        documents = current.document_limit if document_limit is None else document_limit
+        document_kb = current.document_max_kb if document_max_kb is None else document_max_kb
         with self._database.session() as session:
             self._store(session, MODE_KEY, mode)
             self._store(session, FOLDER_KEY, folder)
             self._store(session, MANIFEST_LIMIT_KEY, str(limit), "integer")
-        return GitHubSettings(mode=mode, local_folder=folder, manifest_limit=limit)
+            self._store(session, DOCUMENT_LIMIT_KEY, str(documents), "integer")
+            self._store(session, DOCUMENT_MAX_KB_KEY, str(document_kb), "integer")
+        return GitHubSettings(
+            mode=mode,
+            local_folder=folder,
+            manifest_limit=limit,
+            document_limit=documents,
+            document_max_kb=document_kb,
+        )
 
     @staticmethod
     def _query(key: str) -> Select[Setting]:

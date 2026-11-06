@@ -24,7 +24,11 @@ from kodalo.core.palette import Palette
 from kodalo.core.repo import (
     AnalyzerPlan,
     AnalyzerResult,
+    Evidence,
     LocalDetails,
+    ReadmeAnalysis,
+    ReadmePlan,
+    ReadmeResult,
     RepoInfo,
     Suggestion,
 )
@@ -363,6 +367,19 @@ class GitHubSettingsResponse(BaseModel):
         "reading a repository from GitHub. Each one is a request to GitHub.",
         examples=[10],
     )
+    document_limit: int = Field(
+        ge=1,
+        le=50,
+        description="How many documents (the README and the docs it links to) to read for "
+        "the README analysis.",
+        examples=[10],
+    )
+    document_max_kb: int = Field(
+        ge=1,
+        le=200,
+        description="How much of each document to read, in KB. The rest is left out.",
+        examples=[200],
+    )
 
     @classmethod
     def from_core(cls, settings: GitHubSettings) -> Self:
@@ -370,15 +387,19 @@ class GitHubSettingsResponse(BaseModel):
             mode=settings.mode,
             local_folder=settings.local_folder,
             manifest_limit=settings.manifest_limit,
+            document_limit=settings.document_limit,
+            document_max_kb=settings.document_max_kb,
         )
 
 
 class GitHubSettingsUpdate(BaseModel):
-    """``local_folder`` or ``manifest_limit`` left out keeps the saved value."""
+    """``local_folder`` or a limit left out keeps the saved value."""
 
     mode: GitHubMode = Field(examples=["gh_cli"])
     local_folder: str | None = Field(default=None, max_length=1024, examples=["C:/Users/me/code"])
     manifest_limit: int | None = Field(default=None, ge=1, le=100, examples=[10])
+    document_limit: int | None = Field(default=None, ge=1, le=50, examples=[10])
+    document_max_kb: int | None = Field(default=None, ge=1, le=200, examples=[200])
 
 
 class GitHubCheckResponse(BaseModel):
@@ -862,6 +883,170 @@ class AnalysisResultResponse(BaseModel):
             parsers=list(result.parsers),
             frameworks=list(result.frameworks),
             tools=list(result.tools),
+            skipped=[s[:300] for s in result.skipped],
+            input_tokens=result.input_tokens,
+            output_tokens=result.output_tokens,
+        )
+
+
+class ReadmeReadRequest(BaseModel):
+    """Read the README analysis, or return the saved one unless ``refresh`` is set."""
+
+    refresh: bool = Field(default=False, description="Read the documents again.")
+
+
+class EvidenceResponse(BaseModel):
+    """A short quote from a document."""
+
+    file: str = Field(max_length=1024, examples=["README.md"])
+    quote: str = Field(max_length=128, examples=["pip install sweepito"])
+    status: Literal["documented", "inferred"] = Field(
+        description="Whether a document says it directly or it follows from what it says."
+    )
+
+    @classmethod
+    def from_core(cls, evidence: Evidence) -> Self:
+        return cls(
+            file=evidence.file,
+            quote=evidence.quote,
+            status="inferred" if evidence.status == "inferred" else "documented",
+        )
+
+
+class InstallationResponse(BaseModel):
+    method: str = Field(max_length=32, examples=["pip"])
+    command: str = Field(max_length=512, examples=["pip install sweepito"])
+    note: str = Field(max_length=256)
+    evidence: EvidenceResponse
+
+
+class CapabilityResponse(BaseModel):
+    name: str = Field(max_length=128, examples=["Clean caches"])
+    description: str = Field(max_length=512)
+    note: str = Field(
+        max_length=256, description="Says so when a document calls it planned or experimental."
+    )
+    evidence: EvidenceResponse
+
+
+class UseCaseResponse(BaseModel):
+    title: str = Field(max_length=128, examples=["Free disk space before a release"])
+    description: str = Field(max_length=512)
+    evidence: EvidenceResponse
+
+
+class DocumentResponse(BaseModel):
+    path: str = Field(max_length=1024, examples=["docs/cli.md"])
+    status: Literal["read", "skipped"]
+    reason: str = Field(max_length=128, description="Why a document was skipped.")
+    size: int = Field(ge=0, description="Bytes read.")
+
+
+class ReadmeResponse(BaseModel):
+    """What the README and the docs it links to say the product is, does and how to install it."""
+
+    repository_id: str = Field(max_length=64)
+    tagline: str = Field(max_length=256, examples=["Clean up caches and build folders."])
+    summary: str = Field(max_length=1000)
+    purpose_file: str = Field(max_length=1024, examples=["README.md"])
+    installation: list[InstallationResponse] = Field(max_length=40)
+    capabilities: list[CapabilityResponse] = Field(max_length=30)
+    use_cases: list[UseCaseResponse] = Field(
+        max_length=6, description="Empty until the AI is asked for them."
+    )
+    documents: list[DocumentResponse] = Field(max_length=120)
+    warnings: list[str] = Field(max_length=40)
+    analyzed_at: str = Field(max_length=32)
+    use_cases_at: str | None = Field(max_length=32, description="When use cases were last asked.")
+
+    @classmethod
+    def from_core(cls, analysis: ReadmeAnalysis) -> Self:
+        return cls(
+            repository_id=analysis.repository_id,
+            tagline=analysis.tagline,
+            summary=analysis.summary,
+            purpose_file=analysis.purpose_file,
+            installation=[
+                InstallationResponse(
+                    method=i.method,
+                    command=i.command,
+                    note=i.note,
+                    evidence=EvidenceResponse.from_core(i.evidence),
+                )
+                for i in analysis.installation
+            ],
+            capabilities=[
+                CapabilityResponse(
+                    name=c.name,
+                    description=c.description,
+                    note=c.note,
+                    evidence=EvidenceResponse.from_core(c.evidence),
+                )
+                for c in analysis.capabilities
+            ],
+            use_cases=[
+                UseCaseResponse(
+                    title=u.title,
+                    description=u.description,
+                    evidence=EvidenceResponse.from_core(u.evidence),
+                )
+                for u in analysis.use_cases
+            ],
+            documents=[
+                DocumentResponse(
+                    path=d.path,
+                    status="read" if d.status == "read" else "skipped",
+                    reason=d.reason,
+                    size=d.size,
+                )
+                for d in analysis.documents
+            ],
+            warnings=[w[:300] for w in analysis.warnings],
+            analyzed_at=analysis.analyzed_at,
+            use_cases_at=analysis.use_cases_at,
+        )
+
+
+class ReadmePlanResponse(BaseModel):
+    """What asking the AI to read the documents would send and cost. Nothing has been sent yet."""
+
+    provider: str = Field(max_length=32, description="Empty when there is nothing to send.")
+    label: str = Field(max_length=64, examples=["Claude API"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    documents: list[str] = Field(
+        max_length=50, description="The documents whose text would be sent, secrets removed."
+    )
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[6000])
+    max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
+
+    @classmethod
+    def from_core(cls, plan: ReadmePlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            documents=list(plan.documents),
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+        )
+
+
+class ReadmeResultResponse(BaseModel):
+    """What asking the AI to read the documents did."""
+
+    installation: int = Field(ge=0, description="Installation methods saved.")
+    capabilities: int = Field(ge=0, description="Capabilities saved.")
+    use_cases: int = Field(ge=0, description="Use cases saved.")
+    skipped: list[str] = Field(max_length=100, description="Plain sentences about what was left.")
+    input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
+    output_tokens: int = Field(ge=0, description="Tokens the provider counted for the answer.")
+
+    @classmethod
+    def from_core(cls, result: ReadmeResult) -> Self:
+        return cls(
+            installation=result.installation,
+            capabilities=result.capabilities,
+            use_cases=result.use_cases,
             skipped=[s[:300] for s in result.skipped],
             input_tokens=result.input_tokens,
             output_tokens=result.output_tokens,

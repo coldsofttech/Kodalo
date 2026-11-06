@@ -14,6 +14,8 @@ from kodalo.api.deps import (
     get_appearance,
     get_brand_service,
     get_github_connectivity,
+    get_readme_assistant,
+    get_readme_service,
     get_repo_analyzer,
     get_repo_service,
 )
@@ -64,6 +66,10 @@ from kodalo.api.schemas import (
     PaletteResponse,
     PaletteSuggestion,
     PaletteUpdate,
+    ReadmePlanResponse,
+    ReadmeReadRequest,
+    ReadmeResponse,
+    ReadmeResultResponse,
     RepoReadRequest,
     RepoResponse,
     StudioSourceRequest,
@@ -121,6 +127,8 @@ from kodalo.core.palette import (
 )
 from kodalo.core.palette.suggest import PaletteSuggester
 from kodalo.core.repo import (
+    ReadmeAssistant,
+    ReadmeService,
     RepoAnalyzer,
     RepoDetailsError,
     RepoNotFoundError,
@@ -141,6 +149,8 @@ AiProviderPath = Annotated[AiProvider, Path(description="The AI provider.")]
 AiModelName = Annotated[str, Path(min_length=1, max_length=128, description="The model name.")]
 Repos = Annotated[RepoService, Depends(get_repo_service)]
 Analyzer = Annotated[RepoAnalyzer, Depends(get_repo_analyzer)]
+Readme = Annotated[ReadmeService, Depends(get_readme_service)]
+ReadmeAi = Annotated[ReadmeAssistant, Depends(get_readme_assistant)]
 BrandPath = Annotated[str, Path(max_length=64, description="Brand profile id.")]
 Variant = Annotated[
     Literal["light", "dark"],
@@ -337,7 +347,13 @@ def set_github_settings(body: GitHubSettingsUpdate, github: GitHub) -> GitHubSet
     """Choose the way to reach GitHub: a local folder, the gh CLI or the web."""
     try:
         return GitHubSettingsResponse.from_core(
-            github.save(body.mode, body.local_folder, body.manifest_limit)
+            github.save(
+                body.mode,
+                body.local_folder,
+                body.manifest_limit,
+                body.document_limit,
+                body.document_max_kb,
+            )
         )
     except GitHubInvalidError as error:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
@@ -639,6 +655,60 @@ def run_analysis(repo_id: RepoPath, github: GitHub, analyzer: Analyzer) -> Analy
     and save the valid ones. Read the repository again to use them."""
     with _studio_errors(), _ai_errors():
         return AnalysisResultResponse.from_core(analyzer.apply(github.get(), repo_id))
+
+
+@router.post(
+    "/studio/repositories/{repo_id}/readme",
+    summary="Read the README and docs",
+    responses=COMMON | NOT_FOUND | STUDIO_ERRORS,
+)
+def read_readme(
+    repo_id: RepoPath, body: ReadmeReadRequest, github: GitHub, readme: Readme
+) -> ReadmeResponse:
+    """Read the README and the docs it links to (no AI) and keep what they say: purpose,
+    installation methods and capabilities. A saved analysis is returned unless ``refresh`` is set.
+    """
+    with _studio_errors():
+        return ReadmeResponse.from_core(readme.read(github.get(), repo_id, refresh=body.refresh))
+
+
+@router.get(
+    "/studio/repositories/{repo_id}/readme",
+    summary="Get the saved README analysis",
+    responses=COMMON | NOT_FOUND,
+)
+def get_readme(repo_id: RepoPath, readme: Readme) -> ReadmeResponse:
+    """Return the saved README analysis; 404 when the documents were not read yet."""
+    with _studio_errors():
+        saved = readme.get(repo_id)
+        if saved is None:
+            raise RepoNotFoundError("The README analysis has not been read yet.")
+        return ReadmeResponse.from_core(saved)
+
+
+@router.post(
+    "/studio/repositories/{repo_id}/readme/analysis/plan",
+    summary="Plan the AI README analysis",
+    responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
+)
+def plan_readme_analysis(repo_id: RepoPath, assistant: ReadmeAi) -> ReadmePlanResponse:
+    """List the documents the AI would be sent and estimate the tokens. Nothing is sent."""
+    with _studio_errors(), _ai_errors():
+        return ReadmePlanResponse.from_core(assistant.plan(repo_id))
+
+
+@router.post(
+    "/studio/repositories/{repo_id}/readme/analysis",
+    summary="Read the documents with the AI",
+    responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
+)
+def run_readme_analysis(
+    repo_id: RepoPath, github: GitHub, assistant: ReadmeAi
+) -> ReadmeResultResponse:
+    """Send the documents once to the default AI model and save the purpose, installation
+    methods, capabilities and use cases that have evidence in the documents."""
+    with _studio_errors(), _ai_errors():
+        return ReadmeResultResponse.from_core(assistant.apply(github.get(), repo_id))
 
 
 # Reference data -----------------------------------------------------------------------------
