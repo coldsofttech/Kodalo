@@ -6,6 +6,7 @@ import {
   exportPalette,
   importPalette,
   listPalettes,
+  planPaletteSuggestion,
   suggestPalette,
   updatePalette,
 } from '../../api.js';
@@ -15,6 +16,7 @@ import { Button, TextField } from '../../components/controls.jsx';
 import { ColorsPanel } from '../../components/editor.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
 import { fileNameFor, readJson, saveJson } from '../../download.js';
+import { get } from '../../lookup.js';
 
 const STRIP = ['background', 'primary', 'secondary', 'text', 'background_alt'];
 
@@ -30,7 +32,7 @@ function Strip({ colors }) {
   return (
     <span className="swatches" aria-hidden="true">
       {STRIP.map((key) => (
-        <span key={key} className="swatch" ref={paint(colors[key].light)} />
+        <span key={key} className="swatch" ref={paint(get(colors, key).light)} />
       ))}
     </span>
   );
@@ -55,6 +57,19 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   const [form, setForm] = useState(/** @type {Form | null} */ (null));
   const [asking, setAsking] = useState(/** @type {any | null} */ (null));
   const [suggesting, setSuggesting] = useState(false);
+  /** What the AI would be sent and cost, while the user decides whether to go ahead. */
+  const [plan, setPlan] = useState(/** @type {any | null} */ (null));
+
+  async function ask() {
+    setSuggesting(true);
+    try {
+      setPlan(await planPaletteSuggestion());
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : 'The AI could not be reached.');
+    } finally {
+      setSuggesting(false);
+    }
+  }
 
   async function submit() {
     if (!form) return;
@@ -72,6 +87,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   }
 
   async function suggest() {
+    setPlan(null);
     setSuggesting(true);
     try {
       const { name, colors } = await suggestPalette();
@@ -146,28 +162,90 @@ export default function PalettesPage({ onChange, revision = 0 }) {
             />
           )}
           <div className="row actions">
-            <Button appearance="accent" disabled={busy || !form.name.trim()} onClick={submit}>
-              {form.kind === 'edit' ? 'Save palette' : 'Create palette'}
+            <Button
+              appearance="accent"
+              label={form.kind === 'edit' ? 'Save palette' : 'Create palette'}
+              title={form.kind === 'edit' ? 'Save palette' : 'Create palette'}
+              disabled={busy || !form.name.trim()}
+              onClick={submit}
+            >
+              <i
+                className={`bi ${form.kind === 'edit' ? 'bi-floppy' : 'bi-check-lg'}`}
+                aria-hidden="true"
+              />
             </Button>
             {form.kind === 'new' ? (
-              <Button appearance="outline" disabled={busy || suggesting} onClick={suggest}>
-                {suggesting ? 'Suggesting...' : 'Suggest with AI'}
+              <Button
+                className="ai-button"
+                label="Suggest with AI"
+                title="Suggest with AI"
+                disabled={busy || suggesting || plan !== null}
+                onClick={ask}
+              >
+                <i
+                  className={`bi ${suggesting ? 'bi-hourglass-split' : 'bi-stars'}`}
+                  aria-hidden="true"
+                />
               </Button>
             ) : null}
-            <Button appearance="outline" disabled={busy} onClick={() => setForm(null)}>
-              Cancel
+            <Button
+              appearance="outline"
+              label="Cancel"
+              title="Cancel"
+              disabled={busy}
+              onClick={() => {
+                setPlan(null);
+                setForm(null);
+              }}
+            >
+              <i className="bi bi-x-lg" aria-hidden="true" />
             </Button>
           </div>
+          {plan ? (
+            <div role="group" aria-labelledby="palette-plan-title" className="confirm">
+              <h3 id="palette-plan-title">Ask {plan.label || 'the AI'} for a palette?</h3>
+              <p>
+                Kodalo will send the names and colors of your {plan.palettes} existing palettes, so
+                the AI suggests one that is different. Nothing else is sent. The suggestion fills
+                this form and is not saved until you create it.
+              </p>
+              <p>
+                It goes to {plan.label} ({plan.model}). About {plan.input_tokens} tokens sent, and
+                at most {plan.max_output_tokens} tokens in the answer.
+              </p>
+              <div className="row actions">
+                <Button
+                  appearance="accent"
+                  label="Proceed"
+                  title="Proceed"
+                  disabled={suggesting}
+                  onClick={suggest}
+                >
+                  <i className="bi bi-check-lg" aria-hidden="true" />
+                </Button>
+                <Button
+                  label="Cancel"
+                  title="Cancel"
+                  disabled={suggesting}
+                  onClick={() => setPlan(null)}
+                >
+                  <i className="bi bi-x-lg" aria-hidden="true" />
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </section>
       ) : (
         <div className="row actions">
           <Button
             appearance="accent"
+            label="New palette"
+            title="New palette"
             onClick={() =>
               setForm({ kind: 'new', id: '', name: '', colors: structuredClone(starter.colors) })
             }
           >
-            New palette
+            <i className="bi bi-plus-lg" aria-hidden="true" />
           </Button>
           <ImportButton
             label="Import from file"
@@ -222,6 +300,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
                     <Button
                       appearance="outline"
                       label={`Edit ${palette.name}`}
+                      title="Edit"
                       onClick={() =>
                         setForm({
                           kind: 'edit',
@@ -231,12 +310,13 @@ export default function PalettesPage({ onChange, revision = 0 }) {
                         })
                       }
                     >
-                      Edit
+                      <i className="bi bi-pencil" aria-hidden="true" />
                     </Button>
                   ) : null}
                   <Button
                     appearance="outline"
                     label={`Copy ${palette.name}`}
+                    title="Copy"
                     onClick={() =>
                       setForm({
                         kind: 'copy',
@@ -246,23 +326,25 @@ export default function PalettesPage({ onChange, revision = 0 }) {
                       })
                     }
                   >
-                    Copy
+                    <i className="bi bi-copy" aria-hidden="true" />
                   </Button>
                   <Button
                     appearance="outline"
                     label={`Export ${palette.name}`}
+                    title="Export"
                     onClick={() => exportOne(palette)}
                   >
-                    Export
+                    <i className="bi bi-box-arrow-up" aria-hidden="true" />
                   </Button>
                   {palette.type === 'user' ? (
                     <Button
                       appearance="outline"
                       danger
                       label={`Delete ${palette.name}`}
+                      title="Delete"
                       onClick={() => setAsking(palette)}
                     >
-                      Delete
+                      <i className="bi bi-trash" aria-hidden="true" />
                     </Button>
                   ) : null}
                 </div>

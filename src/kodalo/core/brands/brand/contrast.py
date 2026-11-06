@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Literal
 
-from kodalo.core.brand.models import BrandColors, ColorPair
+from kodalo.core.brands.brand.models import BrandColors, ColorPair
 
 TEXT_MINIMUM = 4.5
 ACCENT_MINIMUM = 3.0

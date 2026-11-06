@@ -107,6 +107,7 @@ export const listPalettes = () => request(PALETTES);
 /** @param {{ name: string, colors: object }} body */
 export const createPalette = (body) => request(PALETTES, { method: 'POST', json: body });
 /** Ask the default AI model for a palette; nothing is saved. */
+export const planPaletteSuggestion = () => request(`${PALETTES}/suggest/plan`, { method: 'POST' });
 export const suggestPalette = () => request(`${PALETTES}/suggest`, { method: 'POST' });
 /** @param {string} id @param {{ name?: string, colors?: object }} body */
 export const updatePalette = (id, body) =>
@@ -151,9 +152,11 @@ export const listFonts = () => request('/api/v1/brands/fonts');
 const CANVASES = '/api/v1/canvases';
 
 export const listCanvases = () => request(CANVASES);
-/** @param {{ name: string, width: number, height: number }} body */
+/** The social platforms a canvas can be made for, with the sizes each recommends. */
+export const listSocialPlatforms = () => request('/api/v1/social-platforms');
+/** @param {{ name: string, width: number, height: number, platform_id: string }} body */
 export const createCanvas = (body) => request(CANVASES, { method: 'POST', json: body });
-/** @param {string} id @param {{ name?: string, width?: number, height?: number }} body */
+/** @param {string} id @param {{ name?: string, width?: number, height?: number, platform_id?: string }} body */
 export const updateCanvas = (id, body) =>
   request(`${CANVASES}/${id}`, { method: 'PATCH', json: body });
 /** @param {string} id @param {string} name */
@@ -253,6 +256,26 @@ export const planReadmeAnalysis = (/** @type {string} */ repoId) =>
 /** Ask the AI once to read the documents and save what it finds with evidence. */
 export const runReadmeAnalysis = (/** @type {string} */ repoId) =>
   request(`${readmeUrl(repoId)}/analysis`, { method: 'POST' });
+/**
+ * What asking the AI for post ideas would send and cost; nothing is sent.
+ * @param {string} repoId
+ * @param {{ post_type: string, kind: string, name: string }} body
+ */
+export const planIdeas = (repoId, body) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/ideas/plan`, {
+    method: 'POST',
+    json: body,
+  });
+/**
+ * Ask the AI once for a strategy, three angles and five post ideas for a tool or a feature.
+ * @param {string} repoId
+ * @param {{ post_type: string, kind: string, name: string }} body
+ */
+export const makeIdeas = (repoId, body) =>
+  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/ideas`, {
+    method: 'POST',
+    json: body,
+  });
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
 
 const AI = '/api/v1/settings/ai/connections';

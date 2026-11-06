@@ -6,14 +6,14 @@ from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kodalo.core.brand.models import BrandColors, ColorPair
-from kodalo.core.palette.errors import (
+from kodalo.core.brands.brand.models import BrandColors, ColorPair
+from kodalo.core.brands.palette.errors import (
     PaletteInvalidError,
     PaletteNameTakenError,
     PaletteNotFoundError,
     PaletteReadOnlyError,
 )
-from kodalo.core.palette.models import Palette, PaletteName
+from kodalo.core.brands.palette.models import Palette, PaletteName
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import PaletteRow
 

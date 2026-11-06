@@ -210,8 +210,8 @@ export default function ReadmeView({
           <p>
             Kodalo will send the text of these {plan.documents.length} documents, with lines that
             look like secrets removed: {plan.documents.join(', ')}. The AI writes the purpose,
-            installation methods, capabilities, features and use cases; each one is kept only if its quote is
-            in the document.
+            installation methods, capabilities, features and use cases; each one is kept only if its
+            quote is in the document.
           </p>
           <p>
             It goes to {plan.label} ({plan.model}). About {plan.input_tokens} tokens sent, and at

@@ -2,8 +2,14 @@ import sys
 
 import pytest
 
-from kodalo.core.brand import FontRef, available_fonts, bundled_fonts, contrast_ratio, missing_fonts
-from kodalo.core.brand import fonts as fonts_module
+from kodalo.core.brands.brand import (
+    FontRef,
+    available_fonts,
+    bundled_fonts,
+    contrast_ratio,
+    missing_fonts,
+)
+from kodalo.core.brands.brand import fonts as fonts_module
 
 
 def test_contrast_ratio_known_values() -> None:
@@ -13,7 +19,7 @@ def test_contrast_ratio_known_values() -> None:
 
 
 def test_failing_pair_is_reported() -> None:
-    from kodalo.core.brand import ColorPair, check_colors, starter_brand
+    from kodalo.core.brands.brand import ColorPair, check_colors, starter_brand
 
     colors = starter_brand().colors
     colors.text = ColorPair(light="#eeeeee", dark="#f3f4f6")

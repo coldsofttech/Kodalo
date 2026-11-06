@@ -998,6 +998,105 @@
         "title": "AnalysisResultResponse",
         "type": "object"
       },
+      "AngleResponse": {
+        "description": "One way to lead with the product, with its hooks.",
+        "properties": {
+          "audience_pain": {
+            "maxLength": 300,
+            "title": "Audience Pain",
+            "type": "string"
+          },
+          "cautions": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 4,
+            "title": "Cautions",
+            "type": "array"
+          },
+          "hooks": {
+            "items": {
+              "$ref": "#/components/schemas/HookResponse"
+            },
+            "maxItems": 3,
+            "title": "Hooks",
+            "type": "array"
+          },
+          "id": {
+            "examples": [
+              "angle-1"
+            ],
+            "maxLength": 32,
+            "title": "Id",
+            "type": "string"
+          },
+          "key_claims": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimResponse"
+            },
+            "maxItems": 5,
+            "title": "Key Claims",
+            "type": "array"
+          },
+          "name": {
+            "maxLength": 80,
+            "title": "Name",
+            "type": "string"
+          },
+          "summary": {
+            "maxLength": 300,
+            "title": "Summary",
+            "type": "string"
+          },
+          "type": {
+            "examples": [
+              "problem"
+            ],
+            "maxLength": 32,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "type",
+          "name",
+          "summary",
+          "audience_pain",
+          "key_claims",
+          "hooks",
+          "cautions"
+        ],
+        "title": "AngleResponse",
+        "type": "object"
+      },
+      "AvoidedClaimResponse": {
+        "description": "A statement from the analysis that should not be repeated without care.",
+        "properties": {
+          "reason": {
+            "maxLength": 200,
+            "title": "Reason",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 120,
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "maxLength": 16,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "type",
+          "reason"
+        ],
+        "title": "AvoidedClaimResponse",
+        "type": "object"
+      },
       "BrandColors": {
         "additionalProperties": false,
         "properties": {
@@ -1341,6 +1440,16 @@
             "title": "Name",
             "type": "string"
           },
+          "platform_id": {
+            "default": "custom",
+            "examples": [
+              "instagram"
+            ],
+            "maxLength": 36,
+            "minLength": 1,
+            "title": "Platform Id",
+            "type": "string"
+          },
           "width": {
             "examples": [
               1080
@@ -1503,6 +1612,38 @@
             "title": "Name",
             "type": "string"
           },
+          "platform": {
+            "examples": [
+              "Instagram"
+            ],
+            "maxLength": 64,
+            "title": "Platform",
+            "type": "string"
+          },
+          "platform_id": {
+            "examples": [
+              "instagram"
+            ],
+            "maxLength": 36,
+            "title": "Platform Id",
+            "type": "string"
+          },
+          "size_concern": {
+            "anyOf": [
+              {
+                "maxLength": 300,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Set when the platform does not recommend this size; saving is still allowed.",
+            "examples": [
+              "Instagram recommends 1080 x 1350, 1080 x 1080, 1080 x 1920."
+            ],
+            "title": "Size Concern"
+          },
           "type": {
             "enum": [
               "system",
@@ -1549,6 +1690,8 @@
           "width",
           "height",
           "type",
+          "platform_id",
+          "platform",
           "used_by",
           "created_at",
           "updated_at"
@@ -1590,6 +1733,22 @@
               "Feed post"
             ],
             "title": "Name"
+          },
+          "platform_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "custom"
+            ],
+            "title": "Platform Id"
           },
           "width": {
             "anyOf": [
@@ -1679,6 +1838,46 @@
           "reason"
         ],
         "title": "ClaimFlagResponse",
+        "type": "object"
+      },
+      "ClaimResponse": {
+        "description": "A short statement about the product and the quote it rests on.",
+        "properties": {
+          "file": {
+            "examples": [
+              "README.md"
+            ],
+            "maxLength": 512,
+            "title": "File",
+            "type": "string"
+          },
+          "needs_review": {
+            "description": "True when the wording needs a check before use.",
+            "title": "Needs Review",
+            "type": "boolean"
+          },
+          "quote": {
+            "description": "Found in the saved analysis.",
+            "maxLength": 200,
+            "title": "Quote",
+            "type": "string"
+          },
+          "text": {
+            "examples": [
+              "Reads a repository without cloning it"
+            ],
+            "maxLength": 200,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "file",
+          "quote",
+          "needs_review"
+        ],
+        "title": "ClaimResponse",
         "type": "object"
       },
       "ColorPair": {
@@ -2395,6 +2594,219 @@
           }
         },
         "title": "HealthResponse",
+        "type": "object"
+      },
+      "HookResponse": {
+        "description": "One opening line for a post.",
+        "properties": {
+          "id": {
+            "examples": [
+              "hook-1-1"
+            ],
+            "maxLength": 32,
+            "title": "Id",
+            "type": "string"
+          },
+          "text": {
+            "description": "At most 12 words.",
+            "maxLength": 200,
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "examples": [
+              "question"
+            ],
+            "maxLength": 32,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "text",
+          "type"
+        ],
+        "title": "HookResponse",
+        "type": "object"
+      },
+      "IdeasPlanResponse": {
+        "description": "What asking the AI for post ideas would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              2000
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "items": {
+            "description": "What the post is about.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Items",
+            "type": "array"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "items",
+          "input_tokens",
+          "max_output_tokens"
+        ],
+        "title": "IdeasPlanResponse",
+        "type": "object"
+      },
+      "IdeasRequest": {
+        "description": "What the post is about: the whole tool, or one feature, use case or capability.",
+        "properties": {
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name; empty for a tool post.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "post_type"
+        ],
+        "title": "IdeasRequest",
+        "type": "object"
+      },
+      "IdeasResponse": {
+        "description": "A strategy, three angles and five post ideas for one selection.",
+        "properties": {
+          "angles": {
+            "items": {
+              "$ref": "#/components/schemas/AngleResponse"
+            },
+            "maxItems": 3,
+            "title": "Angles",
+            "type": "array"
+          },
+          "claims_to_avoid": {
+            "description": "Statements from the analysis not to repeat without care.",
+            "items": {
+              "$ref": "#/components/schemas/AvoidedClaimResponse"
+            },
+            "maxItems": 100,
+            "title": "Claims To Avoid",
+            "type": "array"
+          },
+          "focus": {
+            "description": "The focus's name; empty for a tool post.",
+            "maxLength": 128,
+            "title": "Focus",
+            "type": "string"
+          },
+          "input_tokens": {
+            "description": "Tokens the provider counted for the request.",
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "description": "Tokens the provider counted for the answer.",
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "post_ideas": {
+            "items": {
+              "$ref": "#/components/schemas/PostIdeaResponse"
+            },
+            "maxItems": 5,
+            "title": "Post Ideas",
+            "type": "array"
+          },
+          "post_type": {
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          },
+          "strategy": {
+            "$ref": "#/components/schemas/StrategyResponse"
+          },
+          "warnings": {
+            "description": "Plain sentences about what was left.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "post_type",
+          "focus",
+          "strategy",
+          "angles",
+          "post_ideas",
+          "claims_to_avoid",
+          "warnings",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "IdeasResponse",
         "type": "object"
       },
       "InstallationResponse": {
@@ -3151,7 +3563,8 @@
             "enum": [
               "all",
               "first",
-              "last"
+              "last",
+              "none"
             ],
             "title": "Show On",
             "type": "string"
@@ -3462,6 +3875,63 @@
         "title": "PaletteSuggestion",
         "type": "object"
       },
+      "PaletteSuggestionPlan": {
+        "description": "What asking the AI for a palette would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              900
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "palettes": {
+            "description": "Existing palettes sent so the AI avoids them.",
+            "minimum": 0.0,
+            "title": "Palettes",
+            "type": "integer"
+          },
+          "provider": {
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "palettes",
+          "input_tokens",
+          "max_output_tokens"
+        ],
+        "title": "PaletteSuggestionPlan",
+        "type": "object"
+      },
       "PaletteUpdate": {
         "description": "Fields left out are not changed.",
         "properties": {
@@ -3493,6 +3963,165 @@
           }
         },
         "title": "PaletteUpdate",
+        "type": "object"
+      },
+      "PillarResponse": {
+        "properties": {
+          "description": {
+            "maxLength": 300,
+            "title": "Description",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 80,
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "description"
+        ],
+        "title": "PillarResponse",
+        "type": "object"
+      },
+      "PlatformSizeResponse": {
+        "properties": {
+          "height": {
+            "examples": [
+              1350
+            ],
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Height",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Portrait"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "width": {
+            "examples": [
+              1080
+            ],
+            "maximum": 10000.0,
+            "minimum": 1.0,
+            "title": "Width",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "width",
+          "height"
+        ],
+        "title": "PlatformSizeResponse",
+        "type": "object"
+      },
+      "PostIdeaResponse": {
+        "description": "A plan for one post, not finished copy.",
+        "properties": {
+          "angle_id": {
+            "description": "Empty when the angle is unknown.",
+            "maxLength": 32,
+            "title": "Angle Id",
+            "type": "string"
+          },
+          "asset_needs": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 6,
+            "title": "Asset Needs",
+            "type": "array"
+          },
+          "claims_used": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimResponse"
+            },
+            "maxItems": 6,
+            "title": "Claims Used",
+            "type": "array"
+          },
+          "cta_type": {
+            "examples": [
+              "learn_more"
+            ],
+            "maxLength": 16,
+            "title": "Cta Type",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "single_image",
+              "carousel"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "hook_id": {
+            "description": "Empty when the hook is unknown.",
+            "maxLength": 32,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "id": {
+            "examples": [
+              "idea-1"
+            ],
+            "maxLength": 32,
+            "title": "Id",
+            "type": "string"
+          },
+          "objective": {
+            "maxLength": 300,
+            "title": "Objective",
+            "type": "string"
+          },
+          "outline": {
+            "description": "Short beats, not finished text.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Outline",
+            "type": "array"
+          },
+          "risk_notes": {
+            "maxLength": 300,
+            "title": "Risk Notes",
+            "type": "string"
+          },
+          "visual_concept": {
+            "maxLength": 400,
+            "title": "Visual Concept",
+            "type": "string"
+          },
+          "working_title": {
+            "maxLength": 120,
+            "title": "Working Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "angle_id",
+          "hook_id",
+          "format",
+          "working_title",
+          "objective",
+          "outline",
+          "visual_concept",
+          "asset_needs",
+          "cta_type",
+          "claims_used",
+          "risk_notes"
+        ],
+        "title": "PostIdeaResponse",
         "type": "object"
       },
       "ReadmePlanResponse": {
@@ -4081,6 +4710,97 @@
         "title": "SkippedFileResponse",
         "type": "object"
       },
+      "SocialPlatformResponse": {
+        "description": "A social network a canvas can be made for, with the sizes it recommends.",
+        "properties": {
+          "id": {
+            "examples": [
+              "instagram"
+            ],
+            "maxLength": 36,
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Instagram"
+            ],
+            "maxLength": 64,
+            "title": "Name",
+            "type": "string"
+          },
+          "sizes": {
+            "description": "Empty for Custom, which accepts any size.",
+            "items": {
+              "$ref": "#/components/schemas/PlatformSizeResponse"
+            },
+            "maxItems": 50,
+            "title": "Sizes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "sizes"
+        ],
+        "title": "SocialPlatformResponse",
+        "type": "object"
+      },
+      "StrategyResponse": {
+        "description": "The plan behind the angles.",
+        "properties": {
+          "audience": {
+            "maxLength": 200,
+            "title": "Audience",
+            "type": "string"
+          },
+          "key_messages": {
+            "items": {
+              "$ref": "#/components/schemas/ClaimResponse"
+            },
+            "maxItems": 6,
+            "title": "Key Messages",
+            "type": "array"
+          },
+          "objective": {
+            "maxLength": 300,
+            "title": "Objective",
+            "type": "string"
+          },
+          "pain_points": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 5,
+            "title": "Pain Points",
+            "type": "array"
+          },
+          "pillars": {
+            "items": {
+              "$ref": "#/components/schemas/PillarResponse"
+            },
+            "maxItems": 4,
+            "title": "Pillars",
+            "type": "array"
+          },
+          "positioning": {
+            "maxLength": 300,
+            "title": "Positioning",
+            "type": "string"
+          }
+        },
+        "required": [
+          "objective",
+          "audience",
+          "pain_points",
+          "positioning",
+          "pillars",
+          "key_messages"
+        ],
+        "title": "StrategyResponse",
+        "type": "object"
+      },
       "StudioSourceRequest": {
         "description": "The repository to start a post from.",
         "properties": {
@@ -4374,6 +5094,8 @@
         },
         "summary": "List brand profiles",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -4413,6 +5135,8 @@
         },
         "summary": "Create a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4462,6 +5186,8 @@
         },
         "summary": "Check contrast of colors",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4491,6 +5217,8 @@
         },
         "summary": "List fonts",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4551,6 +5279,8 @@
         },
         "summary": "Import a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4596,6 +5326,8 @@
         },
         "summary": "Delete a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -4645,6 +5377,8 @@
         },
         "summary": "Get a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -4701,6 +5435,8 @@
         },
         "summary": "Update a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4752,6 +5488,8 @@
         },
         "summary": "Make a brand profile the default",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4810,6 +5548,8 @@
         },
         "summary": "Duplicate a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4862,6 +5602,8 @@
         },
         "summary": "Export a brand profile",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -4929,6 +5671,8 @@
         },
         "summary": "Remove a logo",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -4992,6 +5736,8 @@
         },
         "summary": "Get a logo",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5075,6 +5821,8 @@
         },
         "summary": "Set a logo",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5104,6 +5852,8 @@
         },
         "summary": "List canvases",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5149,6 +5899,8 @@
         },
         "summary": "Create a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5212,6 +5964,8 @@
         },
         "summary": "Import a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5256,6 +6010,8 @@
         },
         "summary": "Delete a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5308,6 +6064,8 @@
         },
         "summary": "Get a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5367,6 +6125,8 @@
         },
         "summary": "Change a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5428,6 +6188,8 @@
         },
         "summary": "Copy a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5483,6 +6245,8 @@
         },
         "summary": "Export a canvas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5537,6 +6301,8 @@
         },
         "summary": "List layouts",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5582,6 +6348,8 @@
         },
         "summary": "Create a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5645,6 +6413,8 @@
         },
         "summary": "Import a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5689,6 +6459,8 @@
         },
         "summary": "Delete a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5741,6 +6513,8 @@
         },
         "summary": "Get a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5800,6 +6574,8 @@
         },
         "summary": "Change a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5861,6 +6637,8 @@
         },
         "summary": "Copy a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5916,6 +6694,8 @@
         },
         "summary": "Export a layout",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -5945,6 +6725,8 @@
         },
         "summary": "List palettes",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -5990,6 +6772,8 @@
         },
         "summary": "Create a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -6053,6 +6837,8 @@
         },
         "summary": "Import a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -6084,6 +6870,38 @@
         },
         "summary": "Suggest a palette with AI",
         "tags": [
+          "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/palettes/suggest/plan": {
+      "post": {
+        "description": "Estimate what asking the default AI model for a palette would send and cost. Nothing is\nsent.",
+        "operationId": "plan_palette_suggestion_api_v1_palettes_suggest_plan_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaletteSuggestionPlan"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan the AI palette suggestion",
+        "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -6128,6 +6946,8 @@
         },
         "summary": "Delete a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -6180,6 +7000,8 @@
         },
         "summary": "Get a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -6239,6 +7061,8 @@
         },
         "summary": "Change a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -6300,6 +7124,8 @@
         },
         "summary": "Copy a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -6355,6 +7181,8 @@
         },
         "summary": "Export a palette",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -7348,6 +8176,37 @@
         ]
       }
     },
+    "/api/v1/social-platforms": {
+      "get": {
+        "description": "Return the social platforms a canvas can be made for, with the sizes each recommends.",
+        "operationId": "list_social_platforms_api_v1_social_platforms_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SocialPlatformResponse"
+                  },
+                  "title": "Response List Social Platforms Api V1 Social Platforms Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List social platforms",
+        "tags": [
+          "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
     "/api/v1/studio/repositories": {
       "get": {
         "description": "Return every repository that was read, sorted by owner and name.",
@@ -7562,6 +8421,122 @@
           }
         },
         "summary": "Plan the AI analysis",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/ideas": {
+      "post": {
+        "description": "Send the saved README analysis for the chosen tool, feature, use case or capability once\nto the default AI model and return a strategy, three angles with hooks and five post ideas.\nClaims are kept only when their quote was in what was sent. Nothing is saved.",
+        "operationId": "make_ideas_api_v1_studio_repositories__repo_id__ideas_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan post ideas with the AI",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/ideas/plan": {
+      "post": {
+        "description": "Say what the AI would be sent for the chosen post and estimate the tokens. Nothing is\nsent.",
+        "operationId": "plan_ideas_api_v1_studio_repositories__repo_id__ideas_plan_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeasRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeasPlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan the AI post ideas request",
         "tags": [
           "v1"
         ]

@@ -47,13 +47,15 @@ function SavePalette({ busy, onSave }) {
         <TextField label="Palette name" value={name} maxLength={64} onChange={setName} />
         <Button
           appearance="outline"
+          label="Save palette"
+          title="Save palette"
           disabled={busy || !name.trim()}
           onClick={async () => {
             await onSave(name.trim());
             setName('');
           }}
         >
-          Save palette
+          <i className="bi bi-floppy" aria-hidden="true" />
         </Button>
       </div>
     </section>
@@ -77,8 +79,13 @@ function ImportButton({ onImport }) {
           event.target.value = '';
         }}
       />
-      <Button appearance="outline" onClick={() => input.current?.click()}>
-        Import from file
+      <Button
+        appearance="outline"
+        label="Import from file"
+        title="Import from file"
+        onClick={() => input.current?.click()}
+      >
+        <i className="bi bi-box-arrow-in-down" aria-hidden="true" />
       </Button>
     </>
   );
@@ -293,243 +300,280 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
   const canvasOf = (/** @type {NonNullable<typeof current>} */ item) =>
     canvases.find((canvas) => canvas.id === layoutOf(item).canvas_id) ?? item.brand.canvas;
   return (
-    <div className="brands">
-      <aside className="profiles" aria-label="Brand profiles">
-        <h2>Brands</h2>
-        <ul>
-          {brands.map((brand) => (
-            <li key={brand.id}>
-              <button
-                type="button"
-                className="profile"
-                aria-current={brand.id === selectedId ? 'true' : undefined}
-                onClick={() => chooseBrand(brand.id)}
-              >
-                {brand.name}
-                {brand.is_default ? <span className="badge">Default</span> : null}
-              </button>
-            </li>
-          ))}
-        </ul>
-        <div className="stack">
-          <Button appearance="accent" onClick={() => setAsking({ kind: 'new' })}>
-            New brand
-          </Button>
-          <ImportButton onImport={importFile} />
-        </div>
-      </aside>
-
-      <section className="editor" aria-label="Brand editor">
-        {asking?.kind === 'new' ? (
-          <div className="ask" role="group" aria-label="New brand">
-            <NewBrand palettes={palettes} busy={busy} onCreate={create} />
-            <Button appearance="outline" onClick={() => setAsking(null)}>
-              Cancel
+    <div className="brands-page">
+      <h1>Brands</h1>
+      <p>
+        A brand is a set of colors, fonts and a logo, plus a layout. Your default brand is used for
+        new posts. Layouts are shared, so changing a layout changes every brand that uses it.
+      </p>
+      <div className="brands">
+        <aside className="profiles" aria-label="Brand profiles">
+          <h2>Your brands</h2>
+          <ul>
+            {brands.map((brand) => (
+              <li key={brand.id}>
+                <button
+                  type="button"
+                  className="profile"
+                  aria-current={brand.id === selectedId ? 'true' : undefined}
+                  onClick={() => chooseBrand(brand.id)}
+                >
+                  {brand.name}
+                  {brand.is_default ? (
+                    <i
+                      className="bi bi-check-circle-fill default-mark"
+                      role="img"
+                      aria-label="Default brand"
+                      title="Default brand"
+                    />
+                  ) : null}
+                </button>
+              </li>
+            ))}
+          </ul>
+          <div className="row actions">
+            <Button
+              appearance="accent"
+              label="New brand"
+              title="New brand"
+              onClick={() => setAsking({ kind: 'new' })}
+            >
+              <i className="bi bi-plus-lg" aria-hidden="true" />
             </Button>
+            <ImportButton onImport={importFile} />
           </div>
-        ) : null}
-        {error ? (
-          <p role="alert" className="alert">
-            {error}
-          </p>
-        ) : null}
-        {notice ? (
-          <p role="status" className="notice">
-            {notice}
-          </p>
-        ) : null}
-        {current ? (
-          <>
-            <header className="editor-head">
-              <TextField
-                label="Brand name"
-                value={current.name}
-                maxLength={64}
-                onChange={(name) => setDraft((d) => d && { ...d, name })}
-              />
-              <div className="row actions">
-                {!current.brand.is_default ? (
+        </aside>
+
+        <section className="editor" aria-label="Brand editor">
+          {asking?.kind === 'new' ? (
+            <div className="ask" role="group" aria-label="New brand">
+              <NewBrand palettes={palettes} busy={busy} onCreate={create} />
+              <Button appearance="outline" onClick={() => setAsking(null)}>
+                Cancel
+              </Button>
+            </div>
+          ) : null}
+          {error ? (
+            <p role="alert" className="alert">
+              {error}
+            </p>
+          ) : null}
+          {notice ? (
+            <p role="status" className="notice">
+              {notice}
+            </p>
+          ) : null}
+          {current ? (
+            <>
+              <header className="editor-head">
+                <TextField
+                  label="Brand name"
+                  value={current.name}
+                  maxLength={64}
+                  onChange={(name) => setDraft((d) => d && { ...d, name })}
+                />
+                <div className="row actions">
+                  {!current.brand.is_default ? (
+                    <Button
+                      disabled={busy || dirty}
+                      onClick={() =>
+                        act(async () => {
+                          replace(await setDefaultBrand(current.brand.id));
+                          const list = await listBrands();
+                          setBrands(list);
+                          return 'Default brand changed.';
+                        }, 'The default could not be changed.')
+                      }
+                    >
+                      Make default
+                    </Button>
+                  ) : null}
                   <Button
+                    label="Duplicate"
+                    title="Duplicate"
+                    disabled={busy || dirty}
+                    onClick={() =>
+                      setAsking({ kind: 'duplicate', name: `${current.brand.name} copy` })
+                    }
+                  >
+                    <i className="bi bi-copy" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    label="Export"
+                    title="Export"
                     disabled={busy || dirty}
                     onClick={() =>
                       act(async () => {
-                        replace(await setDefaultBrand(current.brand.id));
-                        const list = await listBrands();
-                        setBrands(list);
-                        return 'Default brand changed.';
-                      }, 'The default could not be changed.')
+                        const saved = await saveJson(
+                          await exportBrand(current.brand.id),
+                          fileNameFor(current.brand.name),
+                        );
+                        return saved === false ? 'Export cancelled.' : 'Exported.';
+                      }, 'The brand could not be exported.')
                     }
                   >
-                    Make default
+                    <i className="bi bi-box-arrow-up" aria-hidden="true" />
                   </Button>
-                ) : null}
-                <Button
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    setAsking({ kind: 'duplicate', name: `${current.brand.name} copy` })
-                  }
-                >
-                  Duplicate
-                </Button>
-                <Button
-                  disabled={busy || dirty}
-                  onClick={() =>
-                    act(async () => {
-                      const saved = await saveJson(
-                        await exportBrand(current.brand.id),
-                        fileNameFor(current.brand.name),
-                      );
-                      return saved === false ? 'Export cancelled.' : 'Exported.';
-                    }, 'The brand could not be exported.')
-                  }
-                >
-                  Export
-                </Button>
-                <Button
-                  appearance="outline"
-                  danger
-                  disabled={busy}
-                  onClick={() => setAsking({ kind: 'delete' })}
-                >
-                  Delete
-                </Button>
-              </div>
-            </header>
+                  <Button
+                    appearance="outline"
+                    danger
+                    label="Delete"
+                    title="Delete"
+                    disabled={busy}
+                    onClick={() => setAsking({ kind: 'delete' })}
+                  >
+                    <i className="bi bi-trash" aria-hidden="true" />
+                  </Button>
+                </div>
+              </header>
 
-            {asking?.kind === 'duplicate' ? (
-              <div className="ask" role="group" aria-label="Duplicate brand">
-                <TextField
-                  label="Name of the copy"
-                  value={asking.name}
-                  maxLength={64}
-                  onChange={(name) => setAsking({ kind: 'duplicate', name })}
-                />
-                <Button
-                  appearance="accent"
-                  disabled={busy || asking.name.trim() === ''}
-                  onClick={() =>
-                    act(async () => {
-                      const copy = await duplicateBrand(current.brand.id, asking.name.trim());
-                      await refreshAndSelect(copy.id);
-                      return `Created ${copy.name}.`;
-                    }, 'The brand could not be duplicated.')
-                  }
-                >
-                  Duplicate
-                </Button>
-                <Button appearance="outline" onClick={() => setAsking(null)}>
-                  Cancel
-                </Button>
-              </div>
-            ) : null}
-            {asking?.kind === 'delete' ? (
-              <div className="ask" role="alertdialog" aria-label="Delete brand">
-                <p>
-                  Delete <strong>{current.brand.name}</strong> and its logo files? This cannot be
-                  undone.
-                </p>
-                <Button
-                  appearance="accent"
-                  danger
-                  disabled={busy}
-                  onClick={() =>
-                    act(async () => {
-                      await deleteBrand(current.brand.id);
-                      const list = await listBrands();
-                      setBrands(list);
-                      select(list, null);
-                      setAsking(null);
-                      return `Deleted ${current.brand.name}.`;
-                    }, 'The brand could not be deleted.')
-                  }
-                >
-                  Delete brand
-                </Button>
-                <Button appearance="outline" onClick={() => setAsking(null)}>
-                  Keep it
-                </Button>
-              </div>
-            ) : null}
-            {asking?.kind === 'switch' ? (
-              <div className="ask" role="alertdialog" aria-label="Unsaved changes">
-                <p>You have unsaved changes. Discard them and open the other brand?</p>
-                <Button
-                  appearance="accent"
-                  onClick={() => {
-                    select(brands, asking.id);
-                    setAsking(null);
-                  }}
-                >
-                  Discard changes
-                </Button>
-                <Button appearance="outline" onClick={() => setAsking(null)}>
-                  Keep editing
-                </Button>
-              </div>
-            ) : null}
-
-            <TabList tab={tab} onChange={setTab} />
-            <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
-              {tab === 'colors' ? (
-                <>
-                  <ColorsPanel data={current.data} onChange={edit} />
-                  <SavePalette
-                    busy={busy}
-                    onSave={(name) =>
-                      act(async () => {
-                        await createPalette({ name, colors: current.data.colors });
-                        onCatalogChange?.();
-                        return `Saved the palette "${name}".`;
-                      }, 'The palette could not be saved.')
-                    }
+              {asking?.kind === 'duplicate' ? (
+                <div className="ask" role="group" aria-label="Duplicate brand">
+                  <TextField
+                    label="Name of the copy"
+                    value={asking.name}
+                    maxLength={64}
+                    onChange={(name) => setAsking({ kind: 'duplicate', name })}
                   />
-                </>
+                  <Button
+                    appearance="accent"
+                    disabled={busy || asking.name.trim() === ''}
+                    onClick={() =>
+                      act(async () => {
+                        const copy = await duplicateBrand(current.brand.id, asking.name.trim());
+                        await refreshAndSelect(copy.id);
+                        return `Created ${copy.name}.`;
+                      }, 'The brand could not be duplicated.')
+                    }
+                  >
+                    Duplicate
+                  </Button>
+                  <Button appearance="outline" onClick={() => setAsking(null)}>
+                    Cancel
+                  </Button>
+                </div>
               ) : null}
-              {tab === 'fonts' ? (
-                <FontsPanel data={current.data} fonts={fonts} onChange={edit} />
+              {asking?.kind === 'delete' ? (
+                <div className="ask" role="alertdialog" aria-label="Delete brand">
+                  <p>
+                    Delete <strong>{current.brand.name}</strong> and its logo files? This cannot be
+                    undone.
+                  </p>
+                  <Button
+                    appearance="accent"
+                    danger
+                    disabled={busy}
+                    onClick={() =>
+                      act(async () => {
+                        await deleteBrand(current.brand.id);
+                        const list = await listBrands();
+                        setBrands(list);
+                        select(list, null);
+                        setAsking(null);
+                        return `Deleted ${current.brand.name}.`;
+                      }, 'The brand could not be deleted.')
+                    }
+                  >
+                    Delete brand
+                  </Button>
+                  <Button appearance="outline" onClick={() => setAsking(null)}>
+                    Keep it
+                  </Button>
+                </div>
               ) : null}
-              {tab === 'logo' ? (
-                <LogoPanel
-                  brand={current.brand}
-                  data={current.data}
-                  onChange={edit}
-                  onStored={onLogoStored}
-                  onError={setError}
-                />
+              {asking?.kind === 'switch' ? (
+                <div className="ask" role="alertdialog" aria-label="Unsaved changes">
+                  <p>You have unsaved changes. Discard them and open the other brand?</p>
+                  <Button
+                    appearance="accent"
+                    onClick={() => {
+                      select(brands, asking.id);
+                      setAsking(null);
+                    }}
+                  >
+                    Discard changes
+                  </Button>
+                  <Button appearance="outline" onClick={() => setAsking(null)}>
+                    Keep editing
+                  </Button>
+                </div>
               ) : null}
-              {tab === 'layout' ? (
-                <LayoutPanel
-                  data={current.data}
-                  layouts={layouts}
-                  canvases={canvases}
-                  onChange={edit}
-                />
-              ) : null}
-            </div>
 
-            {dirty ? (
-              <div className="savebar" role="region" aria-label="Unsaved changes">
-                <span>You have unsaved changes.</span>
-                <Button appearance="accent" disabled={busy} onClick={save}>
-                  Save
-                </Button>
-                <Button appearance="outline" disabled={busy} onClick={discard}>
-                  Discard
-                </Button>
+              <TabList tab={tab} onChange={setTab} />
+              <div role="tabpanel" id={`panel-${tab}`} aria-labelledby={`tab-${tab}`}>
+                {tab === 'colors' ? (
+                  <>
+                    <ColorsPanel data={current.data} onChange={edit} />
+                    <SavePalette
+                      busy={busy}
+                      onSave={(name) =>
+                        act(async () => {
+                          await createPalette({ name, colors: current.data.colors });
+                          onCatalogChange?.();
+                          return `Saved the palette "${name}".`;
+                        }, 'The palette could not be saved.')
+                      }
+                    />
+                  </>
+                ) : null}
+                {tab === 'fonts' ? (
+                  <FontsPanel data={current.data} fonts={fonts} onChange={edit} />
+                ) : null}
+                {tab === 'logo' ? (
+                  <LogoPanel
+                    brand={current.brand}
+                    data={current.data}
+                    onChange={edit}
+                    onStored={onLogoStored}
+                    onError={setError}
+                  />
+                ) : null}
+                {tab === 'layout' ? (
+                  <LayoutPanel
+                    data={current.data}
+                    layouts={layouts}
+                    canvases={canvases}
+                    onChange={edit}
+                  />
+                ) : null}
               </div>
-            ) : null}
-          </>
-        ) : null}
-      </section>
 
-      {current ? (
-        <Preview
-          brand={current.brand}
-          data={current.data}
-          layout={layoutOf(current)}
-          canvas={canvasOf(current)}
-        />
-      ) : null}
+              {dirty ? (
+                <div className="savebar" role="region" aria-label="Unsaved changes">
+                  <span>You have unsaved changes.</span>
+                  <Button
+                    appearance="accent"
+                    label="Save"
+                    title="Save"
+                    disabled={busy}
+                    onClick={save}
+                  >
+                    <i className="bi bi-check-lg" aria-hidden="true" />
+                  </Button>
+                  <Button
+                    appearance="outline"
+                    label="Discard"
+                    title="Discard"
+                    disabled={busy}
+                    onClick={discard}
+                  >
+                    <i className="bi bi-arrow-counterclockwise" aria-hidden="true" />
+                  </Button>
+                </div>
+              ) : null}
+            </>
+          ) : null}
+        </section>
+
+        {current ? (
+          <Preview
+            brand={current.brand}
+            data={current.data}
+            layout={layoutOf(current)}
+            canvas={canvasOf(current)}
+          />
+        ) : null}
+      </div>
     </div>
   );
 }

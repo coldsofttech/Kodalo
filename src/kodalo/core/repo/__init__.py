@@ -1,6 +1,7 @@
 """Repo Reader: read a repository's metadata, languages and structure, and keep it."""
 
 from kodalo.core.repo.ai_analyzer import AnalyzerPlan, AnalyzerResult, RepoAnalyzer
+from kodalo.core.repo.ai_ideas import Ideas, IdeasAssistant, IdeasPlan
 from kodalo.core.repo.ai_readme import ReadmeAssistant, ReadmePlan, ReadmeResult
 from kodalo.core.repo.errors import (
     RepoDetailsError,
@@ -45,6 +46,9 @@ __all__ = [
     "Evidence",
     "Feature",
     "Framework",
+    "Ideas",
+    "IdeasAssistant",
+    "IdeasPlan",
     "Installation",
     "Language",
     "Layout",

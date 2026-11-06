@@ -70,7 +70,7 @@ describe('BrandsPage: editing', () => {
   it('lists brands, marks the default and opens it', async () => {
     start();
     const list = await screen.findByRole('complementary', { name: 'Brand profiles' });
-    expect(within(list).getByText('Default')).toBeInTheDocument();
+    expect(within(list).getByRole('img', { name: 'Default brand' })).toBeInTheDocument();
     expect(await field('Brand name')).toHaveProperty('value', 'Main');
     expect(screen.getByRole('tab', { name: 'Colors', selected: true })).toBeInTheDocument();
   });
@@ -96,7 +96,7 @@ describe('BrandsPage: editing', () => {
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
     expect(sent('PATCH', '/brands/')).toHaveLength(0);
 
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByLabelText('Save'));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     const patch = sent('PATCH', '/brands/b1')[0];
     expect(patch.body.data.colors.background.light).toBe('#ff0000');
@@ -124,7 +124,7 @@ describe('BrandsPage: editing', () => {
   it('discards edits', async () => {
     start();
     typeInto(await field('Brand name'), 'Renamed');
-    await userEvent.click(screen.getByText('Discard'));
+    await userEvent.click(screen.getByLabelText('Discard'));
 
     expect(await field('Brand name')).toHaveProperty('value', 'Main');
     expect(screen.queryByText('You have unsaved changes.')).not.toBeInTheDocument();
@@ -133,7 +133,7 @@ describe('BrandsPage: editing', () => {
   it('renames through the same Save', async () => {
     start();
     typeInto(await field('Brand name'), 'Renamed');
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByLabelText('Save'));
 
     await screen.findByText('Saved.');
     expect(sent('PATCH', '/brands/b1')[0].body.name).toBe('Renamed');
@@ -145,7 +145,7 @@ describe('BrandsPage: editing', () => {
   it('shows the server message when saving fails', async () => {
     start();
     typeInto(await field('Brand name'), 'Side');
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByLabelText('Save'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
@@ -200,7 +200,7 @@ describe('BrandsPage: editing', () => {
 
     const strip = document.querySelector('.preview-strip');
     expect(strip.style.getPropertyValue('--f-heading')).toBe('"Lora", sans-serif');
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByLabelText('Save'));
     const { fonts } = (await waitFor(() => sent('PATCH', '/brands/b1')[0])).body.data;
     expect(fonts.heading).toEqual({ family: 'Lora', source: 'bundled' });
     expect(fonts.mono).toEqual({ family: 'Segoe UI', source: 'system' });
@@ -234,7 +234,7 @@ describe('BrandsPage: editing', () => {
     expect(strip.style.getPropertyValue('--align')).toBe('center');
     expect(screen.getByText('1/4')).toBeInTheDocument();
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
-    await userEvent.click(screen.getByText('Save'));
+    await userEvent.click(screen.getByLabelText('Save'));
     await waitFor(() =>
       expect(sent('PATCH', '/brands/b1')[0].body.data.layout_id).toBe('system-compact'),
     );
@@ -243,7 +243,7 @@ describe('BrandsPage: editing', () => {
   it('saves the colors of a brand as a palette', async () => {
     start();
     typeInto(await field('Palette name'), 'Ocean');
-    await userEvent.click(screen.getByText('Save palette'));
+    await userEvent.click(screen.getByLabelText('Save palette'));
     expect(await screen.findByText('Saved the palette "Ocean".')).toBeInTheDocument();
     expect(sent('POST', '/api/v1/palettes')[0].body.name).toBe('Ocean');
     expect(backend.state.palettes.map((p) => p.name)).toContain('Ocean');
@@ -314,7 +314,7 @@ describe('BrandsPage: editing', () => {
 
   it('duplicates a brand under a new name', async () => {
     start();
-    await userEvent.click(await screen.findByText('Duplicate'));
+    await userEvent.click(await screen.findByLabelText('Duplicate'));
     expect(await field('Name of the copy')).toHaveProperty('value', 'Main copy');
     typeInto(await field('Name of the copy'), 'Third');
     await userEvent.click(
@@ -328,11 +328,11 @@ describe('BrandsPage: editing', () => {
 
   it('deletes only after confirmation', async () => {
     start();
-    await userEvent.click(await screen.findByText('Delete'));
+    await userEvent.click(await screen.findByLabelText('Delete'));
     await userEvent.click(screen.getByText('Keep it'));
     expect(sent('DELETE', '/brands/b1')).toHaveLength(0);
 
-    await userEvent.click(screen.getByText('Delete'));
+    await userEvent.click(screen.getByLabelText('Delete'));
     await userEvent.click(screen.getByText('Delete brand'));
     expect(await screen.findByText('Deleted Main.')).toBeInTheDocument();
     expect(await field('Brand name')).toHaveProperty('value', 'Side');
@@ -340,7 +340,7 @@ describe('BrandsPage: editing', () => {
 
   it('exports a brand to a file', async () => {
     start();
-    await userEvent.click(await screen.findByText('Export'));
+    await userEvent.click(await screen.findByLabelText('Export'));
 
     await screen.findByText(/Exported/);
     expect(saveJson).toHaveBeenCalledOnce();
@@ -365,7 +365,7 @@ describe('BrandsPage: editing', () => {
 
   it('creates another brand from the list', async () => {
     start();
-    await userEvent.click(await screen.findByText('New brand'));
+    await userEvent.click(await screen.findByLabelText('New brand'));
     const group = screen.getByRole('group', { name: 'New brand' });
     typeInto(within(group).getByLabelText('Brand name'), 'Fresh');
     await userEvent.click(within(group).getByText('Create brand'));

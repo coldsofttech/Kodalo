@@ -133,6 +133,10 @@ These apply to `src/kodalo_ui/` and its frontend in `src/kodalo_ui/ui/`, on top 
     `npm run lint`, `npm test` and `npm run build`, scoped to that folder. ESLint and Prettier
     (`.prettierrc.json`) decide formatting; do not hand-format or disable a rule without a comment
     saying why.
+    Icons come from Bootstrap Icons (`bootstrap-icons`, a devDependency imported in
+    `styles/fonts.css`): use `<i className="bi bi-..." aria-hidden="true" />` for icon-only controls,
+    and give the control a `label` (accessible name) and a `title` (tooltip) with the action's text.
+    No other icon set and no hand-drawn SVG icons.
 
 23. **Code and Python access**: function components and hooks only, in `.jsx`; plain `.js` for
     non-component modules. No class components and no TypeScript; use JSDoc types where they help,

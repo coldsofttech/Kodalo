@@ -7,6 +7,16 @@ import { createBackend, makeBrand, mockApi, typeInto } from './testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
+/** Expands the Brands menu and opens one of its pages. */
+async function openBrandsPage(/** @type {string} */ label) {
+  const nav = screen.getByRole('navigation', { name: 'Main' });
+  const toggle = within(nav).getByRole('button', { name: 'Brands', expanded: false });
+  await userEvent.click(toggle);
+  const menu = within(nav).getByRole('list', { name: 'Brands sections' });
+  await userEvent.click(within(menu).getByRole('button', { name: label }));
+  return nav;
+}
+
 describe('App', () => {
   it('opens on the intro page and makes no API calls until a page is opened', async () => {
     const calls = mockApi(createBackend([makeBrand('b1', 'Main', true)]).handler);
@@ -19,7 +29,8 @@ describe('App', () => {
     expect(screen.getByRole('heading', { name: 'Welcome to Kodalo' })).toBeVisible();
     expect(calls).toHaveLength(0);
 
-    await userEvent.click(within(nav).getByRole('button', { name: 'Brands' }));
+    expect(within(nav).queryByRole('list', { name: 'Brands sections' })).not.toBeInTheDocument();
+    await openBrandsPage('Brands');
     await screen.findByLabelText('Brand name');
     expect(calls.length).toBeGreaterThan(0);
   });
@@ -28,8 +39,7 @@ describe('App', () => {
     const backend = createBackend([makeBrand('b1', 'Main', true)]);
     mockApi(backend.handler);
     render(<App />);
-    const nav = screen.getByRole('navigation', { name: 'Main' });
-    await userEvent.click(within(nav).getByRole('button', { name: 'Brands' }));
+    const nav = await openBrandsPage('Brands');
 
     typeInto(await screen.findByLabelText('Brand name'), 'Edited');
     await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
@@ -39,7 +49,11 @@ describe('App', () => {
       'page',
     );
 
-    await userEvent.click(within(nav).getByRole('button', { name: 'Brands' }));
+    await userEvent.click(
+      within(within(nav).getByRole('list', { name: 'Brands sections' })).getByRole('button', {
+        name: 'Brands',
+      }),
+    );
     expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited');
   });
 
@@ -49,8 +63,7 @@ describe('App', () => {
       const backend = createBackend([makeBrand('b1', 'Main', true)]);
       mockApi(backend.handler);
       render(<App />);
-      const nav = screen.getByRole('navigation', { name: 'Main' });
-      await userEvent.click(within(nav).getByRole('button', { name: label }));
+      const nav = await openBrandsPage(label);
       expect(screen.getByRole('heading', { name: label })).toBeVisible();
       expect(within(nav).getByRole('button', { name: label })).toHaveAttribute(
         'aria-current',
@@ -63,11 +76,7 @@ describe('App', () => {
     const backend = createBackend([makeBrand('b1', 'Main', true)]);
     mockApi(backend.handler);
     const { container } = render(<App />);
-    await userEvent.click(
-      within(screen.getByRole('navigation', { name: 'Main' })).getByRole('button', {
-        name: 'Brands',
-      }),
-    );
+    await openBrandsPage('Brands');
     await screen.findByRole('heading', { name: 'Preview' });
     expect(await axe(container)).toHaveNoViolations();
   });

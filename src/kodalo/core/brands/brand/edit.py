@@ -4,8 +4,8 @@ from typing import Any
 
 from pydantic import ValidationError
 
-from kodalo.core.brand.errors import BrandInvalidError
-from kodalo.core.brand.models import BrandData
+from kodalo.core.brands.brand.errors import BrandInvalidError
+from kodalo.core.brands.brand.models import BrandData
 
 # Logo files are set by uploading a file, never by typing a name.
 _READ_ONLY = {"schema_version", "logo.file", "logo.dark_file"}

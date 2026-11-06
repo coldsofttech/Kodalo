@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, TextField } from './controls.jsx';
+import { get } from '../lookup.js';
 
 /** @param {{ palette: any }} props */
 function Swatches({ palette }) {
@@ -10,8 +11,8 @@ function Swatches({ palette }) {
         <span
           key={key}
           className="swatch"
-          data-color={colors[key].light}
-          ref={paint(colors[key].light)}
+          data-color={get(colors, key).light}
+          ref={paint(get(colors, key).light)}
         />
       ))}
     </span>

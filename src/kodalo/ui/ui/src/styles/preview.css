@@ -50,7 +50,88 @@
 }
 
 .slide-figure {
+  position: relative;
   margin: 0;
+}
+
+.slide-expand {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  opacity: 0;
+}
+
+.slide-figure:hover .slide-expand,
+.slide-expand:focus-visible {
+  opacity: 1;
+}
+
+/* The dialog sits inside the strip, so it inherits the brand's custom properties. */
+.slide-dialog {
+  max-width: none;
+  max-height: none;
+  margin: auto;
+  padding: 0.75rem;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.slide-dialog::backdrop {
+  background: rgb(0 0 0 / 0.75);
+}
+
+/* The slide is as wide as the canvas ratio allows in the window; the dialog wraps it exactly. */
+.slide-dialog {
+  --fit: min(90vw, calc((100vh - 9rem) * var(--canvas-w, 1080) / var(--canvas-h, 1350)));
+  width: calc(var(--fit) + 1.5rem);
+  overflow: hidden;
+}
+
+.slide-dialog .slide-figure {
+  width: auto;
+}
+
+.slide-dialog .slide-frame {
+  width: var(--fit);
+}
+
+.slide-dialog-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.slide-dialog-bar button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-s);
+  background: var(--surface-2);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.slide-dialog-bar button:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
 
 .slide-figure figcaption {
@@ -202,6 +283,11 @@
   font-size: calc(var(--u) * 26);
   opacity: 0.8;
   min-height: calc(var(--u) * 30);
+}
+
+/* A logo in the bottom right corner would cover the slide number, so the footer moves left. */
+.slide-footer-left {
+  justify-content: flex-start;
 }
 
 .slide-logo {

@@ -2,9 +2,10 @@
 // Colors, fonts and sizes come from CSS custom properties set on the root element. They are set
 // through the CSSOM (style.setProperty), which Cornea's content security policy allows, unlike an
 // inline style attribute in the markup.
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { logoUrl } from '../api.js';
 import { logoFor, previewVariables } from '../brand.js';
+import { get } from '../lookup.js';
 
 const SLIDES = ['cover', 'content', 'code', 'quote', 'cta'];
 const CAPTIONS = {
@@ -15,8 +16,8 @@ const CAPTIONS = {
   cta: 'Call to action',
 };
 
-/** @param {{ brand: any, data: any, layout: any, mode: 'light' | 'dark', kind: string, index: number, total: number, isLast: boolean }} props */
-function Slide({ brand, data, layout, mode, kind, index, total, isLast }) {
+/** @param {{ brand: any, data: any, layout: any, mode: 'light' | 'dark', kind: string, index: number, total: number, isLast: boolean, onExpand?: () => void }} props */
+function Slide({ brand, data, layout, mode, kind, index, total, isLast, onExpand }) {
   const { logo } = data;
   const logoInfo = logoFor(data, mode);
   const showLogo =
@@ -27,6 +28,17 @@ function Slide({ brand, data, layout, mode, kind, index, total, isLast }) {
   const alt = kind === 'quote' || kind === 'cta';
   return (
     <figure className="slide-figure">
+      {onExpand ? (
+        <button
+          type="button"
+          className="slide-expand"
+          aria-label={`Full screen: ${get(CAPTIONS, kind)}`}
+          title="Full screen"
+          onClick={onExpand}
+        >
+          <i className="bi bi-arrows-fullscreen" aria-hidden="true" />
+        </button>
+      ) : null}
       <div className="slide-frame">
         <article
           className={`slide slide-${kind}${alt ? ' slide-alt' : ''}`}
@@ -89,7 +101,9 @@ function Slide({ brand, data, layout, mode, kind, index, total, isLast }) {
               </>
             ) : null}
           </div>
-          <footer className="slide-footer">
+          <footer
+            className={`slide-footer${showLogo && logo.position === 'bottom_right' ? ' slide-footer-left' : ''}`}
+          >
             <span>{layout.footer_text}</span>
             {layout.slide_numbers ? (
               <span>
@@ -99,14 +113,102 @@ function Slide({ brand, data, layout, mode, kind, index, total, isLast }) {
           </footer>
         </article>
       </div>
-      <figcaption>{CAPTIONS[/** @type {keyof typeof CAPTIONS} */ (kind)]}</figcaption>
+      <figcaption>{get(CAPTIONS, kind)}</figcaption>
     </figure>
+  );
+}
+
+/**
+ * One slide at the size of the window, in a modal dialog. Esc closes it (the browser's own
+ * behavior), the arrow keys and the buttons step through the slides, and a click outside closes it.
+ * @param {{ slide: any, index: number, count: number, onStep: (delta: number) => void, onClose: () => void }} props
+ */
+function FullScreen({ slide, index, count, onStep, onClose }) {
+  const dialog = useRef(/** @type {HTMLDialogElement | null} */ (null));
+  useEffect(() => {
+    const element = dialog.current;
+    if (!element) return undefined;
+    if (!element.open) {
+      if (typeof element.showModal === 'function') element.showModal();
+      else element.setAttribute('open', '');
+    }
+    /** @param {KeyboardEvent} event */
+    const onKey = (event) => {
+      if (event.key === 'ArrowRight') onStep(1);
+      if (event.key === 'ArrowLeft') onStep(-1);
+    };
+    /** @param {MouseEvent} event */
+    const onClick = (event) => {
+      if (event.target === element) onClose();
+    };
+    element.addEventListener('keydown', onKey);
+    element.addEventListener('click', onClick);
+    return () => {
+      element.removeEventListener('keydown', onKey);
+      element.removeEventListener('click', onClick);
+    };
+  }, [onStep, onClose]);
+  return (
+    <dialog
+      ref={dialog}
+      className="slide-dialog"
+      aria-label="Full screen preview"
+      onClose={onClose}
+    >
+      <div className="slide-dialog-bar">
+        <button
+          type="button"
+          aria-label="Previous slide"
+          title="Previous slide"
+          disabled={index === 0}
+          onClick={() => onStep(-1)}
+        >
+          <i className="bi bi-chevron-left" aria-hidden="true" />
+        </button>
+        <span>
+          {index + 1} / {count}
+        </span>
+        <button
+          type="button"
+          aria-label="Next slide"
+          title="Next slide"
+          disabled={index === count - 1}
+          onClick={() => onStep(1)}
+        >
+          <i className="bi bi-chevron-right" aria-hidden="true" />
+        </button>
+        <button type="button" aria-label="Close" title="Close" onClick={onClose}>
+          <i className="bi bi-x-lg" aria-hidden="true" />
+        </button>
+      </div>
+      <Slide {...slide} />
+    </dialog>
   );
 }
 
 /** @param {{ brand: any, data: any, layout: any, canvas: { width: number, height: number } }} props */
 export default function Preview({ brand, data, layout, canvas }) {
   const [mode, setMode] = useState(/** @type {'light' | 'dark'} */ ('light'));
+  /** Index of the slide shown full screen, or null. */
+  const [expanded, setExpanded] = useState(/** @type {number | null} */ (null));
+  const closeFull = useCallback(() => setExpanded(null), []);
+  const step = useCallback(
+    /** @param {number} delta */
+    (delta) =>
+      setExpanded((i) => (i === null ? i : Math.min(SLIDES.length - 1, Math.max(0, i + delta)))),
+    [],
+  );
+  /** @param {number} index */
+  const slideProps = (index) => ({
+    brand,
+    data,
+    layout,
+    mode,
+    kind: SLIDES.at(index),
+    index,
+    total: layout.slides_count,
+    isLast: index === SLIDES.length - 1,
+  });
   const root = useRef(/** @type {HTMLDivElement | null} */ (null));
   const variables = previewVariables(data, mode, layout, canvas);
   const signature = JSON.stringify(variables);
@@ -138,18 +240,17 @@ export default function Preview({ brand, data, layout, canvas }) {
       </div>
       <div ref={root} className="preview-strip">
         {SLIDES.map((kind, index) => (
-          <Slide
-            key={kind}
-            brand={brand}
-            data={data}
-            layout={layout}
-            mode={mode}
-            kind={kind}
-            index={index}
-            total={layout.slides_count}
-            isLast={index === SLIDES.length - 1}
-          />
+          <Slide key={kind} {...slideProps(index)} onExpand={() => setExpanded(index)} />
         ))}
+        {expanded !== null ? (
+          <FullScreen
+            slide={slideProps(expanded)}
+            index={expanded}
+            count={SLIDES.length}
+            onStep={step}
+            onClose={closeFull}
+          />
+        ) : null}
       </div>
     </section>
   );

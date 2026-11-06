@@ -46,7 +46,7 @@ LOGO_POSITIONS = (
     "bottom_center",
     "bottom_right",
 )
-LOGO_SHOW_ON = ("all", "first", "last")
+LOGO_SHOW_ON = ("all", "first", "last", "none")
 
 _NAMING = {
     "ix": "ix_%(column_0_label)s",
@@ -147,6 +147,32 @@ class Canvas(_Row, Base):
     width: Mapped[int]
     height: Mapped[int]
     type: Mapped[str] = mapped_column(String(8), default="user")
+    # Never written as NULL by Kodalo; the column is nullable only because SQLite cannot add a
+    # NOT NULL column that has a foreign key.
+    platform_id: Mapped[str | None] = mapped_column(
+        ForeignKey("social_platforms.id"), default="custom"
+    )
+
+
+class SocialPlatform(_Row, Base):
+    """A social network a canvas is made for. Seeded by a migration; ``custom`` has no sizes."""
+
+    __tablename__ = "social_platforms"
+    __table_args__ = (Index("uq_social_platforms_name", "name", unique=True),)
+
+    name: Mapped[str] = mapped_column(String(64))
+
+
+class SocialPlatformSize(_Row, Base):
+    """A size a platform recommends, such as Instagram's 1080 x 1350 portrait."""
+
+    __tablename__ = "social_platform_sizes"
+    __table_args__ = (UniqueConstraint("platform_id", "width", "height"),)
+
+    platform_id: Mapped[str] = mapped_column(ForeignKey("social_platforms.id", ondelete="CASCADE"))
+    name: Mapped[str] = mapped_column(String(64))
+    width: Mapped[int]
+    height: Mapped[int]
 
 
 class PaletteRow(_Row, Base):

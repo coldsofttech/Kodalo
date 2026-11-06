@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints
 
-from kodalo.core.canvas.models import DEFAULT_CANVAS_ID
+from kodalo.core.brands.canvas.models import DEFAULT_CANVAS_ID
 
 LayoutName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
 LayoutType = Literal["system", "user"]

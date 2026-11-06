@@ -38,10 +38,10 @@ describe('LayoutsPage', () => {
 
   it('adds, edits, copies, exports and deletes a layout and tells the app', async () => {
     const { calls, onChange } = start();
-    await userEvent.click(await screen.findByText('New layout'));
+    await userEvent.click(await screen.findByLabelText('New layout'));
     typeInto(await screen.findByLabelText('Layout name'), 'Feed');
     typeInto(screen.getByLabelText('Number of slides'), '9');
-    await userEvent.click(screen.getByText('Create layout'));
+    await userEvent.click(screen.getByLabelText('Create layout'));
     expect(await screen.findByText('Created "Feed".')).toBeInTheDocument();
     const post = calls.find((call) => call.method === 'POST');
     expect(post.body.name).toBe('Feed');
@@ -55,14 +55,14 @@ describe('LayoutsPage', () => {
       'system-instagram_square',
     );
     typeInto(screen.getByLabelText('Footer text'), '@kodalo');
-    await userEvent.click(screen.getByText('Save layout'));
+    await userEvent.click(screen.getByLabelText('Save layout'));
     expect(await screen.findByText('Saved "Feed".')).toBeInTheDocument();
     const patch = calls.find((call) => call.method === 'PATCH');
     expect(patch.body.canvas_id).toBe('system-instagram_square');
     expect(patch.body.footer_text).toBe('@kodalo');
 
     await userEvent.click(within(await rowOf('Feed')).getByLabelText('Copy Feed'));
-    await userEvent.click(await screen.findByText('Create layout'));
+    await userEvent.click(await screen.findByLabelText('Create layout'));
     expect(await rowOf('Feed copy')).toBeInTheDocument();
 
     await userEvent.click(within(await rowOf('Feed')).getByLabelText('Export Feed'));
@@ -85,9 +85,9 @@ describe('LayoutsPage', () => {
     expect(await screen.findByText('Imported the layout.')).toBeInTheDocument();
     expect(await rowOf('Default (2)')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByText('New layout'));
+    await userEvent.click(screen.getByLabelText('New layout'));
     typeInto(await screen.findByLabelText('Layout name'), 'compact');
-    await userEvent.click(screen.getByText('Create layout'));
+    await userEvent.click(screen.getByLabelText('Create layout'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 

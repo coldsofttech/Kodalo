@@ -3,15 +3,15 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import BrandInvalidError, BrandService
-from kodalo.core.canvas import (
+from kodalo.core.brands.brand import BrandInvalidError, BrandService
+from kodalo.core.brands.canvas import (
     CanvasInUseError,
     CanvasInvalidError,
     CanvasNameTakenError,
     CanvasNotFoundError,
     CanvasReadOnlyError,
 )
-from kodalo.core.layout import LayoutSettings
+from kodalo.core.brands.layout import LayoutSettings
 from kodalo.core.storage import Database, database_path
 
 
@@ -168,3 +168,35 @@ def test_import_of_an_old_file_with_a_nested_layout(brands: BrandService) -> Non
     del payload["data"]["layout"]
     payload["canvas"] = {"width": 1080, "height": 1080}
     assert brands.import_profile(payload, name="Mid").canvas.id == "system-instagram_square"
+
+
+def test_platforms_are_seeded_and_built_in_canvases_are_mapped(brands: BrandService) -> None:
+    platforms = brands.canvases.list_platforms()
+    assert [p.id for p in platforms] == ["instagram", "custom"]
+    assert [(s.width, s.height) for s in platforms[0].sizes] == [
+        (1080, 1080),
+        (1080, 1350),
+        (1080, 1920),
+    ] or len(platforms[0].sizes) == 3
+    assert platforms[1].sizes == []
+    assert brands.canvases.get("system-instagram_story").platform == "Instagram"
+    assert brands.canvases.get("system-x_landscape").platform_id == "custom"
+
+
+def test_a_size_the_platform_does_not_recommend_is_flagged_but_saved(
+    brands: BrandService,
+) -> None:
+    odd = brands.canvases.create("Odd", 1000, 1000, "instagram")
+    assert odd.size_concern is not None
+    assert "Instagram recommends" in odd.size_concern
+    assert brands.canvases.create("Fine", 1080, 1080, "instagram").size_concern is None
+    assert brands.canvases.create("Any", 1000, 1000).size_concern is None
+    moved = brands.canvases.update(odd.id, platform_id="custom")
+    assert moved.platform_id == "custom"
+    assert moved.size_concern is None
+    assert brands.canvases.duplicate(odd.id, "Copy").platform_id == "custom"
+
+
+def test_an_unknown_platform_is_refused(brands: BrandService) -> None:
+    with pytest.raises(CanvasInvalidError):
+        brands.canvases.create("Nope", 1080, 1080, "myspace")

@@ -13,6 +13,7 @@ import { useCatalog } from '../../catalog.js';
 import { Button, NumberField, Select, Switch, TextField } from '../../components/controls.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
 import { fileNameFor, readJson, saveJson } from '../../download.js';
+import { get } from '../../lookup.js';
 
 const SETTINGS = [
   'canvas_id',
@@ -28,7 +29,7 @@ const SETTINGS = [
 ];
 
 /** The settings a layout decides, taken from a stored layout. @param {any} layout */
-const settingsOf = (layout) => Object.fromEntries(SETTINGS.map((key) => [key, layout[key]]));
+const settingsOf = (layout) => Object.fromEntries(SETTINGS.map((key) => [key, get(layout, key)]));
 
 /**
  * What the form is doing: adding a layout, changing one, or copying one under a new name.
@@ -209,11 +210,26 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
             </>
           )}
           <div className="row actions">
-            <Button appearance="accent" disabled={busy || !form.name.trim()} onClick={submit}>
-              {form.kind === 'edit' ? 'Save layout' : 'Create layout'}
+            <Button
+              appearance="accent"
+              label={form.kind === 'edit' ? 'Save layout' : 'Create layout'}
+              title={form.kind === 'edit' ? 'Save layout' : 'Create layout'}
+              disabled={busy || !form.name.trim()}
+              onClick={submit}
+            >
+              <i
+                className={`bi ${form.kind === 'edit' ? 'bi-floppy' : 'bi-check-lg'}`}
+                aria-hidden="true"
+              />
             </Button>
-            <Button appearance="outline" disabled={busy} onClick={() => setForm(null)}>
-              Cancel
+            <Button
+              appearance="outline"
+              label="Cancel"
+              title="Cancel"
+              disabled={busy}
+              onClick={() => setForm(null)}
+            >
+              <i className="bi bi-x-lg" aria-hidden="true" />
             </Button>
           </div>
         </section>
@@ -221,11 +237,13 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
         <div className="row actions">
           <Button
             appearance="accent"
+            label="New layout"
+            title="New layout"
             onClick={() =>
               setForm({ kind: 'new', id: '', name: '', settings: settingsOf(starter) })
             }
           >
-            New layout
+            <i className="bi bi-plus-lg" aria-hidden="true" />
           </Button>
           <ImportButton
             label="Import from file"
@@ -282,6 +300,7 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
                     <Button
                       appearance="outline"
                       label={`Edit ${layout.name}`}
+                      title="Edit"
                       onClick={() =>
                         setForm({
                           kind: 'edit',
@@ -291,12 +310,13 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
                         })
                       }
                     >
-                      Edit
+                      <i className="bi bi-pencil" aria-hidden="true" />
                     </Button>
                   ) : null}
                   <Button
                     appearance="outline"
                     label={`Copy ${layout.name}`}
+                    title="Copy"
                     onClick={() =>
                       setForm({
                         kind: 'copy',
@@ -306,23 +326,25 @@ export default function LayoutsPage({ onChange, revision = 0 }) {
                       })
                     }
                   >
-                    Copy
+                    <i className="bi bi-copy" aria-hidden="true" />
                   </Button>
                   <Button
                     appearance="outline"
                     label={`Export ${layout.name}`}
+                    title="Export"
                     onClick={() => exportOne(layout)}
                   >
-                    Export
+                    <i className="bi bi-box-arrow-up" aria-hidden="true" />
                   </Button>
                   {layout.type === 'user' ? (
                     <Button
                       appearance="outline"
                       danger
                       label={`Delete ${layout.name}`}
+                      title="Delete"
                       onClick={() => setAsking(layout)}
                     >
-                      Delete
+                      <i className="bi bi-trash" aria-hidden="true" />
                     </Button>
                   ) : null}
                 </div>

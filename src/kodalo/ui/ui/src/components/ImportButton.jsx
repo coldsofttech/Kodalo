@@ -21,8 +21,14 @@ export default function ImportButton({ label, what, disabled, onImport }) {
           event.target.value = '';
         }}
       />
-      <Button appearance="outline" disabled={disabled} onClick={() => input.current?.click()}>
-        {label}
+      <Button
+        appearance="outline"
+        label={label}
+        title={label}
+        disabled={disabled}
+        onClick={() => input.current?.click()}
+      >
+        <i className="bi bi-box-arrow-in-down" aria-hidden="true" />
       </Button>
     </>
   );

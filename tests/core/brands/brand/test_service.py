@@ -3,7 +3,7 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import (
+from kodalo.core.brands.brand import (
     BrandInvalidError,
     BrandNameTakenError,
     BrandNotFoundError,

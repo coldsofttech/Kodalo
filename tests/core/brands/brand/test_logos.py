@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import LogoError
-from kodalo.core.brand.logos import MAX_LOGO_BYTES, LogoStore, detect_kind
+from kodalo.core.brands.brand import LogoError
+from kodalo.core.brands.brand.logos import MAX_LOGO_BYTES, LogoStore, detect_kind
 
 PNG = b"\x89PNG\r\n\x1a\n" + b"\x00" * 16
 SVG = b'<svg xmlns="http://www.w3.org/2000/svg"><rect width="10" height="10"/></svg>'

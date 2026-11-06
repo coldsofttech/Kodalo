@@ -17,7 +17,7 @@ function useElement(property, value, events, onEvent) {
   });
   useEffect(() => {
     const element = ref.current;
-    if (element && element[property] !== value) element[property] = value;
+    if (element && Reflect.get(element, property) !== value) Reflect.set(element, property, value);
   }, [property, value]);
   useEffect(() => {
     const element = ref.current;
@@ -100,12 +100,23 @@ export function Switch({ label, checked, onChange }) {
 }
 
 /** @param {{ children: import('react').ReactNode, onClick?: () => void, appearance?: 'accent' | 'neutral' | 'outline' | 'stealth', disabled?: boolean, label?: string, danger?: boolean }} props */
-export function Button({ children, onClick, appearance = 'neutral', disabled, label, danger }) {
+export function Button({
+  children,
+  onClick,
+  appearance = 'neutral',
+  disabled,
+  label,
+  title,
+  danger,
+  className,
+}) {
   return (
     <fluent-button
       appearance={appearance}
       disabled={disabled}
       aria-label={label}
+      title={title}
+      class={className}
       danger={danger ? '' : undefined}
       onClick={disabled ? undefined : onClick}
     >

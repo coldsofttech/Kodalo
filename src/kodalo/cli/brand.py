@@ -1,7 +1,7 @@
 """``brand`` commands: manage brand profiles. They parse input and show output only."""
 
 import json
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Annotated, Any
@@ -12,7 +12,7 @@ from rich.text import Text
 
 from kodalo.cli import output
 from kodalo.cli.state import State, get_state
-from kodalo.core.brand import (
+from kodalo.core.brands.brand import (
     Brand,
     BrandError,
     BrandService,
@@ -21,9 +21,9 @@ from kodalo.core.brand import (
     list_paths,
     set_value,
 )
-from kodalo.core.canvas import Canvas, CanvasError
-from kodalo.core.layout import Layout, LayoutError, LayoutSettings
-from kodalo.core.palette import Palette, PaletteError
+from kodalo.core.brands.canvas import Canvas, CanvasError
+from kodalo.core.brands.layout import Layout, LayoutError, LayoutSettings
+from kodalo.core.brands.palette import Palette, PaletteError
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 app = typer.Typer(
@@ -63,7 +63,7 @@ InputFile = Annotated[Path, typer.Argument(exists=True, dir_okay=False, help="Ex
 
 
 @contextmanager
-def _service(ctx: typer.Context) -> Iterator[BrandService]:
+def _service(ctx: typer.Context) -> Generator[BrandService]:
     """Open the database for one command, turning expected failures into exit code 1."""
     state = get_state(ctx)
     data_dir = state.data_dir or default_data_dir()

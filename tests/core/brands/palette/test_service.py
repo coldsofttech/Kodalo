@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import STARTER_PALETTES, BrandInvalidError, BrandService
-from kodalo.core.palette import (
+from kodalo.core.brands.brand import STARTER_PALETTES, BrandInvalidError, BrandService
+from kodalo.core.brands.palette import (
     PaletteInvalidError,
     PaletteNameTakenError,
     PaletteNotFoundError,

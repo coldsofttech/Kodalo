@@ -5,7 +5,7 @@ import sys
 from dataclasses import dataclass
 from typing import Literal
 
-from kodalo.core.brand.models import FontRef
+from kodalo.core.brands.brand.models import FontRef
 
 Category = Literal["sans", "serif", "display", "mono"]
 

@@ -13,7 +13,7 @@ from starlette.responses import Response
 from starlette.types import ASGIApp
 
 from kodalo.api.errors import problem
-from kodalo.core.brand.logos import MAX_LOGO_BYTES
+from kodalo.core.brands.brand.logos import MAX_LOGO_BYTES
 
 # The interactive docs load scripts and styles, so a strict policy would break them.
 DOCS_PREFIXES = ("/docs", "/redoc")

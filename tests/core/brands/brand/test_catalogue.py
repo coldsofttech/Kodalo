@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import BrandService
-from kodalo.core.brand import fonts as fonts_module
-from kodalo.core.brand.fonts import FontInfo
+from kodalo.core.brands.brand import BrandService
+from kodalo.core.brands.brand import fonts as fonts_module
+from kodalo.core.brands.brand.fonts import FontInfo
 from kodalo.core.storage import Database, database_path
 
 

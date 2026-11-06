@@ -1,6 +1,6 @@
 """Layouts: named slide settings (canvas, margins, text, slide count) that brands share."""
 
-from kodalo.core.layout.errors import (
+from kodalo.core.brands.layout.errors import (
     LayoutError,
     LayoutInUseError,
     LayoutInvalidError,
@@ -8,8 +8,8 @@ from kodalo.core.layout.errors import (
     LayoutNotFoundError,
     LayoutReadOnlyError,
 )
-from kodalo.core.layout.models import DEFAULT_LAYOUT_ID, Layout, LayoutSettings
-from kodalo.core.layout.service import LayoutService
+from kodalo.core.brands.layout.models import DEFAULT_LAYOUT_ID, Layout, LayoutSettings
+from kodalo.core.brands.layout.service import LayoutService
 
 __all__ = [
     "DEFAULT_LAYOUT_ID",

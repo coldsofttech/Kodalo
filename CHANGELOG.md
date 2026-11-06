@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Canvases have a social platform (Instagram or Custom) and warn, without blocking, when the size is not one the platform recommends.
+- A brand's logo can be hidden on every slide, and the footer moves left when the logo is at the bottom right.
+- Preview slides open full screen, with arrow keys to step through them.
+- Suggest with AI on Palettes now asks first, showing where the request goes and the tokens it uses.
+- Buttons on Brands, Palettes, Canvases and Layouts are icons with tooltips, and the Brands menu in the sidebar collapses.
+- On Studio's Focus step, Next with AI plans the post: a strategy, three angles with hooks and five post ideas, kept for the same choice and refreshable. Ideas show as cards you can choose, copy and fold open, with the claims to repeat with care up top.
 - Studio has a new Focus step after Analyze to choose a Tool / Utility post or a Feature post, and for a Feature post, the feature, use case or capability to focus on.
 - Refresh with AI now also lists the product's features, alongside its capabilities and use cases, with how important and mature each is, the use cases it serves and claims to repeat with care.
 - The most of each document to read can now be set up to 2000 KB (it stopped at 200).

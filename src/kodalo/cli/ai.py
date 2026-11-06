@@ -2,7 +2,7 @@
 only. API keys are asked for with a hidden prompt (or read from a pipe), never taken from an
 argument, so they stay out of the shell history."""
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Annotated, Any
 
@@ -46,7 +46,7 @@ NameArgument = Annotated[str, typer.Argument(help="The model name.")]
 
 
 @contextmanager
-def _connections(ctx: typer.Context) -> Iterator[AiConnections]:
+def _connections(ctx: typer.Context) -> Generator[AiConnections]:
     """Open the database for one command, turning expected failures into exit code 1."""
     data_dir = get_state(ctx).data_dir or default_data_dir()
     database: Database | None = None

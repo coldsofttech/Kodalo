@@ -1,7 +1,7 @@
 """``studio`` commands: start a post from a repository. They parse input and show output only."""
 
 import dataclasses
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Generator
 from contextlib import contextmanager
 from typing import Annotated
 
@@ -40,7 +40,7 @@ JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 @contextmanager
 def _open(
     ctx: typer.Context,
-) -> Iterator[tuple[GitHubSettings, RepoService, RepoAnalyzer, ReadmeService, ReadmeAssistant]]:
+) -> Generator[tuple[GitHubSettings, RepoService, RepoAnalyzer, ReadmeService, ReadmeAssistant]]:
     """Open the database for one command, turning expected failures into exit code 1."""
     data_dir = get_state(ctx).data_dir or default_data_dir()
     database: Database | None = None

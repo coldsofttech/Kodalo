@@ -37,9 +37,9 @@ describe('PalettesPage', () => {
 
   it('adds, edits, copies, exports and deletes a palette and tells the app', async () => {
     const { calls, onChange } = start();
-    await userEvent.click(await screen.findByText('New palette'));
+    await userEvent.click(await screen.findByLabelText('New palette'));
     typeInto(await screen.findByLabelText('Palette name'), 'Ocean');
-    await userEvent.click(screen.getByText('Create palette'));
+    await userEvent.click(screen.getByLabelText('Create palette'));
     expect(await screen.findByText('Created "Ocean".')).toBeInTheDocument();
     const post = calls.find((call) => call.method === 'POST');
     expect(post.body.name).toBe('Ocean');
@@ -48,11 +48,11 @@ describe('PalettesPage', () => {
 
     await userEvent.click(within(await rowOf('Ocean')).getByLabelText('Edit Ocean'));
     typeInto(await screen.findByLabelText('Palette name'), 'Sea');
-    await userEvent.click(screen.getByText('Save palette'));
+    await userEvent.click(screen.getByLabelText('Save palette'));
     expect(await screen.findByText('Saved "Sea".')).toBeInTheDocument();
 
     await userEvent.click(within(await rowOf('Sea')).getByLabelText('Copy Sea'));
-    await userEvent.click(await screen.findByText('Create palette'));
+    await userEvent.click(await screen.findByLabelText('Create palette'));
     expect(await rowOf('Sea copy')).toBeInTheDocument();
 
     await userEvent.click(within(await rowOf('Sea')).getByLabelText('Export Sea'));
@@ -86,9 +86,9 @@ describe('PalettesPage', () => {
     );
     expect(await screen.findByRole('alert')).toHaveTextContent('not valid JSON');
 
-    await userEvent.click(screen.getByText('New palette'));
+    await userEvent.click(screen.getByLabelText('New palette'));
     typeInto(await screen.findByLabelText('Palette name'), 'midnight');
-    await userEvent.click(screen.getByText('Create palette'));
+    await userEvent.click(screen.getByLabelText('Create palette'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 });

@@ -6,15 +6,15 @@ from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kodalo.core.canvas import CanvasError, CanvasService
-from kodalo.core.layout.errors import (
+from kodalo.core.brands.canvas import CanvasError, CanvasService
+from kodalo.core.brands.layout.errors import (
     LayoutInUseError,
     LayoutInvalidError,
     LayoutNameTakenError,
     LayoutNotFoundError,
     LayoutReadOnlyError,
 )
-from kodalo.core.layout.models import Layout, LayoutName, LayoutSettings
+from kodalo.core.brands.layout.models import Layout, LayoutName, LayoutSettings
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import BrandProfile, LayoutRow
 from kodalo.core.storage.models import Canvas as CanvasRow

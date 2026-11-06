@@ -14,8 +14,8 @@ from pydantic import (
     StringConstraints,
 )
 
-from kodalo.core.canvas.models import Canvas
-from kodalo.core.layout.models import DEFAULT_LAYOUT_ID, Layout
+from kodalo.core.brands.canvas.models import Canvas
+from kodalo.core.brands.layout.models import DEFAULT_LAYOUT_ID, Layout
 
 HexColor = Annotated[
     str,
@@ -75,7 +75,7 @@ class Logo(_Strict):
     position: LogoPosition = "top_left"
     size_percent: int = Field(default=14, ge=5, le=60)
     padding: int = Field(default=48, ge=0, le=200)
-    show_on: Literal["all", "first", "last"] = "all"
+    show_on: Literal["all", "first", "last", "none"] = "all"
 
 
 class BrandData(_Strict):

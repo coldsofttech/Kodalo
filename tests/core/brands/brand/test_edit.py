@@ -1,6 +1,6 @@
 import pytest
 
-from kodalo.core.brand import BrandInvalidError, list_paths, set_value, starter_brand
+from kodalo.core.brands.brand import BrandInvalidError, list_paths, set_value, starter_brand
 
 
 def test_sets_color_text_bool_and_number() -> None:

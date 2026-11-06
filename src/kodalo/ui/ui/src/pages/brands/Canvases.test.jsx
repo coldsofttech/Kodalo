@@ -38,26 +38,27 @@ describe('CanvasesPage', () => {
 
   it('adds, edits, copies and deletes a canvas and tells the app', async () => {
     const { calls, onChange } = start();
-    await userEvent.click(await screen.findByText('New canvas'));
+    await userEvent.click(await screen.findByLabelText('New canvas'));
     typeInto(await screen.findByLabelText('Canvas name'), 'Feed');
-    await userEvent.click(screen.getByText('Create canvas'));
+    await userEvent.click(screen.getByLabelText('Create canvas'));
     expect(await screen.findByText('Created "Feed".')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST').body).toEqual({
       name: 'Feed',
       width: 1080,
       height: 1350,
+      platform_id: 'instagram',
     });
     expect(onChange).toHaveBeenCalledTimes(1);
 
     const feed = await rowOf('Feed');
     await userEvent.click(within(feed).getByLabelText('Edit Feed'));
     typeInto(await screen.findByLabelText('Canvas name'), 'Wide feed');
-    await userEvent.click(screen.getByText('Save canvas'));
+    await userEvent.click(screen.getByLabelText('Save canvas'));
     expect(await screen.findByText('Saved "Wide feed".')).toBeInTheDocument();
 
     const wide = await rowOf('Wide feed');
     await userEvent.click(within(wide).getByLabelText('Copy Wide feed'));
-    await userEvent.click(await screen.findByText('Create canvas'));
+    await userEvent.click(await screen.findByLabelText('Create canvas'));
     expect(await rowOf('Wide feed copy')).toBeInTheDocument();
 
     await userEvent.click(
@@ -68,11 +69,21 @@ describe('CanvasesPage', () => {
     expect(screen.queryByRole('rowheader', { name: 'Wide feed copy' })).not.toBeInTheDocument();
   });
 
+  it('warns when the size is not one the platform recommends, but still allows saving', async () => {
+    start();
+    await userEvent.click(await screen.findByLabelText('New canvas'));
+    expect(screen.queryByText(/may be cropped or resized/)).not.toBeInTheDocument();
+    typeInto(await screen.findByLabelText('Width (pixels)'), '1000');
+    expect(await screen.findByText(/Instagram recommends 1080 x 1350/)).toBeInTheDocument();
+    await userEvent.selectOptions(screen.getByLabelText('Social platform'), 'custom');
+    expect(screen.queryByText(/may be cropped or resized/)).not.toBeInTheDocument();
+  });
+
   it('shows why a canvas cannot be added or deleted', async () => {
     start();
-    await userEvent.click(await screen.findByText('New canvas'));
+    await userEvent.click(await screen.findByLabelText('New canvas'));
     typeInto(await screen.findByLabelText('Canvas name'), 'instagram portrait');
-    await userEvent.click(screen.getByText('Create canvas'));
+    await userEvent.click(screen.getByLabelText('Create canvas'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 

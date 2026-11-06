@@ -2,6 +2,8 @@
 // The CSS variable names below are the one place the preview reads brand data; the slide designer
 // in Python must map the same fields the same way.
 
+import { get } from './lookup.js';
+
 /** Colors in the order they are edited: label, key and what the color is used for. */
 export const COLOR_ROWS = [
   ['Background', 'background', 'Slide background'],
@@ -49,7 +51,7 @@ export function setIn(object, path, value) {
   const source = /** @type {Record<string, unknown>} */ (object);
   return /** @type {T} */ ({
     ...source,
-    [head]: rest.length ? setIn(source[head], rest.join('.'), value) : value,
+    [head]: rest.length ? setIn(get(source, head), rest.join('.'), value) : value,
   });
 }
 
@@ -86,10 +88,10 @@ export function previewVariables(data, mode, layout, canvas) {
     ),
   };
   for (const [, key] of COLOR_ROWS) {
-    vars[`--b-${key.replace('_', '-')}`] = colors[key][mode];
+    vars[`--b-${key.replace('_', '-')}`] = get(get(colors, key), mode);
   }
   for (const [, key, generic] of FONT_ROWS) {
-    vars[`--f-${key.replace('_', '-')}`] = fontStack(fonts[key], generic);
+    vars[`--f-${key.replace('_', '-')}`] = fontStack(get(fonts, key), generic);
   }
   return vars;
 }

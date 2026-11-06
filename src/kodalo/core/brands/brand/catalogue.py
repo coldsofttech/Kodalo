@@ -7,8 +7,8 @@ or chosen, so a brand can always point to a catalogue row.
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from kodalo.core.brand.fonts import FontInfo, available_fonts, bundled_fonts
-from kodalo.core.brand.models import FontRef
+from kodalo.core.brands.brand.fonts import FontInfo, available_fonts, bundled_fonts
+from kodalo.core.brands.brand.models import FontRef
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import FontRow
 

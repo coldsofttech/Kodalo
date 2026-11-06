@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import {
   checkStudioSource,
   getGithubSettings,
+  listBrands,
+  makeIdeas,
   openExternal,
+  planIdeas,
   planAnalysis,
   readReadme,
   readRepository,
@@ -10,7 +13,9 @@ import {
 } from '../api.js';
 import { Button, Switch, TextField } from '../components/controls.jsx';
 import FocusView from './FocusView.jsx';
+import IdeasView from './IdeasView.jsx';
 import ReadmeView from './ReadmeView.jsx';
+import { get } from '../lookup.js';
 
 const STEPS = [
   ['source', 'Source'],
@@ -452,6 +457,11 @@ export default function StudioPage({ visible, onOpenSettings }) {
   const [readme, setReadme] = useState(/** @type {any} */ (null));
   const [postType, setPostType] = useState('');
   const [focus, setFocus] = useState('');
+  const [ideas, setIdeas] = useState(/** @type {any} */ (null));
+  const [brands, setBrands] = useState(/** @type {any[]} */ ([]));
+  const [brandId, setBrandId] = useState('');
+  const [pick, setPick] = useState(/** @type {any} */ (null)); // the chosen idea and hook
+  const [plan, setPlan] = useState(/** @type {any} */ (null));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -467,6 +477,27 @@ export default function StudioPage({ visible, onOpenSettings }) {
       alive = false;
     };
   }, [visible]);
+
+  // The brand is chosen on the Ideas step; read the list when it opens, in case it changed.
+  useEffect(() => {
+    if (!visible || step !== 'ideas') return undefined;
+    let alive = true;
+    listBrands().then(
+      (list) => {
+        if (!alive) return;
+        setBrands(list);
+        setBrandId((current) =>
+          list.some((/** @type {any} */ b) => b.id === current)
+            ? current
+            : ((list.find((/** @type {any} */ b) => b.is_default) ?? list[0])?.id ?? ''),
+        );
+      },
+      (failure) => alive && setError(failure.message),
+    );
+    return () => {
+      alive = false;
+    };
+  }, [visible, step]);
 
   const local = mode === 'local_folder';
 
@@ -493,7 +524,38 @@ export default function StudioPage({ visible, onOpenSettings }) {
   const analyze = (refresh) =>
     run(async () => {
       setReadme(await readReadme(repo.id, refresh));
+      setIdeas(null); // the ideas were made from the previous analysis
+      setPick(null);
       setStep('analyze');
+    });
+
+  /**
+   * Show what the AI would be sent and ask first. The saved ideas are reused when the choice is
+   * the same, unless `refresh` is set.
+   * @param {boolean} refresh
+   */
+  const generateIdeas = (refresh) => {
+    const [kind, position] = focus.split(':');
+    const item = postType === 'feature' ? get(readme, kind)?.at(Number(position)) : null;
+    const name = item ? (item.name ?? item.title) : '';
+    const key = `${repo.id}|${postType}|${kind ?? ''}|${name}`;
+    if (!refresh && ideas?.key === key) {
+      setStep('ideas');
+      return Promise.resolve();
+    }
+    const body = { post_type: postType, kind: item ? kind : '', name };
+    return run(async () => {
+      setPlan({ ...(await planIdeas(repo.id, body)), key, body });
+    });
+  };
+
+  const proceedIdeas = () =>
+    run(async () => {
+      const { key, body } = plan;
+      setPlan(null);
+      setIdeas({ key, data: await makeIdeas(repo.id, body) });
+      setPick(null);
+      setStep('ideas');
     });
 
   const next = () =>
@@ -664,12 +726,68 @@ export default function StudioPage({ visible, onOpenSettings }) {
           readme={readme}
           focus={focus}
           onFocus={setFocus}
-          onNext={() => setStep('ideas')}
+          busy={busy || plan !== null}
+          onNext={() => generateIdeas(false)}
           onBack={() => {
             setFocus(''); // the analysis may be refreshed, so the saved pick could point elsewhere
             setStep('analyze');
           }}
         />
+      ) : null}
+
+      {step === 'ideas' && ideas ? (
+        <IdeasView
+          ideas={ideas.data}
+          busy={busy || plan !== null}
+          brands={brands}
+          brandId={brandId}
+          onBrand={setBrandId}
+          pick={pick}
+          onPick={setPick}
+          onRefresh={() => generateIdeas(true)}
+          onNext={() => setStep('post')}
+          onBack={() => setStep('focus')}
+        />
+      ) : null}
+
+      {step === 'post' && ideas && pick ? (
+        <>
+          <h2>Post</h2>
+          <p>
+            Chosen idea:{' '}
+            {
+              ideas.data.post_ideas.find((/** @type {any} */ i) => i.id === pick.idea)
+                ?.working_title
+            }
+          </p>
+          <p className="hint">Designing the post comes next.</p>
+          <div className="row actions">
+            <Button onClick={() => setStep('ideas')}>Back</Button>
+          </div>
+        </>
+      ) : null}
+
+      {plan ? (
+        <div role="group" aria-labelledby="ideas-plan-title" className="confirm">
+          <h3 id="ideas-plan-title">Send to {plan.label}?</h3>
+          <p>
+            Kodalo will send what the README analysis saved about {plan.items.join(', ')}, with its
+            evidence quotes and the claims to repeat with care. The AI plans a strategy, three
+            angles with hooks and five post ideas; each claim is kept only if its quote was sent.
+          </p>
+          <p>
+            It goes to {plan.label} ({plan.model}). About {plan.input_tokens} tokens sent, and at
+            most {plan.max_output_tokens} tokens in the answer.
+          </p>
+          <div className="row actions">
+            <Button appearance="accent" disabled={busy} onClick={proceedIdeas}>
+              Proceed
+            </Button>
+            <Button disabled={busy} onClick={() => setPlan(null)}>
+              Cancel
+            </Button>
+          </div>
+        </div>
       ) : null}
 
       {error ? (

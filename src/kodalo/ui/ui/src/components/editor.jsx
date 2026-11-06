@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { checkContrast, logoUrl, removeLogo, uploadLogo } from '../api.js';
 import { COLOR_ROWS, FONT_ROWS, HEX, LOGO_POSITIONS } from '../brand.js';
 import { Button, NumberField, Select, TextField } from './controls.jsx';
+import { get } from '../lookup.js';
 
 /** @param {{ value: string, onChange: (value: string) => void, label: string }} props */
 function HexField({ value, onChange, label }) {
@@ -47,12 +48,12 @@ function ColorRow({ name, hint, pair, onChange }) {
                 <input
                   type="color"
                   aria-label={`${name}, ${mode} color picker`}
-                  value={pair[mode]}
+                  value={get(pair, mode)}
                   onChange={(event) => onChange(mode, event.target.value)}
                 />
                 <HexField
                   label={`${name}, ${mode}`}
-                  value={pair[mode]}
+                  value={get(pair, mode)}
                   onChange={(value) => onChange(mode, value)}
                 />
               </div>
@@ -121,7 +122,7 @@ export function ColorsPanel({ data, onChange }) {
             key={key}
             name={name}
             hint={hint}
-            pair={data.colors[key]}
+            pair={get(data.colors, key)}
             onChange={(mode, value) => onChange(`colors.${key}.${mode}`, value)}
           />
         ))}
@@ -142,7 +143,7 @@ export function FontsPanel({ data, fonts, onChange }) {
         available where the post is made.
       </p>
       {FONT_ROWS.map(([name, key]) => {
-        const current = data.fonts[key];
+        const current = get(data.fonts, key);
         const known = fonts.some((font) => font.family === current.family);
         return (
           <Select
@@ -288,6 +289,7 @@ export function LogoPanel({ brand, data, onChange, onStored, onError }) {
         <option value="all">All slides</option>
         <option value="first">First slide only</option>
         <option value="last">Last slide only</option>
+        <option value="none">No slides</option>
       </Select>
     </div>
   );

@@ -14,17 +14,20 @@ from kodalo.core.ai import (
     Usage,
 )
 from kodalo.core.ai import ConnectionCheck as AiCheck
-from kodalo.core.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
-from kodalo.core.brand.logos import MAX_LOGO_BYTES
-from kodalo.core.canvas import Canvas
+from kodalo.core.brands.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
+from kodalo.core.brands.brand.logos import MAX_LOGO_BYTES
+from kodalo.core.brands.canvas import Canvas, SocialPlatform
+from kodalo.core.brands.layout import Layout, LayoutSettings
+from kodalo.core.brands.palette import Palette
+from kodalo.core.brands.palette.suggest import PalettePlan
 from kodalo.core.doctor import Check
 from kodalo.core.github import ConnectionCheck, GitHubSettings
-from kodalo.core.layout import Layout, LayoutSettings
-from kodalo.core.palette import Palette
 from kodalo.core.repo import (
     AnalyzerPlan,
     AnalyzerResult,
     Evidence,
+    Ideas,
+    IdeasPlan,
     LocalDetails,
     ReadmeAnalysis,
     ReadmePlan,
@@ -32,6 +35,7 @@ from kodalo.core.repo import (
     RepoInfo,
     Suggestion,
 )
+from kodalo.core.repo.ai_ideas import Claim
 from kodalo.core.repo.readme import CLAIM_TYPES, IMPORTANCE, MATURITY
 from kodalo.core.studio import Source
 
@@ -53,6 +57,14 @@ class CanvasResponse(BaseModel):
     width: int = Field(ge=200, le=4000, examples=[1080])
     height: int = Field(ge=200, le=4000, examples=[1350])
     type: Literal["system", "user"]
+    platform_id: str = Field(max_length=36, examples=["instagram"])
+    platform: str = Field(max_length=64, examples=["Instagram"])
+    size_concern: str | None = Field(
+        default=None,
+        max_length=300,
+        description="Set when the platform does not recommend this size; saving is still allowed.",
+        examples=["Instagram recommends 1080 x 1350, 1080 x 1080, 1080 x 1920."],
+    )
     used_by: list[str] = Field(
         max_length=1000,
         description="Names of the brand profiles whose layout uses this canvas.",
@@ -66,10 +78,31 @@ class CanvasResponse(BaseModel):
         return cls(**canvas.model_dump())
 
 
+class PlatformSizeResponse(BaseModel):
+    name: str = Field(max_length=64, examples=["Portrait"])
+    width: int = Field(ge=1, le=10000, examples=[1080])
+    height: int = Field(ge=1, le=10000, examples=[1350])
+
+
+class SocialPlatformResponse(BaseModel):
+    """A social network a canvas can be made for, with the sizes it recommends."""
+
+    id: str = Field(max_length=36, examples=["instagram"])
+    name: str = Field(max_length=64, examples=["Instagram"])
+    sizes: list[PlatformSizeResponse] = Field(
+        max_length=50, description="Empty for Custom, which accepts any size."
+    )
+
+    @classmethod
+    def from_core(cls, platform: SocialPlatform) -> Self:
+        return cls(**platform.model_dump())
+
+
 class CanvasCreate(BaseModel):
     name: str = Field(min_length=1, max_length=64, examples=["Feed post"])
     width: int = Field(ge=200, le=4000, examples=[1080])
     height: int = Field(ge=200, le=4000, examples=[1350])
+    platform_id: str = Field(default="custom", min_length=1, max_length=36, examples=["instagram"])
 
 
 class CanvasUpdate(BaseModel):
@@ -78,6 +111,7 @@ class CanvasUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=64, examples=["Feed post"])
     width: int | None = Field(default=None, ge=200, le=4000, examples=[1080])
     height: int | None = Field(default=None, ge=200, le=4000, examples=[1350])
+    platform_id: str | None = Field(default=None, min_length=1, max_length=36, examples=["custom"])
 
 
 class CanvasDuplicate(BaseModel):
@@ -291,6 +325,28 @@ class PaletteSuggestion(BaseModel):
 
     name: str = Field(min_length=1, max_length=64, examples=["Desert Dusk"])
     colors: BrandColors
+
+
+class PaletteSuggestionPlan(BaseModel):
+    """What asking the AI for a palette would send and cost. Nothing has been sent yet."""
+
+    provider: str = Field(max_length=32)
+    label: str = Field(max_length=64, examples=["Claude API"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    palettes: int = Field(ge=0, description="Existing palettes sent so the AI avoids them.")
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[900])
+    max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
+
+    @classmethod
+    def from_core(cls, plan: PalettePlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            palettes=plan.palettes,
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+        )
 
 
 class PaletteUpdate(BaseModel):
@@ -1100,6 +1156,186 @@ class ReadmeResultResponse(BaseModel):
             skipped=[s[:300] for s in result.skipped],
             input_tokens=result.input_tokens,
             output_tokens=result.output_tokens,
+        )
+
+
+class IdeasRequest(BaseModel):
+    """What the post is about: the whole tool, or one feature, use case or capability."""
+
+    post_type: Literal["tool", "feature"] = Field(description="The kind of post.")
+    kind: Literal["", "features", "use_cases", "capabilities"] = Field(
+        default="", description="Which list the focus is in; empty for a tool post."
+    )
+    name: str = Field(
+        default="", max_length=128, description="The focus's name; empty for a tool post."
+    )
+
+
+class IdeasPlanResponse(BaseModel):
+    """What asking the AI for post ideas would send and cost. Nothing has been sent yet."""
+
+    provider: str = Field(max_length=32)
+    label: str = Field(max_length=64, examples=["Claude API"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    items: list[str] = Field(max_length=20, description="What the post is about.")
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[2000])
+    max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
+
+    @classmethod
+    def from_core(cls, plan: IdeasPlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            items=[i[:128] for i in plan.items],
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+        )
+
+
+class ClaimResponse(BaseModel):
+    """A short statement about the product and the quote it rests on."""
+
+    text: str = Field(max_length=200, examples=["Reads a repository without cloning it"])
+    file: str = Field(max_length=512, examples=["README.md"])
+    quote: str = Field(max_length=200, description="Found in the saved analysis.")
+    needs_review: bool = Field(description="True when the wording needs a check before use.")
+
+
+class HookResponse(BaseModel):
+    """One opening line for a post."""
+
+    id: str = Field(max_length=32, examples=["hook-1-1"])
+    text: str = Field(max_length=200, description="At most 12 words.")
+    type: str = Field(max_length=32, examples=["question"])
+
+
+class AngleResponse(BaseModel):
+    """One way to lead with the product, with its hooks."""
+
+    id: str = Field(max_length=32, examples=["angle-1"])
+    type: str = Field(max_length=32, examples=["problem"])
+    name: str = Field(max_length=80)
+    summary: str = Field(max_length=300)
+    audience_pain: str = Field(max_length=300)
+    key_claims: list[ClaimResponse] = Field(max_length=5)
+    hooks: list[HookResponse] = Field(max_length=3)
+    cautions: list[str] = Field(max_length=4)
+
+
+class PostIdeaResponse(BaseModel):
+    """A plan for one post, not finished copy."""
+
+    id: str = Field(max_length=32, examples=["idea-1"])
+    angle_id: str = Field(max_length=32, description="Empty when the angle is unknown.")
+    hook_id: str = Field(max_length=32, description="Empty when the hook is unknown.")
+    format: Literal["single_image", "carousel"]
+    working_title: str = Field(max_length=120)
+    objective: str = Field(max_length=300)
+    outline: list[str] = Field(max_length=8, description="Short beats, not finished text.")
+    visual_concept: str = Field(max_length=400)
+    asset_needs: list[str] = Field(max_length=6)
+    cta_type: str = Field(max_length=16, examples=["learn_more"])
+    claims_used: list[ClaimResponse] = Field(max_length=6)
+    risk_notes: str = Field(max_length=300)
+
+
+class PillarResponse(BaseModel):
+    name: str = Field(max_length=80)
+    description: str = Field(max_length=300)
+
+
+class StrategyResponse(BaseModel):
+    """The plan behind the angles."""
+
+    objective: str = Field(max_length=300)
+    audience: str = Field(max_length=200)
+    pain_points: list[str] = Field(max_length=5)
+    positioning: str = Field(max_length=300)
+    pillars: list[PillarResponse] = Field(max_length=4)
+    key_messages: list[ClaimResponse] = Field(max_length=6)
+
+
+class AvoidedClaimResponse(BaseModel):
+    """A statement from the analysis that should not be repeated without care."""
+
+    text: str = Field(max_length=120)
+    type: str = Field(max_length=16)
+    reason: str = Field(max_length=200)
+
+
+def _claim(claim: Claim) -> ClaimResponse:
+    return ClaimResponse(
+        text=claim.text, file=claim.file, quote=claim.quote, needs_review=claim.needs_review
+    )
+
+
+class IdeasResponse(BaseModel):
+    """A strategy, three angles and five post ideas for one selection."""
+
+    post_type: Literal["tool", "feature"]
+    focus: str = Field(max_length=128, description="The focus's name; empty for a tool post.")
+    strategy: StrategyResponse
+    angles: list[AngleResponse] = Field(max_length=3)
+    post_ideas: list[PostIdeaResponse] = Field(max_length=5)
+    claims_to_avoid: list[AvoidedClaimResponse] = Field(
+        max_length=100, description="Statements from the analysis not to repeat without care."
+    )
+    warnings: list[str] = Field(max_length=100, description="Plain sentences about what was left.")
+    input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
+    output_tokens: int = Field(ge=0, description="Tokens the provider counted for the answer.")
+
+    @classmethod
+    def from_core(cls, ideas: Ideas) -> Self:
+        s = ideas.strategy
+        return cls(
+            post_type="feature" if ideas.post_type == "feature" else "tool",
+            focus=ideas.focus,
+            strategy=StrategyResponse(
+                objective=s.objective,
+                audience=s.audience,
+                pain_points=list(s.pain_points),
+                positioning=s.positioning,
+                pillars=[PillarResponse(name=n, description=d) for n, d in s.pillars],
+                key_messages=[_claim(c) for c in s.key_messages],
+            ),
+            angles=[
+                AngleResponse(
+                    id=a.id,
+                    type=a.type,
+                    name=a.name,
+                    summary=a.summary,
+                    audience_pain=a.audience_pain,
+                    key_claims=[_claim(c) for c in a.key_claims],
+                    hooks=[HookResponse(id=h.id, text=h.text, type=h.type) for h in a.hooks],
+                    cautions=list(a.cautions),
+                )
+                for a in ideas.angles
+            ],
+            post_ideas=[
+                PostIdeaResponse(
+                    id=i.id,
+                    angle_id=i.angle_id,
+                    hook_id=i.hook_id,
+                    format="carousel" if i.format == "carousel" else "single_image",
+                    working_title=i.working_title,
+                    objective=i.objective,
+                    outline=list(i.outline),
+                    visual_concept=i.visual_concept,
+                    asset_needs=list(i.asset_needs),
+                    cta_type=i.cta_type,
+                    claims_used=[_claim(c) for c in i.claims_used],
+                    risk_notes=i.risk_notes,
+                )
+                for i in ideas.post_ideas
+            ],
+            claims_to_avoid=[
+                AvoidedClaimResponse(text=a.text, type=a.type, reason=a.reason)
+                for a in ideas.claims_to_avoid
+            ],
+            warnings=[w[:300] for w in ideas.warnings],
+            input_tokens=ideas.input_tokens,
+            output_tokens=ideas.output_tokens,
         )
 
 

@@ -806,6 +806,12 @@ fluent-switch {
   margin: 0 0 0.5rem;
 }
 
+.default-mark {
+  margin-left: 0.5rem;
+  color: #198754;
+  vertical-align: middle;
+}
+
 .badge {
   margin-left: 0.5rem;
   padding: 0.1rem 0.5rem;
@@ -832,6 +838,22 @@ fluent-switch {
   text-align: left;
   padding: 0.4rem 0.6rem;
   border-bottom: 1px solid var(--border);
+}
+
+/* The AI action: its own color, so it does not read as the primary action. */
+fluent-button.ai-button::part(control) {
+  background: #7c3aed;
+  border-color: #7c3aed;
+  color: #ffffff;
+}
+
+fluent-button.ai-button:hover::part(control) {
+  background: #6d28d9;
+  border-color: #6d28d9;
+}
+
+fluent-button.ai-button[disabled]::part(control) {
+  opacity: 0.5;
 }
 
 .confirm {
@@ -1000,4 +1022,37 @@ fluent-switch {
   grid-column: 2;
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+/* Post ideas: one compact card per idea, with its details folded away. */
+.ideas {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.idea .choice {
+  margin-bottom: 0.25rem;
+}
+
+.idea details,
+.confirm + h3 + p + .ideas details {
+  margin: 0.25rem 0 0 0.5rem;
+}
+
+.idea summary {
+  cursor: pointer;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+/* A size the platform does not recommend: a hint, never an error. */
+.warning {
+  margin: 0.5rem 0;
+  color: #9a5b00;
+}
+
+.size-concern {
+  margin-left: 0.4rem;
+  color: #c27803;
 }

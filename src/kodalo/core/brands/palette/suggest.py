@@ -1,18 +1,32 @@
 """Ask the default AI model for a new palette that differs from the existing ones."""
 
 import json
+from dataclasses import dataclass
 from importlib import resources
 from typing import Any
 
 from pydantic import ValidationError
 
 from kodalo.core.ai import AiConnections, AiInvalidError
-from kodalo.core.brand.models import BrandColors
-from kodalo.core.palette.models import Palette
-from kodalo.core.palette.service import PaletteService
+from kodalo.core.brands.brand.models import BrandColors
+from kodalo.core.brands.palette.models import Palette
+from kodalo.core.brands.palette.service import PaletteService
+from kodalo.core.repo.ai_parsers import estimate_tokens
 
 MAX_OUTPUT_TOKENS = 1024
 MAX_NAME = 64
+
+
+@dataclass(frozen=True)
+class PalettePlan:
+    """What a suggestion would send and cost, for the user to approve before anything is sent."""
+
+    provider: str
+    label: str
+    model: str
+    palettes: int
+    input_tokens: int
+    max_output_tokens: int
 
 
 def system_prompt() -> str:
@@ -55,6 +69,19 @@ class PaletteSuggester:
     def __init__(self, palettes: PaletteService, ai: AiConnections) -> None:
         self._palettes = palettes
         self._ai = ai
+
+    def plan(self) -> PalettePlan:
+        """Work out what a suggestion would send and cost. Nothing is sent."""
+        existing = self._palettes.list_palettes()
+        target = self._ai.default_target()
+        return PalettePlan(
+            provider=target.provider,
+            label=target.label,
+            model=target.model,
+            palettes=len(existing),
+            input_tokens=estimate_tokens(system_prompt(), build_prompt(existing)),
+            max_output_tokens=min(MAX_OUTPUT_TOKENS, target.max_tokens or MAX_OUTPUT_TOKENS),
+        )
 
     def suggest(self) -> tuple[str, BrandColors]:
         """Return a suggested name and colors. Raises ``AiInvalidError`` when the model's answer

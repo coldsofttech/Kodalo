@@ -1,7 +1,7 @@
 import pytest
 from pydantic import ValidationError
 
-from kodalo.core.brand import (
+from kodalo.core.brands.brand import (
     STARTER_PALETTES,
     BrandData,
     ColorPair,
@@ -9,7 +9,7 @@ from kodalo.core.brand import (
     Logo,
     starter_brand,
 )
-from kodalo.core.layout import LayoutSettings
+from kodalo.core.brands.layout import LayoutSettings
 
 
 def test_starter_brand_is_valid_and_normalised() -> None:
@@ -58,7 +58,7 @@ def test_layout_and_logo_limits() -> None:
 
 
 def test_every_starter_palette_passes_contrast() -> None:
-    from kodalo.core.brand import check_colors
+    from kodalo.core.brands.brand import check_colors
 
     for palette in STARTER_PALETTES:
         failing = [r for r in check_colors(palette.colors) if not r.passes]

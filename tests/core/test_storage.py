@@ -54,6 +54,8 @@ TABLES = {
     "tools",
     "features",
     "feature_evidence",
+    "social_platforms",
+    "social_platform_sizes",
     VERSION_TABLE,
 }
 

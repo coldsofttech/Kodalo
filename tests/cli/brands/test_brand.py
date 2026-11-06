@@ -106,8 +106,8 @@ def test_show_is_grouped_with_color_swatches(data_dir: Path) -> None:
 def test_fonts_show_a_category_for_installed_fonts(
     data_dir: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from kodalo.core.brand import fonts as fonts_module
-    from kodalo.core.brand.fonts import FontInfo
+    from kodalo.core.brands.brand import fonts as fonts_module
+    from kodalo.core.brands.brand.fonts import FontInfo
 
     monkeypatch.setattr(
         fonts_module, "system_fonts", lambda: [FontInfo("Segoe UI", "serif", "system")]

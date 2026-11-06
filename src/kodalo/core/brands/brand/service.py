@@ -9,15 +9,15 @@ from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select, update
 from sqlalchemy.orm import Session
 
-from kodalo.core.brand.catalogue import FontCatalogue
-from kodalo.core.brand.contrast import ContrastResult, check_colors
-from kodalo.core.brand.errors import (
+from kodalo.core.brands.brand.catalogue import FontCatalogue
+from kodalo.core.brands.brand.contrast import ContrastResult, check_colors
+from kodalo.core.brands.brand.errors import (
     BrandInvalidError,
     BrandNameTakenError,
     BrandNotFoundError,
 )
-from kodalo.core.brand.logos import LogoStore
-from kodalo.core.brand.models import (
+from kodalo.core.brands.brand.logos import LogoStore
+from kodalo.core.brands.brand.models import (
     Brand,
     BrandColors,
     BrandData,
@@ -27,10 +27,10 @@ from kodalo.core.brand.models import (
     Logo,
     ProfileName,
 )
-from kodalo.core.brand.palettes import default_fonts
-from kodalo.core.canvas import Canvas, CanvasService
-from kodalo.core.layout import Layout, LayoutError, LayoutService
-from kodalo.core.palette import PaletteError, PaletteService
+from kodalo.core.brands.brand.palettes import default_fonts
+from kodalo.core.brands.canvas import Canvas, CanvasService
+from kodalo.core.brands.layout import Layout, LayoutError, LayoutService
+from kodalo.core.brands.palette import PaletteError, PaletteService
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import (
     BrandColorsRow,

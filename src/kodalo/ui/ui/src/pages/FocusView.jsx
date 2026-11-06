@@ -1,4 +1,5 @@
 import { Button, Select } from '../components/controls.jsx';
+import { get } from '../lookup.js';
 
 export const POST_TYPES = [
   {
@@ -24,10 +25,11 @@ const FOCUS_GROUPS = [
 
 /**
  * @param {{ postType: string, onChange: (value: string) => void, readme: any, focus: string,
- *   onFocus: (value: string) => void, onNext: () => void, onBack: () => void }} props
+ *   onFocus: (value: string) => void, busy: boolean, onNext: () => void, onBack: () => void }} props
  */
 export default function FocusView({
   postType,
+  busy,
   onChange,
   readme,
   focus,
@@ -38,10 +40,10 @@ export default function FocusView({
   const groups = FOCUS_GROUPS.map(([key, label, field]) => ({
     key,
     label,
-    items: (readme?.[key] ?? [])
+    items: (get(readme, key) ?? [])
       .map((/** @type {any} */ item, /** @type {number} */ index) => ({
         value: `${key}:${index}`,
-        text: item[field],
+        text: get(item, field),
         rank: key === 'features' ? Math.max(0, IMPORTANCE.indexOf(item.importance)) : 0,
       }))
       .sort((a, b) => a.rank - b.rank), // headline features first; the sort is stable
@@ -105,10 +107,16 @@ export default function FocusView({
         </p>
       ))}
       <div className="row actions">
-        <Button appearance="accent" disabled={!postType || (choose && !focus)} onClick={onNext}>
-          Next
+        <Button
+          appearance="accent"
+          disabled={busy || !postType || (choose && !focus)}
+          onClick={onNext}
+        >
+          Next with AI
         </Button>
-        <Button onClick={onBack}>Back</Button>
+        <Button disabled={busy} onClick={onBack}>
+          Back
+        </Button>
       </div>
     </>
   );

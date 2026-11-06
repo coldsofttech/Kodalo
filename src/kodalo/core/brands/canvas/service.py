@@ -6,17 +6,26 @@ from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from kodalo.core.canvas.errors import (
+from kodalo.core.brands.canvas.errors import (
     CanvasInUseError,
     CanvasInvalidError,
     CanvasNameTakenError,
     CanvasNotFoundError,
     CanvasReadOnlyError,
 )
-from kodalo.core.canvas.models import MAX_SIZE, MIN_SIZE, Canvas, CanvasName
+from kodalo.core.brands.canvas.models import (
+    CUSTOM_PLATFORM_ID,
+    MAX_SIZE,
+    MIN_SIZE,
+    Canvas,
+    CanvasName,
+    PlatformSize,
+    SocialPlatform,
+)
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import Canvas as CanvasRow
-from kodalo.core.storage.models import LayoutRow
+from kodalo.core.storage.models import LayoutRow, SocialPlatformSize
+from kodalo.core.storage.models import SocialPlatform as PlatformRow
 
 EXPORT_FORMAT = "kodalo-canvas"
 EXPORT_VERSION = 1
@@ -37,6 +46,14 @@ def _check_size(width: int, height: int) -> None:
         )
 
 
+def size_concern(platform: SocialPlatform, width: int, height: int) -> str | None:
+    """Say so when a size is not one the platform recommends. Platforms without sizes never do."""
+    if not platform.sizes or any((s.width, s.height) == (width, height) for s in platform.sizes):
+        return None
+    options = ", ".join(f"{s.width} x {s.height}" for s in platform.sizes)
+    return f"{platform.name} recommends {options}. {width} x {height} may be cropped or resized."
+
+
 class CanvasService:
     """Canvases kept in the local database. Built-in (``system``) canvases are read-only."""
 
@@ -52,6 +69,11 @@ class CanvasService:
             canvases = [self._canvas(session, row) for row in rows]
         return sorted(canvases, key=lambda c: (c.type != "system", c.name.lower()))
 
+    def list_platforms(self) -> list[SocialPlatform]:
+        """Return the social platforms with their recommended sizes, Custom last."""
+        with self._database.session() as session:
+            return self._platforms(session)
+
     def get(self, canvas_id: str) -> Canvas:
         with self._database.session() as session:
             return self._canvas(session, self._row(session, canvas_id))
@@ -66,12 +88,17 @@ class CanvasService:
 
     # Changing
 
-    def create(self, name: str, width: int, height: int) -> Canvas:
+    def create(
+        self, name: str, width: int, height: int, platform_id: str = CUSTOM_PLATFORM_ID
+    ) -> Canvas:
         name = _clean_name(name)
         _check_size(width, height)
         with self._database.session() as session:
             self._check_name(session, name)
-            row = CanvasRow(name=name, width=width, height=height, type="user")
+            self._check_platform(session, platform_id)
+            row = CanvasRow(
+                name=name, width=width, height=height, type="user", platform_id=platform_id
+            )
             session.add(row)
             session.flush()
             return self._canvas(session, row)
@@ -83,6 +110,7 @@ class CanvasService:
         name: str | None = None,
         width: int | None = None,
         height: int | None = None,
+        platform_id: str | None = None,
     ) -> Canvas:
         """Change a user canvas. Every brand that uses it follows the change."""
         with self._database.session() as session:
@@ -96,13 +124,16 @@ class CanvasService:
             new_height = row.height if height is None else height
             _check_size(new_width, new_height)
             row.width, row.height = new_width, new_height
+            if platform_id is not None:
+                self._check_platform(session, platform_id)
+                row.platform_id = platform_id
             session.flush()
             return self._canvas(session, row)
 
     def duplicate(self, canvas_id: str, name: str) -> Canvas:
         """Copy any canvas, built-in or not, as a new user canvas."""
         source = self.get(canvas_id)
-        return self.create(name, source.width, source.height)
+        return self.create(name, source.width, source.height, source.platform_id)
 
     def delete(self, canvas_id: str) -> None:
         """Remove a user canvas that no brand uses."""
@@ -191,6 +222,28 @@ class CanvasService:
             raise CanvasNameTakenError(f'A canvas named "{name}" already exists.')
 
     @staticmethod
+    def _check_platform(session: Session, platform_id: str) -> None:
+        if session.get(PlatformRow, platform_id) is None:
+            raise CanvasInvalidError("Choose a social platform from the list.")
+
+    @staticmethod
+    def _platforms(session: Session) -> list[SocialPlatform]:
+        sizes = session.scalars(select(SocialPlatformSize)).all()
+        platforms = [
+            SocialPlatform(
+                id=row.id,
+                name=row.name,
+                sizes=[
+                    PlatformSize(name=s.name, width=s.width, height=s.height)
+                    for s in sorted(sizes, key=lambda s: s.name)
+                    if s.platform_id == row.id
+                ],
+            )
+            for row in session.scalars(select(PlatformRow)).all()
+        ]
+        return sorted(platforms, key=lambda p: (p.id == CUSTOM_PLATFORM_ID, p.name.lower()))
+
+    @staticmethod
     def _row(session: Session, canvas_id: str) -> CanvasRow:
         row = session.get(CanvasRow, canvas_id)
         if row is None:
@@ -206,7 +259,14 @@ class CanvasService:
 
     @classmethod
     def _canvas(cls, session: Session, row: CanvasRow) -> Canvas:
+        platforms = {p.id: p for p in cls._platforms(session)}
+        platform = platforms.get(row.platform_id or CUSTOM_PLATFORM_ID) or platforms.get(
+            CUSTOM_PLATFORM_ID
+        )
         return Canvas(
+            platform_id=platform.id if platform else CUSTOM_PLATFORM_ID,
+            platform=platform.name if platform else "Custom",
+            size_concern=size_concern(platform, row.width, row.height) if platform else None,
             id=row.id,
             name=row.name,
             width=row.width,

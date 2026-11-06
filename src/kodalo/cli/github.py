@@ -1,6 +1,6 @@
 """``github`` commands: choose how Kodalo reaches GitHub. They parse input and show output only."""
 
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from typing import Annotated
 
@@ -29,7 +29,7 @@ JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 
 
 @contextmanager
-def _connectivity(ctx: typer.Context) -> Iterator[GitHubConnectivity]:
+def _connectivity(ctx: typer.Context) -> Generator[GitHubConnectivity]:
     """Open the database for one command, turning expected failures into exit code 1."""
     data_dir = get_state(ctx).data_dir or default_data_dir()
     database: Database | None = None

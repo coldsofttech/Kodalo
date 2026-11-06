@@ -258,7 +258,9 @@ describe('StudioPage README step', () => {
 
     await userEvent.click(screen.getByText('Proceed'));
     expect(
-      await screen.findByText(/Saved 1 installation method\(s\), 2 capabilities, 0 feature\(s\) and 1 use case/),
+      await screen.findByText(
+        /Saved 1 installation method\(s\), 2 capabilities, 0 feature\(s\) and 1 use case/,
+      ),
     ).toBeInTheDocument();
     expect(await screen.findByText('Free disk space')).toBeInTheDocument();
     expect(calls.filter((call) => call.path.endsWith('/readme/analysis')).length).toBe(1);

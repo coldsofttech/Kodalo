@@ -103,7 +103,7 @@ def test_unexpected_error_is_short_by_default(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setattr(sys, "argv", ["kodalo", "doctor"])
-    monkeypatch.setattr("kodalo.cli.cli.run_checks", _boom)
+    monkeypatch.setattr("kodalo.cli.doctor.run_checks", _boom)
 
     with pytest.raises(SystemExit) as exit_info:
         run()
@@ -119,7 +119,7 @@ def test_unexpected_error_shows_traceback_with_verbose(
     monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
 ) -> None:
     monkeypatch.setattr(sys, "argv", ["kodalo", "--verbose", "doctor"])
-    monkeypatch.setattr("kodalo.cli.cli.run_checks", _boom)
+    monkeypatch.setattr("kodalo.cli.doctor.run_checks", _boom)
 
     with pytest.raises(SystemExit):
         run()

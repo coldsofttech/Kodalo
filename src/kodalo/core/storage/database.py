@@ -1,7 +1,7 @@
 """Open the local database, bringing it up to the latest version first."""
 
 import shutil
-from collections.abc import Iterator
+from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -138,7 +138,7 @@ class Database:
         return cls(migrate(path))
 
     @contextmanager
-    def session(self) -> Iterator[Session]:
+    def session(self) -> Generator[Session]:
         """Yield a session that commits on success and rolls back on an error."""
         with self._sessions() as session:
             try:

@@ -10,7 +10,7 @@ import uuid
 from pathlib import Path
 from xml.etree import ElementTree
 
-from kodalo.core.brand.errors import LogoError
+from kodalo.core.brands.brand.errors import LogoError
 
 MAX_LOGO_BYTES = 2 * 1024 * 1024
 _PNG_SIGNATURE = b"\x89PNG\r\n\x1a\n"

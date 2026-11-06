@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from kodalo.core.brand.models import (
+from kodalo.core.brands.brand.models import (
     BrandColors,
     BrandData,
     BrandFonts,

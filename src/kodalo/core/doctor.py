@@ -8,16 +8,14 @@ import platform
 import sqlite3
 import sys
 from dataclasses import asdict, dataclass
-from importlib import metadata
 from pathlib import Path
 
 from kodalo.core import __version__
-from kodalo.core.brand.fonts import bundled_fonts, system_fonts
+from kodalo.core.brands.brand.fonts import bundled_fonts, system_fonts
 from kodalo.core.storage import database_path, default_data_dir, head_revision, is_known_revision
 from kodalo.core.storage.models import VERSION_TABLE
 
 MIN_PYTHON = (3, 11)
-DEPENDENCIES = ("typer", "rich", "pydantic", "sqlalchemy", "alembic")
 
 
 @dataclass(frozen=True)
@@ -29,13 +27,6 @@ class Check:
 
     def to_dict(self) -> dict[str, object]:
         return asdict(self)
-
-
-def _dependency(name: str) -> Check:
-    try:
-        return Check(name, True, metadata.version(name), required=True)
-    except metadata.PackageNotFoundError:
-        return Check(name, False, "not installed", required=True)
 
 
 def _nearest_existing(path: Path) -> Path:
@@ -110,7 +101,6 @@ def run_checks(data_dir: Path | None = None) -> list[Check]:
             required=True,
         ),
         Check("Platform", True, platform.platform()),
-        *(_dependency(name) for name in DEPENDENCIES),
         _data_folder(data_dir),
         *_database(database_path(data_dir)),
     ]

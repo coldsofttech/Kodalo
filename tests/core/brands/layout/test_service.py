@@ -3,8 +3,8 @@ from pathlib import Path
 
 import pytest
 
-from kodalo.core.brand import BrandService
-from kodalo.core.layout import (
+from kodalo.core.brands.brand import BrandService
+from kodalo.core.brands.layout import (
     LayoutInUseError,
     LayoutInvalidError,
     LayoutNameTakenError,

@@ -10,9 +10,15 @@ from fastapi import HTTPException, status
 
 from kodalo.core.ai import AiConnections
 from kodalo.core.appearance import Appearance
-from kodalo.core.brand import BrandService
+from kodalo.core.brands.brand import BrandService
 from kodalo.core.github import GitHubConnectivity
-from kodalo.core.repo import ReadmeAssistant, ReadmeService, RepoAnalyzer, RepoService
+from kodalo.core.repo import (
+    IdeasAssistant,
+    ReadmeAssistant,
+    ReadmeService,
+    RepoAnalyzer,
+    RepoService,
+)
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -35,6 +41,7 @@ class Services:
     analyzer: RepoAnalyzer
     readme: ReadmeService
     assistant: ReadmeAssistant
+    ideas: IdeasAssistant
 
 
 def data_dir() -> Path:
@@ -66,6 +73,7 @@ def _build_services() -> Services:
         RepoAnalyzer(repos, ai, folder / "parsers", folder / "frameworks", folder / "tooling"),
         readme,
         ReadmeAssistant(readme, ai),
+        IdeasAssistant(readme, ai),
     )
 
 
@@ -152,3 +160,11 @@ def configure(data_dir: Path | None) -> None:
     global _data_dir
     reset_services()
     _data_dir = data_dir
+
+
+def get_ideas_assistant() -> IdeasAssistant:
+    """Return the AI post ideas assistant, opening the database on first use."""
+    try:
+        return _services().ideas
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error

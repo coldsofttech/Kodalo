@@ -8,14 +8,16 @@ import PalettesPage from './pages/brands/Palettes.jsx';
 import StudioPage from './pages/Studio.jsx';
 import SettingsPage from './pages/Settings.jsx';
 
-/** Canvases, Palettes and Layouts are sub-menus of Brands. */
+/** Brands, Palettes, Canvases and Layouts sit in a collapsible Brands menu. */
+const BRANDS_MENU = 'brands-menu';
 const PAGES = [
   ['home', 'Home', []],
   ['studio', 'Studio', []],
   [
-    'brands',
+    BRANDS_MENU,
     'Brands',
     [
+      ['brands', 'Brands'],
       ['palettes', 'Palettes'],
       ['canvases', 'Canvases'],
       ['layouts', 'Layouts'],
@@ -24,6 +26,8 @@ const PAGES = [
   ['settings', 'Settings', []],
   ['about', 'About', []],
 ];
+
+const BRANDS_PAGES = ['brands', 'palettes', 'canvases', 'layouts'];
 
 /** @param {{ page: string, pageKey: string, label: string, onOpen: (key: string) => void }} props */
 function NavButton({ page, pageKey, label, onOpen }) {
@@ -46,7 +50,10 @@ export default function App() {
   const open = (key) => {
     setVisited((seen) => (seen.has(key) ? seen : new Set(seen).add(key)));
     setPage(key);
+    if (BRANDS_PAGES.includes(key)) setBrandsOpen(true);
   };
+  /** The Brands menu starts collapsed. */
+  const [brandsOpen, setBrandsOpen] = useState(false);
   /** Counts changes to canvases, palettes and layouts, so the brand editor reloads its lists. */
   const [catalogRevision, setCatalogRevision] = useState(0);
   const changed = () => setCatalogRevision((n) => n + 1);
@@ -57,8 +64,18 @@ export default function App() {
         <ul>
           {PAGES.map(([key, label, children]) => (
             <li key={key}>
-              <NavButton page={page} pageKey={key} label={label} onOpen={open} />
               {children.length > 0 ? (
+                <button
+                  type="button"
+                  aria-expanded={brandsOpen}
+                  onClick={() => setBrandsOpen((isOpen) => !isOpen)}
+                >
+                  {label}
+                </button>
+              ) : (
+                <NavButton page={page} pageKey={key} label={label} onOpen={open} />
+              )}
+              {children.length > 0 && brandsOpen ? (
                 <ul className="subnav" aria-label={`${label} sections`}>
                   {children.map(([childKey, childLabel]) => (
                     <li key={childKey}>

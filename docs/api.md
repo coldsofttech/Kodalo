@@ -32,11 +32,14 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | `POST /api/v1/studio/repositories/{id}/readme` | Read the README and the docs it links to (no AI) and keep the purpose, installation methods, capabilities and the documents read or skipped; see [readme-analysis.md](readme-analysis.md). A saved analysis is returned unless `refresh` is set. Errors: `404`, `502` |
 | `GET /api/v1/studio/repositories/{id}/readme` | The saved README analysis; `404` until it was read |
 | `POST /api/v1/studio/repositories/{id}/readme/analysis/plan` | List the documents one AI request would send (`documents`, the ones the README analysis read) and estimate the tokens. Nothing is sent and no document is read. Errors: `404`, `422` (no default connection or model), `502` |
+| `POST /api/v1/studio/repositories/{id}/ideas/plan` | Say what one AI request for the chosen post would send (`items`) and estimate the tokens. Nothing is sent. Errors: `404`, `422`, `502` |
+| `POST /api/v1/studio/repositories/{id}/ideas` | Send the saved README analysis for the chosen tool, feature, use case or capability (`post_type`, `kind`, `name`) once to the default AI model and return a strategy, three angles with hooks, five post ideas and the claims to avoid. Claims without a checkable quote are left out and listed in `warnings`. Nothing is saved. Errors: `404`, `422` (no default connection, a planned feature, or an unusable answer), `502` |
 | `POST /api/v1/studio/repositories/{id}/readme/analysis` | Read those documents again (secret-looking lines removed), send them once to the default AI model and save the purpose, installation methods, capabilities and use cases that have evidence in the documents. The response counts what was saved and lists what was left out. Errors as above |
 | `GET /api/v1/studio/repositories`, `GET /api/v1/studio/repositories/{id}` | List stored repositories, read one |
 | `GET`, `POST /api/v1/palettes` | List palettes (built-in first, each with complete brand data to begin from), create one |
 | `GET`, `PATCH`, `DELETE /api/v1/palettes/{id}` | Read, rename or recolor, delete a palette. Built-in palettes answer `403` |
 | `POST /api/v1/palettes/{id}/duplicate` | Copy any palette as a palette of your own |
+| `POST /api/v1/palettes/suggest/plan` | Estimate what the AI palette suggestion would send and cost (provider, model, tokens); nothing is sent |
 | `POST /api/v1/palettes/suggest` | Ask the default AI model for a new palette (name and colors) that differs from the existing ones; nothing is saved |
 | `GET /api/v1/palettes/{id}/export`, `POST /api/v1/palettes/import` | Export a palette as a file; add one from a file (`?name=` sets its name) |
 | `GET`, `POST /api/v1/layouts` | List layouts (built-in first, each with the layouts that use it), create one |
@@ -44,7 +47,8 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | `POST /api/v1/layouts/{id}/duplicate` | Copy any layout as a layout of your own |
 | `GET /api/v1/layouts/{id}/export`, `POST /api/v1/layouts/import` | Export a layout (with its canvas) as a file; add one from a file |
 | `GET /api/v1/brands/fonts` | The font catalogue: bundled fonts first, then fonts installed on this computer |
-| `GET`, `POST /api/v1/canvases` | List canvases (built-in first, each with the brands that use it), create one |
+| `GET /api/v1/social-platforms` | List social platforms (Instagram, Custom) with the sizes each recommends |
+| `GET`, `POST /api/v1/canvases` | List canvases (built-in first, each with its platform, a size concern when the size is not recommended, and the brands that use it), create one with a platform |
 | `GET`, `PATCH`, `DELETE /api/v1/canvases/{id}` | Read, rename or resize, delete a canvas. Built-in canvases answer `403`; deleting one that layouts use answers `409` |
 | `POST /api/v1/canvases/{id}/duplicate` | Copy any canvas as a canvas of your own |
 | `GET /api/v1/canvases/{id}/export`, `POST /api/v1/canvases/import` | Export a canvas as a file; add one from a file |

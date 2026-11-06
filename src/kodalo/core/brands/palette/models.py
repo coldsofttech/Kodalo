@@ -4,7 +4,7 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, StringConstraints
 
-from kodalo.core.brand.models import BrandColors
+from kodalo.core.brands.brand.models import BrandColors
 
 PaletteName = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=64)]
 PaletteType = Literal["system", "user"]

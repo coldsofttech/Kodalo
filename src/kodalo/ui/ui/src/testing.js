@@ -121,20 +121,37 @@ const canvasRow = (
   /** @type {number} */ width,
   /** @type {number} */ height,
   /** @type {'system' | 'user'} */ type = 'system',
+  /** @type {string} */ platformId = 'custom',
 ) => ({
   id,
   name,
   width,
   height,
   type,
+  platform_id: platformId,
+  platform: platformId === 'instagram' ? 'Instagram' : 'Custom',
+  size_concern: /** @type {string | null} */ (null),
   used_by: /** @type {string[]} */ ([]),
   created_at: '2026-11-01T09:00:00+00:00',
   updated_at: '2026-11-01T09:00:00+00:00',
 });
 
 export const CANVASES = [
-  canvasRow('system-instagram_portrait', 'Instagram portrait', 1080, 1350),
-  canvasRow('system-instagram_square', 'Instagram square', 1080, 1080),
+  canvasRow('system-instagram_portrait', 'Instagram portrait', 1080, 1350, 'system', 'instagram'),
+  canvasRow('system-instagram_square', 'Instagram square', 1080, 1080, 'system', 'instagram'),
+];
+
+export const PLATFORMS = [
+  {
+    id: 'instagram',
+    name: 'Instagram',
+    sizes: [
+      { name: 'Portrait', width: 1080, height: 1350 },
+      { name: 'Square', width: 1080, height: 1080 },
+      { name: 'Story', width: 1080, height: 1920 },
+    ],
+  },
+  { id: 'custom', name: 'Custom', sizes: [] },
 ];
 
 const layoutRow = (
@@ -521,7 +538,7 @@ export function createBackend(initial = []) {
       body,
       url,
     ) => {
-      const rows = () => /** @type {any[]} */ (state[key]);
+      const rows = () => /** @type {any[]} */ (Reflect.get(state, key));
       if (parts.length === 1) {
         if (method === 'GET') return rows().map(view);
         if (taken(rows(), body.name)) {
@@ -529,14 +546,14 @@ export function createBackend(initial = []) {
         }
         state.counter += 1;
         const created = make(`user-${state.counter}`, body);
-        state[key] = [...rows(), created];
+        Reflect.set(state, key, [...rows(), created]);
         return [201, view(created)];
       }
       if (parts[1] === 'import') {
         state.counter += 1;
         const name = freeName(rows(), url.searchParams.get('name') ?? body.name);
         const created = make(`user-${state.counter}`, { ...body, name });
-        state[key] = [...rows(), created];
+        Reflect.set(state, key, [...rows(), created]);
         return [201, view(created)];
       }
       const row = rows().find((r) => r.id === parts[1]);
@@ -545,7 +562,7 @@ export function createBackend(initial = []) {
       if (parts[2] === 'duplicate') {
         state.counter += 1;
         const copy = make(`user-${state.counter}`, { ...row, name: body.name });
-        state[key] = [...rows(), copy];
+        Reflect.set(state, key, [...rows(), copy]);
         return [201, view(copy)];
       }
       if (method === 'GET') return view(row);
@@ -554,7 +571,11 @@ export function createBackend(initial = []) {
         const names = users(row);
         if (names.length)
           return [409, { detail: `"${row.name}" is used by: ${names.join(', ')}.` }];
-        state[key] = rows().filter((r) => r.id !== row.id);
+        Reflect.set(
+          state,
+          key,
+          rows().filter((r) => r.id !== row.id),
+        );
         return [204, null];
       }
       if (body.name !== undefined && taken(rows(), body.name, row.id)) {
@@ -567,7 +588,8 @@ export function createBackend(initial = []) {
   const canvasRoutes = resource(
     'canvases',
     'kodalo-canvas',
-    (id, body) => canvasRow(id, body.name, body.width, body.height, 'user'),
+    (id, body) =>
+      canvasRow(id, body.name, body.width, body.height, 'user', body.platform_id ?? 'custom'),
     withUse,
     (row, body) => Object.assign(row, body),
     (row) => withUse(row).used_by,
@@ -640,6 +662,7 @@ export function createBackend(initial = []) {
     if (parts[0] === 'palettes') return paletteRoutes(method, parts, body, url);
     if (parts[0] === 'layouts') return layoutRoutes(method, parts, body, url);
     if (parts[0] === 'canvases') return canvasRoutes(method, parts, body, url);
+    if (parts[0] === 'social-platforms') return PLATFORMS;
     if (parts[0] === 'brands' && parts[1] === 'fonts') return FONTS;
     if (parts[0] === 'doctor') return state.doctor;
     if (parts[0] !== 'brands') return undefined;
@@ -696,7 +719,7 @@ export function createBackend(initial = []) {
     if (action === 'logo') {
       const dark = url.searchParams.get('variant') === 'dark';
       const key = dark ? 'dark_file' : 'file';
-      brand.data.logo[key] = method === 'PUT' ? `${'a'.repeat(32)}.png` : null;
+      Reflect.set(brand.data.logo, key, method === 'PUT' ? `${'a'.repeat(32)}.png` : null);
       return touch(brand);
     }
     return undefined;

@@ -1,6 +1,6 @@
 """Canvases: named slide sizes that brand layouts reuse."""
 
-from kodalo.core.canvas.errors import (
+from kodalo.core.brands.canvas.errors import (
     CanvasError,
     CanvasInUseError,
     CanvasInvalidError,
@@ -8,10 +8,17 @@ from kodalo.core.canvas.errors import (
     CanvasNotFoundError,
     CanvasReadOnlyError,
 )
-from kodalo.core.canvas.models import DEFAULT_CANVAS_ID, Canvas
-from kodalo.core.canvas.service import CanvasService
+from kodalo.core.brands.canvas.models import (
+    CUSTOM_PLATFORM_ID,
+    DEFAULT_CANVAS_ID,
+    Canvas,
+    PlatformSize,
+    SocialPlatform,
+)
+from kodalo.core.brands.canvas.service import CanvasService
 
 __all__ = [
+    "CUSTOM_PLATFORM_ID",
     "DEFAULT_CANVAS_ID",
     "Canvas",
     "CanvasError",
@@ -21,4 +28,6 @@ __all__ = [
     "CanvasNotFoundError",
     "CanvasReadOnlyError",
     "CanvasService",
+    "PlatformSize",
+    "SocialPlatform",
 ]
