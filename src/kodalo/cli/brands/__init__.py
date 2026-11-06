@@ -40,9 +40,9 @@ app = typer.Typer(
 app.add_typer(logo.app, name="logo", rich_help_panel="Change a profile")
 settings_app = typer.Typer(help="List and change the settings of a profile.", no_args_is_help=True)
 app.add_typer(settings_app, name="settings", rich_help_panel="Change a profile")
-app.add_typer(layout.app, name="layout", rich_help_panel="Layouts")
-app.add_typer(palette.app, name="palette", rich_help_panel="Palettes")
-app.add_typer(canvas.app, name="canvas", rich_help_panel="Canvases")
+app.add_typer(layout.app, name="layout", rich_help_panel="Commands")
+app.add_typer(palette.app, name="palette", rich_help_panel="Commands")
+app.add_typer(canvas.app, name="canvas", rich_help_panel="Commands")
 
 
 def _contrast_table(results: list[ContrastResult]) -> Table:

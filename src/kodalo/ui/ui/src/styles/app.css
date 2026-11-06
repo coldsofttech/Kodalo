@@ -662,7 +662,7 @@ button.link {
 
 .facts {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.6rem;
   margin: 0 0 1rem;
 }
 
@@ -1110,4 +1110,301 @@ fluent-button.ai-button[disabled]::part(control) {
 .size-concern {
   margin-left: 0.4rem;
   color: #c27803;
+}
+
+.section-gap {
+  margin-top: 2rem;
+}
+
+/* Private, fork, archived and monorepo on one line. */
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  color: var(--muted);
+}
+
+.flag.on {
+  color: inherit;
+  font-weight: 600;
+}
+
+/* A page title with a button at the right end of the same line. */
+.page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.page-head h1 {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+/* The languages of a repository as one bar, like GitHub. */
+.language-bar {
+  border-radius: 999px;
+  overflow: hidden;
+  height: 0.5rem;
+  margin: 0.5rem 0 0.75rem;
+}
+
+.language-bar svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.language-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.5rem;
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1rem;
+}
+
+.language-legend li {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.language-legend span {
+  color: var(--muted);
+}
+
+.language-dot {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+/* Collapsible blocks of the repository view. */
+.accordion {
+  border-bottom: 1px solid var(--border);
+}
+
+.accordion summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.75rem 0.25rem;
+  cursor: pointer;
+  list-style: none;
+  font-weight: 600;
+}
+
+.accordion summary::-webkit-details-marker {
+  display: none;
+}
+
+.accordion-chevron {
+  transition: transform 0.15s;
+  color: var(--muted);
+}
+
+.accordion[open] .accordion-chevron {
+  transform: rotate(90deg);
+}
+
+.accordion-title {
+  font-size: 1.1rem;
+}
+
+.accordion-body {
+  padding: 0.25rem 0.25rem 1rem 1.75rem;
+}
+
+.accordion-body .entries,
+.accordion-body .checks {
+  margin-bottom: 0;
+}
+
+.folder-icon {
+  color: #e3a008;
+}
+
+.row.actions .bi {
+  font-size: 1rem;
+}
+
+.repo-actions {
+  margin-top: 1.5rem;
+}
+
+.page-home {
+  display: flex;
+  gap: 0.5rem;
+}
+
+/* A see-through screen with a small robot animation while the AI works. */
+.ai-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  background: rgb(0 0 0 / 0.35);
+  backdrop-filter: blur(2px);
+}
+
+.ai-overlay-card {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 2.5rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  color: var(--text);
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.25);
+}
+
+.ai-overlay-card p {
+  margin: 0;
+  font-weight: 600;
+}
+
+.ai-robot {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+  display: grid;
+  place-items: center;
+}
+
+.ai-robot-body {
+  font-size: 3.5rem;
+  color: #7c3aed;
+  animation: ai-bob 1.2s ease-in-out infinite;
+}
+
+.ai-spark {
+  position: absolute;
+  color: #e3a008;
+  opacity: 0;
+  animation: ai-twinkle 1.8s ease-in-out infinite;
+}
+
+.ai-spark-1 {
+  top: 0;
+  left: 0.25rem;
+  font-size: 1rem;
+}
+
+.ai-spark-2 {
+  top: 0.5rem;
+  right: 0;
+  font-size: 1.3rem;
+  animation-delay: 0.6s;
+}
+
+.ai-spark-3 {
+  bottom: 0;
+  left: 1rem;
+  font-size: 0.9rem;
+  animation-delay: 1.2s;
+}
+
+.ai-progress {
+  position: relative;
+  width: 14rem;
+  height: 0.4rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: color-mix(in srgb, #7c3aed 22%, transparent);
+}
+
+.ai-progress span {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40%;
+  border-radius: 999px;
+  background: #7c3aed;
+  animation: ai-slide 1.4s ease-in-out infinite;
+}
+
+/* A plain refresh turns its icon instead of bobbing. */
+.ai-robot-body.ai-spin {
+  color: #0f6cbd;
+  animation: ai-turn 1.1s linear infinite;
+}
+
+@keyframes ai-turn {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ai-bob {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-4deg);
+  }
+  50% {
+    transform: translateY(-0.5rem) rotate(4deg);
+  }
+}
+
+@keyframes ai-twinkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+@keyframes ai-slide {
+  0% {
+    left: -40%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes ai-fade {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-robot-body,
+  .ai-robot-body.ai-spin,
+  .ai-spark {
+    animation: none;
+  }
+
+  /* No motion: the bar fills and gently fades instead of sliding. */
+  .ai-progress span {
+    left: 0;
+    width: 100%;
+    animation: ai-fade 1.6s ease-in-out infinite;
+  }
+
+  .ai-spark {
+    opacity: 1;
+  }
+}
+
+.page-home-end {
+  margin-left: 0.75rem;
+}
+
+/* A badge after text in a table cell (where it was found). */
+.checks td .topic {
+  margin-left: 0.6rem;
 }

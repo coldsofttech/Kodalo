@@ -24,7 +24,7 @@ The API itself still:
 
 ## AI parser step
 
-`Refresh with AI` (and `studio read --refresh-with-ai`) sends the first 1.5 KB of up to five top-level project files that no parser config covers to the default AI provider. Lines containing `token`, `secret`, `password`, `api key`, `authorization` or `credential` are removed first, files named like secrets are never sent, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each config is checked against the config schema (data only, never code) and tried on the real file before it is saved to the `parsers` folder. Provider errors never include the key or the provider's reply.
+`Refresh with AI` (and `repositories add --refresh-with-ai`) sends the first 1.5 KB of up to five top-level project files that no parser config covers to the default AI provider. Lines containing `token`, `secret`, `password`, `api key`, `authorization` or `credential` are removed first, files named like secrets are never sent, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each config is checked against the config schema (data only, never code) and tried on the real file before it is saved to the `parsers` folder. Provider errors never include the key or the provider's reply.
 
 ## Claude Code as a provider
 
@@ -36,7 +36,7 @@ Every AI call is recorded locally (date, title, purpose, connection, model, toke
 
 ## AI framework step
 
-`Refresh with AI` (and `studio read --refresh-with-ai`), in the same single request as the project files above, sends only package names that no framework or tooling config covers (at most 80), the names of up to 40 top-level files and folders and up to 40 top-level names that look like configuration files to the default AI provider; file contents are never sent, names that look like secrets are left out, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each entry is checked against the framework config schema (data only, never code) and must match something that was sent before it is saved to the `frameworks` folder (or the `tooling` folder for tools).
+`Refresh with AI` (and `repositories add --refresh-with-ai`), in the same single request as the project files above, sends only package names that no framework or tooling config covers (at most 80), the names of up to 40 top-level files and folders and up to 40 top-level names that look like configuration files to the default AI provider; file contents are never sent, names that look like secrets are left out, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each entry is checked against the framework config schema (data only, never code) and must match something that was sent before it is saved to the `frameworks` folder (or the `tooling` folder for tools).
 
 ## Supply chain
 

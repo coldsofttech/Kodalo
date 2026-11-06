@@ -5,6 +5,7 @@ import BrandsPage from './pages/brands/Brands.jsx';
 import CanvasesPage from './pages/brands/Canvases.jsx';
 import LayoutsPage from './pages/brands/Layouts.jsx';
 import PalettesPage from './pages/brands/Palettes.jsx';
+import RepositoriesPage from './pages/repositories/Repositories.jsx';
 import StudioPage from './pages/Studio.jsx';
 import SettingsPage from './pages/settings/Settings.jsx';
 
@@ -13,6 +14,7 @@ const BRANDS_MENU = 'brands-menu';
 const PAGES = [
   ['home', 'Home', []],
   ['studio', 'Studio', []],
+  ['repositories', 'Repositories', []],
   [
     BRANDS_MENU,
     'Brands',
@@ -110,6 +112,14 @@ export default function App() {
             <StudioPage
               key="studio"
               visible={page === 'studio'}
+              onOpenRepositories={() => open('repositories')}
+            />,
+          ],
+          [
+            'repositories',
+            <RepositoriesPage
+              key="repositories"
+              visible={page === 'repositories'}
               onOpenSettings={() => open('settings')}
             />,
           ],

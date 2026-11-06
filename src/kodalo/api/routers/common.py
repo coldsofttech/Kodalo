@@ -20,8 +20,7 @@ from kodalo.api.schemas import (
     AiProvider,
 )
 from kodalo.core.ai import AiConnections
-from kodalo.core.repo import (
-    IdeasAssistant,
+from kodalo.core.repositories import (
     ReadmeAssistant,
     ReadmeService,
     RepoAnalyzer,
@@ -41,6 +40,7 @@ from kodalo.core.settings.github import (
     GitHubConnectivity,
 )
 from kodalo.core.studio import StudioInvalidError
+from kodalo.core.studio.ideas import IdeasAssistant
 
 GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
 ThemeSetting = Annotated[Appearance, Depends(get_appearance)]

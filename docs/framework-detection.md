@@ -1,15 +1,15 @@
 # Framework detection
 
-Reading a repository (`kodalo studio read`, or Studio in the window) also lists the frameworks it uses, such as FastAPI or React, and its tooling: build, test, lint and format, CI, container and package tools such as Make, pytest, Ruff, GitHub Actions, Docker or uv. Each one comes with its evidence: the project file and package that showed it (`pyproject.toml: "fastapi"`), or the file that did (`vite.config.ts`).
+Reading a repository (`kodalo repositories add`, or Studio in the window) also lists the frameworks it uses, such as FastAPI or React, and its tooling: build, test, lint and format, CI, container and package tools such as Make, pytest, Ruff, GitHub Actions, Docker or uv. Each one comes with its evidence: the project file and package that showed it (`pyproject.toml: "fastapi"`), or the file that did (`vite.config.ts`).
 
 Detection runs on what is already read: the dependencies of the project files (see [manifest-parsers.md](manifest-parsers.md)) and the repository's file list. Nothing extra is downloaded. Files inside ignored folders such as `node_modules` are not looked at, and lockfiles are never used as evidence.
 
 ## Where the rules live
 
-- **Bundled:** `src/kodalo/core/repo/framework_configs/*.json`, shipped with Kodalo (about 120 common frameworks).
+- **Bundled:** `src/kodalo/core/configs/frameworks/*.json`, shipped with Kodalo (about 120 common frameworks).
 - **Your own:** `frameworks/*.json` inside the Kodalo data folder (`%LOCALAPPDATA%/Kodalo/frameworks` on Windows, or the folder given with `--data-dir`). A framework with the same `id` as a bundled one replaces it; any other `id` adds a new one. A file that is not valid is skipped and mentioned in the repository's warnings.
 
-Tooling works the same way with its own files: bundled `src/kodalo/core/repo/tooling_configs/*.json` (about 80 common tools) and your own `tooling/*.json` in the data folder. A tooling file holds a `tools` list instead of `frameworks`, and its `category` is one of `build`, `test`, `lint_format`, `ci`, `containers` or `package_distribution`. A folder such as `.github/workflows` is matched with `paths`; a tool listed as a dev dependency (Ruff, ESLint) is matched with `dependencies`.
+Tooling works the same way with its own files: bundled `src/kodalo/core/configs/toolings/*.json` (about 80 common tools) and your own `tooling/*.json` in the data folder. A tooling file holds a `tools` list instead of `frameworks`, and its `category` is one of `build`, `test`, `lint_format`, `ci`, `containers` or `package_distribution`. A folder such as `.github/workflows` is matched with `paths`; a tool listed as a dev dependency (Ruff, ESLint) is matched with `dependencies`.
 
 Configs hold only data, never code.
 
@@ -46,7 +46,7 @@ Any one match is enough, and an entry needs at least one of `dependencies`, `fil
 
 ## Teaching Kodalo more frameworks with the AI
 
-Packages that no config recognises can be sent to your default AI model as part of `Refresh with AI` in Studio, or `kodalo studio read <repo> --refresh-with-ai`. This is one request that also carries the project-file step: Kodalo shows the combined expected tokens and asks once before sending (`--yes` skips the question). Packages that a newly saved parser reads from its file can also match a framework in the same answer, so there is no second question.
+Packages that no config recognises can be sent to your default AI model as part of `Refresh with AI` on the Repositories page, or `kodalo repositories add <repo> --refresh-with-ai`. This is one request that also carries the project-file step: Kodalo shows the combined expected tokens and asks once before sending (`--yes` skips the question). Packages that a newly saved parser reads from its file can also match a framework in the same answer, so there is no second question.
 
 What is sent: only the package names that no framework or tooling config covers (at most 80, grouped by ecosystem), the names of up to 40 top-level files and folders, and up to 40 top-level names that look like configuration and that no tooling config covers (the `tool files:` line). File contents are never sent, and names that look like secrets are left out. The instructions are the bundled `src/kodalo/core/ai/prompts/repo/repo-analyzer.SKILL.md`, which holds the parser, framework and tooling instructions in one prompt and asks for one answer, `{"configs": [], "frameworks": [], "tools": []}`.
 
@@ -58,7 +58,7 @@ The answer must be JSON. Each entry is validated like a hand-written one, must n
 
 1. Copy the closest bundled file into your `frameworks` folder.
 2. Change the `id`, `name`, `category` and the names to match.
-3. Run `kodalo studio read <repo> --refresh`. Problems are shown as warnings.
+3. Run `kodalo repositories add <repo> --refresh`. Problems are shown as warnings.
 
 ## Documentation, files not read and evidence
 

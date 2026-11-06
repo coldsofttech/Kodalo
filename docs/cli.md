@@ -48,7 +48,7 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | Command | What it does |
 | --- | --- |
 | `settings github show` | Show the current mode, folder, number of project files to read and the document limits. `--refresh-with-ai` asks the default AI model for parser configs for project files no config covers: it prints the files and the expected tokens and asks first (`--yes` skips the question), then reads again with the new configs. `--json` for machine-readable output. |
-| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `studio read --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 2000 KB (default 200). |
+| `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `repositories add --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 2000 KB (default 200). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
 
 ### `settings ai`
@@ -73,16 +73,19 @@ Connect Kodalo to an AI provider: `claude_api` (Claude API), `claude_code` (the 
 | `settings ai models default <provider> <name>` | Choose the model the connection uses by default. |
 | `settings ai models remove <provider> <name>` | Forget a model (one the provider offers comes back on the next refresh). |
 
-### `studio`
-
-Start a post from a repository. Reading follows the GitHub mode: `gh_cli` and `web_fetch` read a GitHub address (`https://github.com/owner/repo` or `owner/repo`); `local_folder` reads a folder with git and its files. What is read (metadata, languages, top-level structure, warnings) is stored in the local database.
+### `repositories`
 
 | Command | What it does |
 | --- | --- |
-| `studio source <value>` | Check the folder or address against the mode. `--json` for machine-readable output. Exits with 1 when it is not valid. |
-| `studio read <value>` | Read the repository and store it, with its notable folders, project files (package, version and dependencies; see [manifest-parsers.md](manifest-parsers.md), where you can also add your own file types) and whether it is a monorepo. It also shows the documentation files found (README, changelog, contributing, license, docs folder) and the files that were not read, with the reason. It also lists the frameworks and tooling in use with their evidence (see [framework-detection.md](framework-detection.md)); `--refresh-with-ai` also asks the default AI model about packages no config knows, in the same single question as the project files. A stored repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--readme` also reads the README and the docs it links to without AI and shows the purpose, installation methods, capabilities and the documents read or skipped (see [readme-analysis.md](readme-analysis.md)); the result is kept, and `--refresh` reads it again. `--readme-with-ai` (which implies `--readme`) asks the default AI model to read those same documents and write the purpose, installation methods, capabilities and use cases, after printing the documents it would send and the expected tokens and asking first (`--yes` skips the question); see [readme-analysis.md](readme-analysis.md). With `--readme`, `--json` prints `{"repository": ..., "readme": ...}`. `--json` for machine-readable output. |
-| `studio list` | List stored repositories. `--json` for machine-readable output. |
-| `studio show <id>` | Show one stored repository. `--json` for machine-readable output. |
+| `repositories check <value>` | Check the folder or address against the mode. `--json` for machine-readable output. Exits with 1 when it is not valid. |
+| `repositories add <value>` | Add a repository: read it and keep it, with its notable folders, project files (package, version and dependencies; see [manifest-parsers.md](manifest-parsers.md), where you can also add your own file types) and whether it is a monorepo. It also shows the documentation files found (README, changelog, contributing, license, docs folder) and the files that were not read, with the reason. It also lists the frameworks and tooling in use with their evidence (see [framework-detection.md](framework-detection.md)); `--refresh-with-ai` also asks the default AI model about packages no config knows, in the same single question as the project files. An added repository is returned as is; `--refresh` reads again. For a folder the first read needs `--owner`, `--repo`, `--license` and `--branch`; `--description`, `--homepage`, `--topic` (repeatable), `--private`, `--fork` and `--archived` are optional. `--readme` also reads the README and the docs it links to without AI and shows the purpose, installation methods, capabilities and the documents read or skipped (see [readme-analysis.md](readme-analysis.md)); the result is kept, and `--refresh` reads it again. `--readme-with-ai` (which implies `--readme`) asks the default AI model to read those same documents and write the purpose, installation methods, capabilities and use cases, after printing the documents it would send and the expected tokens and asking first (`--yes` skips the question); see [readme-analysis.md](readme-analysis.md). With `--readme`, `--json` prints `{"repository": ..., "readme": ...}`. `--json` for machine-readable output. |
+| `repositories list` | List the added repositories with their ids. `--json` for machine-readable output. |
+| `repositories show <id>` | Show one added repository. `--json` for machine-readable output. |
+| `repositories remove <id>` | Remove a repository and everything saved about it. Asks first; `--yes` skips the question. |
+
+### `studio`
+
+Studio's post steps will be added here. Checking, reading and analyzing a repository moved to `repositories`.
 
 ### `brand`
 

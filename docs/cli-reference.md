@@ -23,6 +23,7 @@ $ kodalo [OPTIONS] COMMAND [ARGS]...
 
 * `doctor`: Diagnose the installation and the local data.
 * `brand`: Manage brand profiles: colors, fonts, logo...
+* `repositories`: Add, check, list, show and remove the...
 * `settings`: Change Kodalo&#x27;s settings.
 * `studio`: Start a post from a repository.
 
@@ -978,6 +979,134 @@ $ kodalo brand canvas import [OPTIONS] {file}
 * `--name <str>`: Name for the new canvas.
 * `--help`: Show this message and exit.
 
+## `kodalo repositories`
+
+Add, check, list, show and remove the repositories that posts are made from.
+
+**Usage**:
+
+```console
+$ kodalo repositories [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `check`: Check a folder or address against the...
+* `add`: Add a repository: read its metadata,...
+* `list`: List the added repositories.
+* `show`: Show an added repository.
+* `remove`: Remove a repository and everything saved...
+
+### `kodalo repositories check`
+
+Check a folder or address against the GitHub mode. Exits with 1 when it is not valid.
+
+**Usage**:
+
+```console
+$ kodalo repositories check [OPTIONS] {value}
+```
+
+**Arguments**:
+
+* `value`: A folder (local_folder mode) or a GitHub repository address.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo repositories add`
+
+Add a repository: read its metadata, languages and structure, and keep them.
+
+**Usage**:
+
+```console
+$ kodalo repositories add [OPTIONS] {value}
+```
+
+**Arguments**:
+
+* `value`: A folder (local_folder mode) or a GitHub repository address.  [required]
+
+**Options**:
+
+* `--refresh`: Read again, even if added.
+* `--owner <str>`: Local folder: the owner (required once).
+* `--repo <str>`: Local folder: the repository name.
+* `--license <str>`: Local folder: the license, e.g. MIT.
+* `--branch <str>`: Local folder: the default branch.
+* `--description <str>`: Local folder: a short description.
+* `--homepage <str>`: Local folder: the home page address.
+* `--topic <str>`: Local folder: a topic; repeatable.
+* `--private`: Local folder: it is private.
+* `--fork`: Local folder: it is a fork.
+* `--archived`: Local folder: it is archived.
+* `--refresh-with-ai`: Ask the default AI model to read unknown project files and find frameworks.
+* `-y, --yes`: With an AI option: do not ask before sending.
+* `--readme`: Also read the README and the docs it links to: purpose, installation, capabilities. Without AI. Kept; --refresh reads it again.
+* `--readme-with-ai`: Ask the default AI model to read those documents and write the purpose, installation, capabilities and use cases (implies --readme).
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo repositories list`
+
+List the added repositories.
+
+**Usage**:
+
+```console
+$ kodalo repositories list [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo repositories show`
+
+Show an added repository.
+
+**Usage**:
+
+```console
+$ kodalo repositories show [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo repositories remove`
+
+Remove a repository and everything saved about it (analysis, features, ideas).
+
+**Usage**:
+
+```console
+$ kodalo repositories remove [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-y, --yes`: Do not ask for confirmation.
+* `--help`: Show this message and exit.
+
 ## `kodalo settings`
 
 Change Kodalo&#x27;s settings.
@@ -1415,98 +1544,4 @@ $ kodalo studio [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
-* `--help`: Show this message and exit.
-
-**Commands**:
-
-* `source`: Check a repository against the GitHub mode.
-* `read`: Read a repository&#x27;s metadata, languages...
-* `list`: List the repositories that were read before.
-* `show`: Show a stored repository.
-
-### `kodalo studio source`
-
-Check a repository against the GitHub mode. Exits with 1 when it is not valid.
-
-**Usage**:
-
-```console
-$ kodalo studio source [OPTIONS] {value}
-```
-
-**Arguments**:
-
-* `value`: A folder (local_folder mode) or a GitHub repository address.  [required]
-
-**Options**:
-
-* `--json`: Output as JSON.
-* `--help`: Show this message and exit.
-
-### `kodalo studio read`
-
-Read a repository&#x27;s metadata, languages and structure, and store it.
-
-**Usage**:
-
-```console
-$ kodalo studio read [OPTIONS] {value}
-```
-
-**Arguments**:
-
-* `value`: A folder (local_folder mode) or a GitHub repository address.  [required]
-
-**Options**:
-
-* `--refresh`: Read again, even if stored.
-* `--owner <str>`: Local folder: the owner (required once).
-* `--repo <str>`: Local folder: the repository name.
-* `--license <str>`: Local folder: the license, e.g. MIT.
-* `--branch <str>`: Local folder: the default branch.
-* `--description <str>`: Local folder: a short description.
-* `--homepage <str>`: Local folder: the home page address.
-* `--topic <str>`: Local folder: a topic; repeatable.
-* `--private`: Local folder: it is private.
-* `--fork`: Local folder: it is a fork.
-* `--archived`: Local folder: it is archived.
-* `--refresh-with-ai`: Ask the default AI model to read unknown project files and find frameworks.
-* `-y, --yes`: With an AI option: do not ask before sending.
-* `--readme`: Also read the README and the docs it links to: purpose, installation, capabilities. Without AI. Kept; --refresh reads it again.
-* `--readme-with-ai`: Ask the default AI model to read those documents and write the purpose, installation, capabilities and use cases (implies --readme).
-* `--json`: Output as JSON.
-* `--help`: Show this message and exit.
-
-### `kodalo studio list`
-
-List the repositories that were read before.
-
-**Usage**:
-
-```console
-$ kodalo studio list [OPTIONS]
-```
-
-**Options**:
-
-* `--json`: Output as JSON.
-* `--help`: Show this message and exit.
-
-### `kodalo studio show`
-
-Show a stored repository.
-
-**Usage**:
-
-```console
-$ kodalo studio show [OPTIONS] {repo_id}
-```
-
-**Arguments**:
-
-* `repo_id`: Id of a stored repository (see studio list).  [required]
-
-**Options**:
-
-* `--json`: Output as JSON.
 * `--help`: Show this message and exit.

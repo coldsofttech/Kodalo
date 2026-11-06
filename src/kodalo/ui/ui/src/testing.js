@@ -28,6 +28,7 @@ export const makeRepo = (owner) => ({
   tree_truncated: false,
   warnings: [],
   local_path: '',
+  has_social_preview: false,
   last_scanned_at: '2026-11-02T07:00:00+00:00',
   notable_dirs: [{ path: 'tests', purpose: 'tests' }],
   frameworks: [
@@ -476,6 +477,7 @@ function aiRoutes(list, method, rest, body) {
 export function createBackend(initial = []) {
   const state = {
     brands: initial,
+    repos: /** @type {any[]} */ ([makeRepo('o')]),
     canvases: CANVASES.map((canvas) => ({ ...canvas })),
     layouts: LAYOUTS.map((layout) => ({ ...layout })),
     palettes: PALETTES.map((palette) => ({ ...palette })),
@@ -623,14 +625,7 @@ export function createBackend(initial = []) {
     if (url.pathname === '/api/bridge/app_info') {
       return { available: true, result: { name: 'Kodalo', version: '1.2.3' } };
     }
-    if (parts[0] === 'studio' && parts[1] === 'repositories') {
-      const local = state.github.mode === 'local_folder';
-      if (local && !state.repoRead && !body.details)
-        return [422, { detail: 'Please fill in: owner.' }];
-      state.repoRead = true;
-      return makeRepo(body.details?.owner ?? 'o');
-    }
-    if (parts[0] === 'studio') {
+    if (parts[0] === 'repositories' && parts[1] === 'check') {
       if (state.github.mode === 'local_folder') {
         const suggested = { owner: '', repo: 'proj', default_branch: 'main' };
         return {
@@ -643,6 +638,20 @@ export function createBackend(initial = []) {
       }
       if (!body.source.startsWith('https://')) return [422, { detail: 'Use a GitHub address.' }];
       return { kind: 'github', value: body.source, name: 'repo', stored_id: null, suggested: null };
+    }
+    if (parts[0] === 'repositories' && parts[1] && method === 'GET') return state.repos[0];
+    if (parts[0] === 'repositories' && parts[1] && method === 'DELETE') {
+      state.repos = [];
+      return null;
+    }
+    if (parts[0] === 'repositories' && method === 'GET') return state.repos;
+    if (parts[0] === 'repositories') {
+      const local = state.github.mode === 'local_folder';
+      if (local && !state.repoRead && !body.details)
+        return [422, { detail: 'Please fill in: owner.' }];
+      state.repoRead = true;
+      state.repos = [makeRepo(body.details?.owner ?? 'o')];
+      return state.repos[0];
     }
     if (parts[0] === 'settings') {
       if (parts[1] === 'theme') {

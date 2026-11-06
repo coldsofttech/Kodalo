@@ -13,12 +13,10 @@ from kodalo.core.brands.layout import Layout, LayoutSettings
 from kodalo.core.brands.palette import Palette
 from kodalo.core.brands.palette.suggest import PalettePlan
 from kodalo.core.doctor import Check
-from kodalo.core.repo import (
+from kodalo.core.repositories import (
     AnalyzerPlan,
     AnalyzerResult,
     Evidence,
-    Ideas,
-    IdeasPlan,
     LocalDetails,
     ReadmeAnalysis,
     ReadmePlan,
@@ -26,8 +24,7 @@ from kodalo.core.repo import (
     RepoInfo,
     Suggestion,
 )
-from kodalo.core.repo.ai_ideas import Claim
-from kodalo.core.repo.readme import CLAIM_TYPES, IMPORTANCE, MATURITY
+from kodalo.core.repositories.readme import CLAIM_TYPES, IMPORTANCE, MATURITY
 from kodalo.core.settings.ai import (
     AiCallDetail,
     AiCallRecord,
@@ -37,6 +34,7 @@ from kodalo.core.settings.ai import (
 )
 from kodalo.core.settings.github import ConnectionCheck, GitHubSettings
 from kodalo.core.studio import Source
+from kodalo.core.studio.ideas import Claim, Ideas, IdeasPlan
 
 
 class HealthResponse(BaseModel):
@@ -818,10 +816,14 @@ class RepoResponse(BaseModel):
         max_length=200,
         description="Project files that were not read (secret-looking, over 200 KB or unreadable).",
     )
+    has_social_preview: bool = Field(
+        description="Whether the owner's social preview image is saved."
+    )
 
     @classmethod
     def from_core(cls, info: RepoInfo) -> Self:
         return cls(
+            has_social_preview=info.has_social_preview,
             id=info.id,
             url=info.url,
             owner=info.owner,

@@ -228,12 +228,18 @@ export const getTheme = () => request('/api/v1/settings/theme');
 /** @param {string} theme */
 export const saveTheme = (theme) =>
   request('/api/v1/settings/theme', { method: 'PUT', json: { theme } });
+const REPOSITORIES = '/api/v1/repositories';
+export const listRepositories = () => request(REPOSITORIES);
+/** @param {string} repoId */
+export const getRepository = (repoId) => request(`${REPOSITORIES}/${encodeURIComponent(repoId)}`);
+/** @param {string} repoId */
+export const removeRepository = (repoId) =>
+  request(`${REPOSITORIES}/${encodeURIComponent(repoId)}`, { method: 'DELETE' });
 /** @param {string} source */
-export const checkStudioSource = (source) =>
-  request('/api/v1/studio/source', { method: 'POST', json: { source } });
+export const checkRepository = (source) =>
+  request(`${REPOSITORIES}/check`, { method: 'POST', json: { source } });
 /** @param {{ source: string, refresh?: boolean, details?: object }} body */
-export const readRepository = (body) =>
-  request('/api/v1/studio/repositories', { method: 'POST', json: body });
+export const addRepository = (body) => request(REPOSITORIES, { method: 'POST', json: body });
 /** What asking the AI to analyze a repository would send and cost; nothing is sent. */
 export const planAnalysis = (/** @type {string} */ repoId) =>
   request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis/plan`, {
@@ -336,3 +342,7 @@ export const getAiUsage = (/** @type {Parameters<typeof aiQuery>[0]} */ filter) 
   request(
     `${AI_SETTINGS}/usage?${aiQuery({ period: filter.period, start: filter.start, end: filter.end })}`,
   );
+
+/** Where the saved social preview image of a repository is served; the scan time busts the cache. */
+export const socialPreviewUrl = (/** @type {any} */ repo) =>
+  `${REPOSITORIES}/${encodeURIComponent(repo.id)}/social-preview?v=${encodeURIComponent(repo.last_scanned_at ?? '')}`;

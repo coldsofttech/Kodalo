@@ -52,7 +52,11 @@ The analysis is kept in six tables (migrations `0017`, `0018` and `0019`): `repo
 
 | Layer | Where |
 | --- | --- |
-| Core | `kodalo.core.repo.readme` (`ReadmeService`) and `kodalo.core.repo.ai_readme` (`ReadmeAssistant`, which plans before it sends) |
-| Command line | `kodalo studio read --readme [--readme-with-ai] [--yes]`; see [cli.md](cli.md) |
+| Core | `kodalo.core.repositories.readme` (`ReadmeService`) and `kodalo.core.repositories.ai.readme` (`ReadmeAssistant`, which plans before it sends) |
+| Command line | `kodalo repositories add --readme [--readme-with-ai] [--yes]`; see [cli.md](cli.md) |
 | API | `/api/v1/studio/repositories/{id}/readme` and `.../readme/analysis`; see [api.md](api.md) |
 | Window | The Analyze step of Studio, `pages/ReadmeView.jsx`; see [ui.md](ui.md) |
+
+## Refreshing after the AI
+
+Once the AI has written an analysis, a plain refresh (`POST .../readme` with `refresh`, or `readme --refresh`) does not replace it. It keeps the purpose, installation methods and capabilities as they are. It adds installation methods that are new in the documents (matched by method and command), fills a blank capability description from the documents when the name matches, and updates the list of documents read. It adds no capabilities of its own: the plain read takes every bullet it finds, and the AI chose which ones matter. Before the AI has run, a refresh replaces what was found, as before.

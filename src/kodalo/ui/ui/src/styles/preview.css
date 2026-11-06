@@ -329,3 +329,20 @@
   bottom: calc(var(--u) * var(--logo-pad, 48));
   right: calc(var(--u) * var(--logo-pad, 48));
 }
+
+/* The social preview image fits the window; the dialog wraps it. */
+.image-dialog {
+  width: auto;
+  max-width: 94vw;
+}
+
+.image-dialog-image {
+  display: block;
+  max-width: calc(94vw - 1.5rem);
+  max-height: calc(100vh - 9rem);
+  border-radius: var(--radius-s);
+}
+
+.image-dialog .slide-dialog-bar {
+  justify-content: flex-end;
+}

@@ -5,7 +5,7 @@ from typing import Annotated
 
 import typer
 
-from kodalo.cli import brands, doctor, output, settings, studio
+from kodalo.cli import brands, doctor, output, repositories, settings, studio
 from kodalo.cli.state import State
 from kodalo.core import __version__
 from kodalo.core.settings.ai import purge_expired_history
@@ -21,6 +21,7 @@ app = typer.Typer(
 )
 
 app.add_typer(brands.app, name="brand")
+app.add_typer(repositories.app, name="repositories")
 app.add_typer(settings.app, name="settings")
 app.add_typer(studio.app, name="studio")
 app.command()(doctor.doctor)

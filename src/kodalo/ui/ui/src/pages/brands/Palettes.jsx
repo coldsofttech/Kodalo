@@ -12,6 +12,7 @@ import {
 } from '../../api.js';
 import { setIn } from '../../brand.js';
 import { useCatalog } from '../../catalog.js';
+import AiOverlay from '../../components/AiOverlay.jsx';
 import { Button, TextField } from '../../components/controls.jsx';
 import { ColorsPanel } from '../../components/editor.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
@@ -57,6 +58,8 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   const [form, setForm] = useState(/** @type {Form | null} */ (null));
   const [asking, setAsking] = useState(/** @type {any | null} */ (null));
   const [suggesting, setSuggesting] = useState(false);
+  /** True while the AI is working on the palette, to show the overlay. */
+  const [thinking, setThinking] = useState(false);
   /** What the AI would be sent and cost, while the user decides whether to go ahead. */
   const [plan, setPlan] = useState(/** @type {any | null} */ (null));
 
@@ -89,6 +92,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   async function suggest() {
     setPlan(null);
     setSuggesting(true);
+    setThinking(true);
     try {
       const { name, colors } = await suggestPalette();
       setForm((f) => f && { ...f, name, colors });
@@ -96,6 +100,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
       setError(failure instanceof Error ? failure.message : 'The AI could not suggest a palette.');
     } finally {
       setSuggesting(false);
+      setThinking(false);
     }
   }
 
@@ -124,6 +129,7 @@ export default function PalettesPage({ onChange, revision = 0 }) {
   const titles = { new: 'New palette', edit: 'Edit palette', copy: 'Copy palette' };
   return (
     <div className="palettes">
+      {thinking ? <AiOverlay message="The AI is choosing colors…" /> : null}
       <h1>Palettes</h1>
       <p>
         A palette is a named set of the eight brand colors. New brands start from one; a brand keeps

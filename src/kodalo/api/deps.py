@@ -10,8 +10,7 @@ from fastapi import HTTPException, status
 
 from kodalo.core.ai import AiConnections
 from kodalo.core.brands.brand import BrandService
-from kodalo.core.repo import (
-    IdeasAssistant,
+from kodalo.core.repositories import (
     ReadmeAssistant,
     ReadmeService,
     RepoAnalyzer,
@@ -20,6 +19,7 @@ from kodalo.core.repo import (
 from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import GitHubConnectivity
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
+from kodalo.core.studio.ideas import IdeasAssistant
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
 _data_dir: Path | None = None
@@ -58,6 +58,7 @@ def _build_services() -> Services:
         parsers_dir=folder / "parsers",
         frameworks_dir=folder / "frameworks",
         tooling_dir=folder / "tooling",
+        previews_dir=folder / "social_previews",
     )
     ai = AiConnections(database)
     with suppress(Exception):  # old history is removed when the services start

@@ -4,7 +4,7 @@ from pathlib import Path as FsPath
 
 from fastapi import APIRouter
 
-from kodalo.api.routers import about, brands, settings
+from kodalo.api.routers import about, brands, repositories, settings
 from kodalo.api.routers.common import (
     AI_UNREACHABLE,
     COMMON,
@@ -36,7 +36,7 @@ from kodalo.api.schemas import (
     StudioSourceRequest,
     StudioSourceResponse,
 )
-from kodalo.core.repo import (
+from kodalo.core.repositories import (
     RepoNotFoundError,
     suggest,
 )
@@ -44,6 +44,7 @@ from kodalo.core.studio import validate_source
 
 # Cornea has already authenticated the caller by the time a request reaches these routes.
 router = APIRouter(tags=["v1"])
+router.include_router(repositories.router)
 
 
 # Studio -------------------------------------------------------------------------------------

@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- A plain Refresh on a repository now shows a see-through progress screen too.
+- While the AI works on a palette suggestion or a repository refresh, a see-through screen with a small robot animation shows that work is in progress.
+- A repository's social preview image shows on its page when the owner uploaded one on GitHub (GitHub CLI mode).
+- Repositories: a new page, API and `kodalo repositories` command to add, list, show and remove repositories. Studio now starts by picking one of them.
 - AI history can be exported as CSV or JSON for the chosen period.
 - Settings is reorganised: GitHub has separate connection and reading-limit blocks, AI joins connections and history in one tab (history opens on demand), and buttons are icons.
 - Saving an AI connection turns it on and turns any other off, so only one is used at a time.
@@ -43,5 +47,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- The `kodalo studio` commands to check, read, list and show a repository moved to `kodalo repositories` (`check`, `add`, `list`, `show`).
+- Refreshing a repository's README after the AI has analyzed it keeps the AI's text and only adds new details.
 - Using Claude Code as the AI connection now sends only Kodalo's own question, so a call uses about 1,700 tokens instead of about 37,000.
 - Kodalo starts a little faster.

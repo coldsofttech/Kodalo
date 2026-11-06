@@ -4476,6 +4476,11 @@
             "title": "Frameworks",
             "type": "array"
           },
+          "has_social_preview": {
+            "description": "Whether the owner's social preview image is saved.",
+            "title": "Has Social Preview",
+            "type": "boolean"
+          },
           "homepage": {
             "maxLength": 512,
             "title": "Homepage",
@@ -4678,7 +4683,8 @@
           "is_monorepo",
           "monorepo_signals",
           "documentation",
-          "skipped"
+          "skipped",
+          "has_social_preview"
         ],
         "title": "RepoResponse",
         "type": "object"
@@ -7182,6 +7188,271 @@
         "summary": "Export a palette",
         "tags": [
           "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/repositories": {
+      "get": {
+        "description": "Return every added repository, sorted by owner and name.",
+        "operationId": "list_repositories_api_v1_repositories_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/RepoResponse"
+                  },
+                  "title": "Response List Repositories Api V1 Repositories Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List repositories",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Read the metadata, languages and structure of a repository and store them.\n\nA repository that was added before is returned from the database unless ``refresh`` is set.",
+        "operationId": "add_repository_api_v1_repositories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RepoReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "GitHub has no such repository."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "GitHub or the GitHub CLI could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Add a repository",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/repositories/check": {
+      "post": {
+        "description": "Check the source against the saved GitHub mode. Nothing is stored.\n\nFor a local folder the answer also carries values read from git to prefill the details form.",
+        "operationId": "check_repository_api_v1_repositories_check_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StudioSourceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StudioSourceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "GitHub has no such repository."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "GitHub or the GitHub CLI could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Check a repository address or folder",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/repositories/{repo_id}": {
+      "delete": {
+        "description": "Remove a repository and everything saved about it (analysis, features, ideas).",
+        "operationId": "remove_repository_api_v1_repositories__repo_id__delete",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No repository has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Remove a repository",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      },
+      "get": {
+        "description": "Return one added repository.",
+        "operationId": "get_repository_api_v1_repositories__repo_id__get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RepoResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No repository has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a repository",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/repositories/{repo_id}/social-preview": {
+      "get": {
+        "description": "Return the social preview the owner uploaded on GitHub, saved when the repository was read\nwith the GitHub CLI. ``has_social_preview`` on the repository says whether there is one.",
+        "operationId": "get_social_preview_api_v1_repositories__repo_id__social_preview_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/jpeg": {},
+              "image/png": {}
+            },
+            "description": "The image (PNG or JPEG)."
+          },
+          "404": {
+            "description": "No repository has that id, or it has no image."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a repository's social preview image",
+        "tags": [
           "v1",
           "v1"
         ]

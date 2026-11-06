@@ -11,7 +11,7 @@ from kodalo.core.ai import AiConnections
 from kodalo.core.brands.brand.models import BrandColors
 from kodalo.core.brands.palette.models import Palette
 from kodalo.core.brands.palette.service import PaletteService
-from kodalo.core.repo.ai_parsers import estimate_tokens
+from kodalo.core.repositories.ai.parsers import estimate_tokens
 from kodalo.core.settings.ai import AiInvalidError
 
 MAX_OUTPUT_TOKENS = 1024

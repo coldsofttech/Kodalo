@@ -4,7 +4,7 @@ When Kodalo reads a repository it finds the project files (`package.json`, `pypr
 
 ## Where configs live
 
-- **Bundled:** `src/kodalo/core/repo/parser_configs/*.json`, shipped with Kodalo.
+- **Bundled:** `src/kodalo/core/configs/parsers/*.json`, shipped with Kodalo.
 - **Your own:** `parsers/*.json` inside the Kodalo data folder (`%LOCALAPPDATA%/Kodalo/parsers` on Windows, or the folder given with `--data-dir`). A config with the same `id` as a bundled one replaces it; any other `id` adds a new kind of file.
 - A config that is not valid is skipped, and the reason is added to the repository's warnings. The others keep working.
 
@@ -60,10 +60,10 @@ A config holds at most 20 entries per list, and each pattern at most 300 charact
 
 ## Writing configs with AI
 
-For top-level project files no config covers, `Refresh with AI` in Studio (or `kodalo studio read <repo> --refresh-with-ai`) asks the default AI connection and model for a config. The same instructions go to every provider: they are the bundled `src/kodalo/core/ai/prompts/repo/repo-analyzer.SKILL.md`, which doubles as a Claude Code skill file and also covers frameworks and tooling (see [framework-detection.md](framework-detection.md)), so one request and one answer serve all three. To keep cost low it sends at most 5 files, 1.5 KB each, caps the answer (700 tokens per file plus room for frameworks and tools, and the model's own max tokens when lower), and shows the estimate before sending. Replies must be JSON; each config is validated, must not reuse an existing `id`, and must read something from the real file before it is saved to `parsers/`.
+For top-level project files no config covers, `Refresh with AI` on the Repositories page (or `kodalo repositories add <repo> --refresh-with-ai`) asks the default AI connection and model for a config. The same instructions go to every provider: they are the bundled `src/kodalo/core/ai/prompts/repo/repo-analyzer.SKILL.md`, which doubles as a Claude Code skill file and also covers frameworks and tooling (see [framework-detection.md](framework-detection.md)), so one request and one answer serve all three. To keep cost low it sends at most 5 files, 1.5 KB each, caps the answer (700 tokens per file plus room for frameworks and tools, and the model's own max tokens when lower), and shows the estimate before sending. Replies must be JSON; each config is validated, must not reuse an existing `id`, and must read something from the real file before it is saved to `parsers/`.
 
 ## Adding a stack
 
 1. Copy the closest bundled config to your `parsers` folder and change `id`, `ecosystem`, `files` and the paths or patterns.
-2. Read a repository that has such a file (`kodalo studio read <repo> --refresh`) and check the Project files table.
+2. Read a repository that has such a file (`kodalo repositories add <repo> --refresh`) and check the Project files table.
 3. Fix the warnings if the file could not be read.
