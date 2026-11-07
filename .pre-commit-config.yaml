@@ -52,16 +52,23 @@ repos:
         pass_filenames: false
       - id: eslint
         name: eslint (ui)
-        entry: npm --prefix src/kodalo_ui/ui run lint
+        entry: npm --prefix src/kodalo/ui/ui run lint
         language: system
-        files: ^src/kodalo_ui/ui/.*\.(js|jsx)$
+        files: ^src/kodalo/ui/ui/.*\.(js|jsx)$
         pass_filenames: false
       - id: prettier
         name: prettier (ui)
-        entry: npm --prefix src/kodalo_ui/ui run format:check
+        entry: npm --prefix src/kodalo/ui/ui run format:check
         language: system
-        files: ^src/kodalo_ui/ui/
-        exclude: ^src/kodalo_ui/ui/package-lock\.json$
+        files: ^src/kodalo/ui/ui/
+        exclude: ^src/kodalo/ui/ui/package-lock\.json$
+        pass_filenames: false
+      - id: vitest
+        name: vitest (ui)
+        entry: npm --prefix src/kodalo/ui/ui test
+        language: system
+        files: ^src/kodalo/ui/ui/
+        exclude: ^src/kodalo/ui/ui/package-lock\.json$
         pass_filenames: false
       - id: pytest
         name: pytest

@@ -62,7 +62,7 @@ The template has more layers than most projects use. Delete a layer together wit
 | If you do not need | Delete |
 | --- | --- |
 | The Windows window | `src/<ui package>/`, its tests in `tests/ui/`, `installer/pyinstaller/ui.spec`, `installer/windows/nsis/ui.nsi`, the `ui` group in `pyproject.toml`, and the `ui`, `ui-windows` jobs in `ci.yml` |
-| The HTTP API | `src/<api package>/`, `tests/api/`, `.env.example`, `docs/openapi.json`, `scripts/export_openapi.py`, `api-compat.yml`, and the `api` group in `pyproject.toml` (the window needs the API, so remove the window first) |
+| The HTTP API | `src/<api package>/`, `tests/api/`, `docs/openapi.json`, `scripts/export_openapi.py`, `api-compat.yml`, and the `api` group in `pyproject.toml` (the window needs the API, so remove the window first) |
 | Installers | `installer/`, `scripts/build_installer.py`, `scripts/update_manifests.py` (then give `release.yml` its own release-notes step), `build.yml`, and the installer jobs of `release.yml` |
 
 After removing a layer, update `[tool.installer]` in `pyproject.toml` and run the checks, since the names the scripts read must still exist.

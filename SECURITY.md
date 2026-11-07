@@ -6,7 +6,7 @@ Only the latest release receives security fixes.
 
 ## What is covered
 
-Anything this project ships: the command line, the HTTP API (run on its own), the local server behind the Windows window, and the installers and packages published with each release. Please report problems in the packaged software here, not in the dependencies of it; those go to their own projects. How the API and the window protect requests is described in [docs/security.md](docs/security.md).
+Anything this project ships: the command line, the HTTP API (run on its own), the local server behind the Windows window, and the Windows installers published with each release. It also covers how Kodalo handles the credentials you give it (AI provider keys and Instagram tokens), the files it reads from your repositories, and the public address used for posting. Please report problems in Kodalo itself here, not in the dependencies it uses or in the AI provider and Instagram services; those go to their own projects. How the API and the window protect requests is described in [docs/security.md](docs/security.md).
 
 ## Reporting a vulnerability
 

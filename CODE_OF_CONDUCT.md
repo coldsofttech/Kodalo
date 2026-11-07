@@ -21,7 +21,7 @@ We pledge to make participation in this community a harassment-free experience f
 
 Maintainers may remove, edit or reject contributions that violate this code, and may temporarily or permanently ban contributors for behavior they deem inappropriate.
 
-Report violations to the maintainers at `<ADD CONTACT METHOD>`. All reports are reviewed and handled confidentially.
+Report violations privately through GitHub: open the **Security** tab of this repository and choose **Report a vulnerability**, and say it is a Code of Conduct report. Do not post it in a public issue. All reports are reviewed and handled confidentially.
 
 ## Attribution
 

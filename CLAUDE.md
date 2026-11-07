@@ -104,8 +104,8 @@ These apply to `src/kodalo_api/`, on top of the rules above.
 18. **Dependencies and settings**: use `Annotated[..., Depends(...)]` for settings, auth and shared
     objects such as the store, and add no new global state; tests reset the cached ones in
     `tests/conftest.py`. Add settings to `config.py` with the `KODALO_API_` prefix, read them
-    through `get_settings()` and never `os.environ` elsewhere, and document each in `.env.example`
-    and `docs/api.md`.
+    through `get_settings()` and never `os.environ` elsewhere, and document each in
+    `docs/api.md`.
 
 19. **Contract, logging and tests**: breaking changes go in a new `/api/v2` router. Log with the
     `logging` module (JSON, with the request ID), never `print`, and never log keys or request
