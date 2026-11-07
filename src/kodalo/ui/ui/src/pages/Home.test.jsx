@@ -5,12 +5,20 @@ import userEvent from '@testing-library/user-event';
 import HomePage from './Home.jsx';
 
 describe('HomePage', () => {
-  it('opens Studio and Brands from its buttons', async () => {
+  it('opens pages from its buttons and tiles', async () => {
     const onOpen = vi.fn();
     render(<HomePage onOpen={onOpen} />);
     await userEvent.click(screen.getByText('Open Studio'));
     await userEvent.click(screen.getByText('Manage brands'));
-    expect(onOpen.mock.calls).toEqual([['studio'], ['brands']]);
+    await userEvent.click(screen.getByRole('button', { name: /Settings/ }));
+    await userEvent.click(screen.getByRole('button', { name: /Add a repository/ }));
+    expect(onOpen.mock.calls).toEqual([['studio'], ['brands'], ['settings'], ['repositories']]);
+  });
+
+  it('explains how it works in four steps', () => {
+    render(<HomePage onOpen={() => undefined} />);
+    expect(screen.getByRole('heading', { name: 'How it works' })).toBeInTheDocument();
+    expect(screen.getAllByRole('listitem')).toHaveLength(7);
   });
 
   it('has no accessibility violations', async () => {
