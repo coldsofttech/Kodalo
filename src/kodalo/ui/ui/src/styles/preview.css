@@ -346,3 +346,158 @@
 .image-dialog .slide-dialog-bar {
   justify-content: flex-end;
 }
+
+/* Studio design step: the slides of a designed post, laid out as the design plan says. */
+.design-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 1.25rem;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.design-left .slide-body {
+  text-align: left;
+  justify-items: start;
+}
+
+.design-center,
+.design-center .slide-body {
+  text-align: center;
+  justify-items: center;
+}
+
+.design-secondary .slide-title,
+.design-secondary .design-icon {
+  color: var(--b-secondary);
+}
+
+.design-template-hook .slide-title {
+  font-size: calc(var(--u) * 96);
+}
+
+.design-template-problem .slide-title,
+.design-template-summary .slide-title {
+  padding-bottom: calc(var(--u) * 20);
+  border-bottom: calc(var(--u) * 6) solid var(--b-secondary);
+}
+
+.design-badge {
+  display: grid;
+  place-items: center;
+  width: calc(var(--u) * 96);
+  height: calc(var(--u) * 96);
+  border-radius: 50%;
+  background: var(--b-primary);
+  color: var(--b-background);
+  font-family: var(--f-heading);
+  font-size: calc(var(--u) * 52);
+  font-weight: 700;
+}
+
+.design-secondary .design-badge {
+  background: var(--b-secondary);
+}
+
+.design-icon {
+  font-size: calc(var(--u) * 120);
+  line-height: 1;
+  color: var(--b-primary);
+}
+
+.design-media {
+  width: 100%;
+  overflow: hidden;
+  border-radius: calc(var(--u) * var(--radius, 24));
+}
+
+.design-media img {
+  display: block;
+  width: 100%;
+  height: calc(var(--u) * 480);
+  object-fit: cover;
+}
+
+.design-fit-contain img {
+  object-fit: contain;
+}
+
+.design-template-proof .design-media {
+  border: calc(var(--u) * 6) solid var(--b-primary);
+}
+
+.design-media-icon {
+  width: calc(var(--u) * 260);
+  height: calc(var(--u) * 260);
+}
+
+.design-media-icon img {
+  height: 100%;
+  object-fit: contain;
+}
+
+/* The logo cut out of the social preview: the picture is sized and moved by the box. */
+.design-crop {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: var(--crop-ar, 1);
+}
+
+.design-media .design-crop img {
+  position: absolute;
+  max-width: none;
+  width: calc(100% / var(--crop-w, 1));
+  height: auto;
+  left: calc(-100% * var(--crop-x, 0) / var(--crop-w, 1));
+  top: calc(-100% * var(--crop-y, 0) / var(--crop-h, 1));
+}
+
+/* A drawing is a one-color silhouette: the drawing is a mask over the accent color. */
+.design-drawing {
+  display: block;
+  width: 100%;
+  height: calc(var(--u) * 420);
+  background-color: var(--b-primary);
+  -webkit-mask: var(--drawing) center / contain no-repeat;
+  mask: var(--drawing) center / contain no-repeat;
+}
+
+.design-secondary .design-drawing {
+  background-color: var(--b-secondary);
+}
+
+.design-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 1.1rem 1.25rem;
+}
+
+.design-caption p {
+  margin: 0;
+}
+
+/* A slide the AI wrote as HTML: its page is canvas-sized in a frame and scaled to the card. */
+.design-html {
+  position: relative;
+  overflow: hidden;
+  width: 100%;
+  aspect-ratio: var(--canvas-w, 1080) / var(--canvas-h, 1350);
+  border-radius: var(--radius-s);
+  box-shadow: 0 0 0 1px var(--border);
+}
+
+.design-html iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: calc(var(--canvas-w, 1080) * 1px);
+  height: calc(var(--canvas-h, 1350) * 1px);
+  border: 0;
+  transform: scale(var(--scale, 0.2));
+  transform-origin: top left;
+}

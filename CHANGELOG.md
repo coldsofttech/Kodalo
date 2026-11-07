@@ -6,6 +6,12 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- `kodalo studio` commands to make post ideas, write the copy and design the slides from the command line, and to export slides as HTML or SVG.
+- Studio designs the post: after the copy, Next lays out each slide (template, picture, icon) with the AI and shows the slides full screen with the caption and hashtags below. It uses the social preview, the repo icon and Bootstrap icons as Settings > Platforms allows. With the AI-powered templates switch on, the AI writes one shared style and a layout for each slide, while the app places your text, the brand logo (or the repo name), the footer and progress marks so every slide is consistent.
+- The README analysis with AI now also finds the repository's own icon and shows it on the repository page.
+- Settings > Platforms: choose how many hashtags an Instagram post gets, the default hashtags every post carries, and which visuals the designer may use (also `kodalo settings platforms`). Posts now respect the hashtag settings instead of always having five.
+- Studio writes the slides, caption, alt text and hashtags of the chosen Instagram post idea with the AI; you can edit and save them.
+- Studio keeps the post ideas the AI made for each feature and shows them again; Refresh with AI in the top bar makes new ones.
 - A plain Refresh on a repository now shows a see-through progress screen too.
 - While the AI works on a palette suggestion or a repository refresh, a see-through screen with a small robot animation shows that work is in progress.
 - A repository's social preview image shows on its page when the owner uploaded one on GitHub (GitHub CLI mode).

@@ -3,10 +3,12 @@ import Appearance from './Appearance.jsx';
 import AiConnections from './ai/Connections.jsx';
 import AiHistory, { AiHistorySettings } from './ai/History.jsx';
 import GitHub from './GitHub.jsx';
+import Platforms from './Platforms.jsx';
 
 const TABS = [
   ['github', 'GitHub'],
   ['ai', 'AI'],
+  ['platforms', 'Platforms'],
   ['appearance', 'Appearance'],
 ];
 
@@ -34,6 +36,7 @@ export default function SettingsPage() {
         ))}
       </div>
       {tab === 'appearance' ? <Appearance /> : null}
+      {tab === 'platforms' ? <Platforms /> : null}
       {tab === 'ai' ? (
         <section className="panel" role="tabpanel" id="panel-ai" aria-labelledby="tab-ai">
           <AiConnections />

@@ -25,7 +25,7 @@ $ kodalo [OPTIONS] COMMAND [ARGS]...
 * `brand`: Manage brand profiles: colors, fonts, logo...
 * `repositories`: Add, check, list, show and remove the...
 * `settings`: Change Kodalo&#x27;s settings.
-* `studio`: Start a post from a repository.
+* `studio`: Make a post from a repository: ideas, then...
 
 ## `kodalo doctor`
 
@@ -1125,6 +1125,7 @@ $ kodalo settings [OPTIONS] COMMAND [ARGS]...
 
 * `ai`: Connect Kodalo to Claude, ChatGPT or...
 * `github`: Choose how Kodalo reaches GitHub: a local...
+* `platforms`: Choose how many hashtags a post gets, and...
 
 ### `kodalo settings ai`
 
@@ -1532,9 +1533,73 @@ $ kodalo settings github check [OPTIONS]
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 
+### `kodalo settings platforms`
+
+Choose how many hashtags a post gets, and the ones every post carries.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `show`: Show a platform&#x27;s hashtag settings.
+* `set`: Change a platform&#x27;s settings.
+
+#### `kodalo settings platforms show`
+
+Show a platform&#x27;s hashtag settings.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms show [OPTIONS] {platform}
+```
+
+**Arguments**:
+
+* `platform`: One of: instagram.  [required]
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings platforms set`
+
+Change a platform&#x27;s settings. What you leave out stays as it is.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms set [OPTIONS] {platform}
+```
+
+**Arguments**:
+
+* `platform`: One of: instagram.  [required]
+
+**Options**:
+
+* `--hashtags <int>`: Hashtags on each post, the default ones included, 0 to 30.
+* `--default-hashtags <str>`: Hashtags every post carries, separated by spaces, for example &quot;#sweepito&quot;. Use an empty value to remove them.
+* `--use-social-preview / --no-social-preview`: The designer may use the social preview.
+* `--use-repo-icon / --no-repo-icon`: The designer may use the repository icon.
+* `--use-icons / --no-icons`: The designer may use icons.
+* `--build-custom-images / --no-custom-images`: The designer may build custom images as needed.
+* `--use-ai-templates / --no-ai-templates`: The AI writes the HTML and CSS of each slide instead of the fixed templates.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
 ## `kodalo studio`
 
-Start a post from a repository.
+Make a post from a repository: ideas, then copy, then design.
 
 **Usage**:
 
@@ -1544,4 +1609,373 @@ $ kodalo studio [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `ideas`: Plan, make and show the post ideas of a...
+* `copy`: Plan, write, show and edit the copy of a...
+* `design`: Plan, make and show the design of a...
+
+### `kodalo studio ideas`
+
+Plan, make and show the post ideas of a repository.
+
+**Usage**:
+
+```console
+$ kodalo studio ideas [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `plan`: Say what the AI would be sent and what it...
+* `make`: Ask the default AI model for a strategy,...
+* `show`: Show the saved post ideas.
+
+#### `kodalo studio ideas plan`
+
+Say what the AI would be sent and what it costs. Nothing is sent.
+
+**Usage**:
+
+```console
+$ kodalo studio ideas plan [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio ideas make`
+
+Ask the default AI model for a strategy, three angles and five post ideas. Saved.
+
+**Usage**:
+
+```console
+$ kodalo studio ideas make [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `-y, --yes`: Do not ask before sending to the AI.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio ideas show`
+
+Show the saved post ideas. Exits with 1 when none were made yet.
+
+**Usage**:
+
+```console
+$ kodalo studio ideas show [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo studio copy`
+
+Plan, write, show and edit the copy of a post idea.
+
+**Usage**:
+
+```console
+$ kodalo studio copy [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `plan`: Say what the AI would be sent and what it...
+* `make`: Ask the default AI model to write the copy...
+* `show`: Show the saved copy.
+* `edit`: Replace the saved copy with your edited...
+
+#### `kodalo studio copy plan`
+
+Say what the AI would be sent and what it costs. Nothing is sent.
+
+**Usage**:
+
+```console
+$ kodalo studio copy plan [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio copy make`
+
+Ask the default AI model to write the copy of an idea. Replaces the copy saved before.
+
+**Usage**:
+
+```console
+$ kodalo studio copy make [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `-y, --yes`: Do not ask before sending to the AI.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio copy show`
+
+Show the saved copy. Exits with 1 when none was written yet.
+
+**Usage**:
+
+```console
+$ kodalo studio copy show [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio copy edit`
+
+Replace the saved copy with your edited text (slides, caption, alternative opening and
+hashtags); the limits are applied.
+
+**Usage**:
+
+```console
+$ kodalo studio copy edit [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-f, --file <file>`: JSON as from: copy show --json.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+### `kodalo studio design`
+
+Plan, make and show the design of a written post, and export its slides.
+
+**Usage**:
+
+```console
+$ kodalo studio design [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `plan`: Say what the AI would be sent to design...
+* `make`: Ask the default AI model how to lay out...
+* `show`: Show the saved design.
+* `slide`: Export one AI-written slide as a...
+* `svg`: Export the drawing the AI made for one...
+
+#### `kodalo studio design plan`
+
+Say what the AI would be sent to design the saved copy. Nothing is sent.
+
+**Usage**:
+
+```console
+$ kodalo studio design plan [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio design make`
+
+Ask the default AI model how to lay out each slide of the saved copy. Replaces the
+design saved before.
+
+**Usage**:
+
+```console
+$ kodalo studio design make [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `-y, --yes`: Do not ask before sending to the AI.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio design show`
+
+Show the saved design. Exits with 1 when none was made yet.
+
+**Usage**:
+
+```console
+$ kodalo studio design show [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio design slide`
+
+Export one AI-written slide as a self-contained HTML page (to stdout without --output).
+
+**Usage**:
+
+```console
+$ kodalo studio design slide [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `--slide <int range>`: The slide, from 0.  [default: 0; 0&lt;=x&lt;=11]
+* `--mode <light|dark>`: The brand&#x27;s colors to use.  [default: light]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `-o, --output <file>`: Write to a file.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio design svg`
+
+Export the drawing the AI made for one slide as SVG (to stdout without --output).
+
+**Usage**:
+
+```console
+$ kodalo studio design svg [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `--slide <int range>`: The slide, from 0.  [default: 0; 0&lt;=x&lt;=11]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `-o, --output <file>`: Write to a file.
 * `--help`: Show this message and exit.

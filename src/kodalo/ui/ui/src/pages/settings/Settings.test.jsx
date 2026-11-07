@@ -15,6 +15,7 @@ describe('SettingsPage', () => {
     expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
       'GitHub',
       'AI',
+      'Platforms',
       'Appearance',
     ]);
     expect(screen.getByRole('tab', { name: 'GitHub' })).toHaveAttribute('aria-selected', 'true');

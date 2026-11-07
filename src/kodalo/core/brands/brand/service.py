@@ -7,7 +7,7 @@ from typing import Any, TypeVar
 
 from pydantic import TypeAdapter, ValidationError
 from sqlalchemy import select, update
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from kodalo.core.brands.brand.catalogue import FontCatalogue
 from kodalo.core.brands.brand.contrast import ContrastResult, check_colors
@@ -29,6 +29,7 @@ from kodalo.core.brands.brand.models import (
 )
 from kodalo.core.brands.brand.palettes import default_fonts
 from kodalo.core.brands.canvas import Canvas, CanvasService
+from kodalo.core.brands.canvas.models import CUSTOM_PLATFORM_ID
 from kodalo.core.brands.layout import Layout, LayoutError, LayoutService
 from kodalo.core.brands.palette import PaletteError, PaletteService
 from kodalo.core.storage import Database
@@ -39,6 +40,7 @@ from kodalo.core.storage.models import (
     BrandProfile,
     LayoutRow,
 )
+from kodalo.core.storage.models import SocialPlatform as PlatformRow
 
 EXPORT_FORMAT = "kodalo-brand"
 EXPORT_VERSION = 1
@@ -423,7 +425,12 @@ class BrandService:
             created_at=lay.created_at,
             updated_at=lay.updated_at,
         )
+        platform_id = canvas.platform_id or CUSTOM_PLATFORM_ID
+        session = object_session(canvas)
+        platform = session.get(PlatformRow, platform_id) if session is not None else None
         return layout, Canvas(
+            platform_id=platform_id,
+            platform=platform.name if platform is not None else "Custom",
             id=canvas.id,
             name=canvas.name,
             width=canvas.width,

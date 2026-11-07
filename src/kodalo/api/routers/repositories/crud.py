@@ -1,10 +1,9 @@
-"""Repositories: the GitHub repositories and local folders that posts are made from."""
+"""Add, list, check, get and remove repositories."""
 
 from pathlib import Path as FsPath
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, Response, status
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Response, status
 
 from kodalo.api.routers.common import (
     COMMON,
@@ -83,33 +82,6 @@ def get_repository(repo_id: RepoPath, repos: Repos) -> RepoResponse:
     """Return one added repository."""
     with studio_errors():
         return RepoResponse.from_core(repos.get(repo_id))
-
-
-@router.get(
-    "/repositories/{repo_id}/social-preview",
-    summary="Get a repository's social preview image",
-    response_class=FileResponse,
-    responses=COMMON
-    | {
-        status.HTTP_200_OK: {
-            "description": "The image (PNG or JPEG).",
-            "content": {"image/png": {}, "image/jpeg": {}},
-        },
-        status.HTTP_404_NOT_FOUND: {
-            "description": "No repository has that id, or it has no image."
-        },
-    },
-)
-def get_social_preview(repo_id: RepoPath, repos: Repos) -> FileResponse:
-    """Return the social preview the owner uploaded on GitHub, saved when the repository was read
-    with the GitHub CLI. ``has_social_preview`` on the repository says whether there is one."""
-    with studio_errors():
-        repos.get(repo_id)
-    found = repos.social_preview(repo_id)
-    if found is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "This repository has no social preview.")
-    path, media_type = found
-    return FileResponse(path, media_type=media_type)
 
 
 @router.delete(

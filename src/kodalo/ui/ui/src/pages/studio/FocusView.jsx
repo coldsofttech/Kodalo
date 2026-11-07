@@ -1,5 +1,5 @@
-import { Button, Select } from '../components/controls.jsx';
-import { get } from '../lookup.js';
+import { Select } from '../../components/controls.jsx';
+import { get } from '../../lookup.js';
 
 export const POST_TYPES = [
   {
@@ -25,18 +25,9 @@ const FOCUS_GROUPS = [
 
 /**
  * @param {{ postType: string, onChange: (value: string) => void, readme: any, focus: string,
- *   onFocus: (value: string) => void, busy: boolean, onNext: () => void, onBack: () => void }} props
+ *   onFocus: (value: string) => void }} props
  */
-export default function FocusView({
-  postType,
-  busy,
-  onChange,
-  readme,
-  focus,
-  onFocus,
-  onNext,
-  onBack,
-}) {
+export default function FocusView({ postType, onChange, readme, focus, onFocus }) {
   const groups = FOCUS_GROUPS.map(([key, label, field]) => ({
     key,
     label,
@@ -63,7 +54,6 @@ export default function FocusView({
     : [];
   return (
     <>
-      <h2>What is this post about?</h2>
       <p className="hint">Choose what the post will focus on. You can change this later.</p>
       <div role="radiogroup" aria-label="Post type" className="choices">
         {POST_TYPES.map((option) => (
@@ -106,18 +96,6 @@ export default function FocusView({
           {line}
         </p>
       ))}
-      <div className="row actions">
-        <Button
-          appearance="accent"
-          disabled={busy || !postType || (choose && !focus)}
-          onClick={onNext}
-        >
-          Next with AI
-        </Button>
-        <Button disabled={busy} onClick={onBack}>
-          Back
-        </Button>
-      </div>
     </>
   );
 }

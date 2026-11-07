@@ -188,3 +188,39 @@ def test_social_preview_is_saved_served_and_removed(
     client.post("/api/v1/repositories", json={"source": "o/r", "refresh": True})
     assert client.delete(f"/api/v1/repositories/{added['id']}").status_code == 204
     assert repos.social_preview(added["id"]) is None
+
+
+def test_saved_ideas_are_404_until_the_ai_made_some(client: TestClient) -> None:
+    repo_id = client.post(READ, json={"source": "o/r"}).json()["id"]
+
+    response = client.get(
+        f"{READ}/{repo_id}/ideas", params={"post_type": "feature", "kind": "features", "name": "x"}
+    )
+
+    assert response.status_code == 404
+
+
+def test_copy_needs_an_existing_brand(client: TestClient) -> None:
+    repo_id = client.post(READ, json={"source": "o/r"}).json()["id"]
+    ask = {"post_type": "feature", "kind": "features", "name": "x", "idea_id": "idea-1"}
+
+    saved = client.get(f"{READ}/{repo_id}/copy", params={**ask, "brand_id": "nope"})
+    plan = client.post(f"{READ}/{repo_id}/copy/plan", json={**ask, "brand_id": "nope"})
+
+    assert (saved.status_code, plan.status_code) == (404, 404)
+
+
+def test_design_needs_an_existing_brand(client: TestClient) -> None:
+    repo_id = client.post(READ, json={"source": "o/r"}).json()["id"]
+    ask = {"post_type": "feature", "kind": "features", "name": "x", "idea_id": "idea-1"}
+    ask = {**ask, "brand_id": "nope"}
+
+    responses = [
+        client.get(f"{READ}/{repo_id}/design", params=ask),
+        client.get(f"{READ}/{repo_id}/design/svg", params={**ask, "slide": 0}),
+        client.get(f"{READ}/{repo_id}/design/slide", params={**ask, "slide": 0}),
+        client.post(f"{READ}/{repo_id}/design/plan", json=ask),
+        client.post(f"{READ}/{repo_id}/design", json=ask),
+    ]
+
+    assert [r.status_code for r in responses] == [404, 404, 404, 404, 404]

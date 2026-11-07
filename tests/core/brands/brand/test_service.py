@@ -35,6 +35,12 @@ def test_first_profile_is_default_and_names_are_unique(service: BrandService) ->
     assert [b.name for b in service.list_brands()] == ["Main", "Side"]
 
 
+def test_the_brand_canvas_knows_its_social_platform(service: BrandService) -> None:
+    brand = service.create("Main")
+
+    assert (brand.canvas.platform_id, brand.canvas.platform) == ("instagram", "Instagram")
+
+
 def test_empty_database_has_no_default(service: BrandService) -> None:
     assert service.default() is None
     assert service.list_brands() == []

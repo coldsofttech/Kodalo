@@ -29,6 +29,9 @@ export const makeRepo = (owner) => ({
   warnings: [],
   local_path: '',
   has_social_preview: false,
+  has_icon: false,
+  icon_path: '',
+  icon_checked: false,
   last_scanned_at: '2026-11-02T07:00:00+00:00',
   notable_dirs: [{ path: 'tests', purpose: 'tests' }],
   frameworks: [
@@ -654,6 +657,20 @@ export function createBackend(initial = []) {
       return state.repos[0];
     }
     if (parts[0] === 'settings') {
+      if (parts[1] === 'platforms') {
+        state.platforms ??= {};
+        const current = state.platforms[parts[2]] ?? {
+          hashtag_count: 5,
+          default_hashtags: [],
+          use_social_preview: false,
+          use_repo_icon: false,
+          use_icons: false,
+          build_custom_images: false,
+          use_ai_templates: false,
+        };
+        if (method === 'PUT') state.platforms[parts[2]] = { ...body };
+        return { platform: parts[2], ...(state.platforms[parts[2]] ?? current) };
+      }
       if (parts[1] === 'theme') {
         if (method === 'PUT') state.theme = body.theme;
         return { theme: state.theme ?? 'system' };

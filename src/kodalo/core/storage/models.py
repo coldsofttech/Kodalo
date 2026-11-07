@@ -433,6 +433,17 @@ class Repository(_Row, Base):
     warnings_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     documentation_json: Mapped[str] = mapped_column(Text, default="{}", server_default="{}")
     skipped_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    # Files that may be the repository's icon (read with the repository), the one the README
+    # analysis with AI picked, and when it looked. ``icon_checked_at`` set with no ``icon_path``
+    # means it looked and found none.
+    icon_candidates_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
+    icon_path: Mapped[str] = mapped_column(String(1024), default="", server_default="")
+    icon_ext: Mapped[str] = mapped_column(String(8), default="", server_default="")
+    icon_checked_at: Mapped[str | None] = mapped_column(String(32))
+    # Where the logo is in the social preview, as fractions of its width and height, for a
+    # repository with no icon file: ``[x, y, w, h]``, ``[]`` when none was found, empty when the
+    # designer has not looked yet.
+    icon_box_json: Mapped[str] = mapped_column(String(128), default="", server_default="")
     local_path: Mapped[str] = mapped_column(String(1024), default="", server_default="")
     is_monorepo: Mapped[bool] = mapped_column(default=False, server_default="0")
     monorepo_signals_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
@@ -605,6 +616,39 @@ class RepositoryReadme(_Row, Base):
     warnings_json: Mapped[str] = mapped_column(Text, default="[]", server_default="[]")
     analyzed_at: Mapped[str | None] = mapped_column(String(32))
     use_cases_at: Mapped[str | None] = mapped_column(String(32))
+
+
+class StudioIdeas(_Row, Base):
+    """The post ideas the AI made for one repository and focus: one row for each of them."""
+
+    __tablename__ = "studio_ideas"
+    __table_args__ = (UniqueConstraint("repository_id", "focus_key"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    focus_key: Mapped[str] = mapped_column(String(600))
+    payload: Mapped[str] = mapped_column(Text)
+
+
+class StudioDesign(_Row, Base):
+    """The design plan of one post: one row for each platform, focus, idea and hook."""
+
+    __tablename__ = "studio_design"
+    __table_args__ = (UniqueConstraint("repository_id", "design_key"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    design_key: Mapped[str] = mapped_column(String(600))
+    payload: Mapped[str] = mapped_column(Text)
+
+
+class StudioCopy(_Row, Base):
+    """The copy written for one post idea and hook: one row for each platform, focus and idea."""
+
+    __tablename__ = "studio_copy"
+    __table_args__ = (UniqueConstraint("repository_id", "copy_key"),)
+
+    repository_id: Mapped[str] = mapped_column(ForeignKey("repositories.id", ondelete="CASCADE"))
+    copy_key: Mapped[str] = mapped_column(String(600))
+    payload: Mapped[str] = mapped_column(Text)
 
 
 class RepositoryDocument(_Row, Base):

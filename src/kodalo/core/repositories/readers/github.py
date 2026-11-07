@@ -112,6 +112,19 @@ def read_github(owner: str, repo: str, fetch: Fetch, method: str) -> RepoInfo:
     )
 
 
+def read_bytes(fetch: Fetch, owner: str, repo: str, path: str, limit: int) -> bytes | None:
+    """Return the bytes of one file, or ``None`` when it is over ``limit`` or cannot be read."""
+    try:
+        data = fetch(f"repos/{owner}/{repo}/contents/{urllib.parse.quote(path)}")
+        if not isinstance(data, dict) or int(data.get("size") or 0) > limit:
+            return None
+        if data.get("encoding") != "base64":
+            return None
+        return base64.b64decode(str(data.get("content") or ""))
+    except (RepoError, ValueError, binascii.Error):
+        return None
+
+
 def read_file(fetch: Fetch, owner: str, repo: str, path: str) -> str | None:
     """Return the text of one file, or ``None`` when it is too large or cannot be read."""
     try:

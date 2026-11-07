@@ -67,6 +67,7 @@ class ReadmeResult:
     input_tokens: int
     output_tokens: int
     features: int = 0
+    icon: str = ""  # the path of the icon that was kept; empty when none was found
 
 
 def system_prompt() -> str:
@@ -81,9 +82,12 @@ def redact(text: str) -> str:
     return "\n".join(line for line in text.splitlines() if not _SECRET_LINE.search(line))
 
 
-def build_prompt(texts: dict[str, str]) -> str:
-    """The user message: every document after its path."""
-    return "\n\n".join(f"### {path}\n{text}" for path, text in texts.items())
+def build_prompt(texts: dict[str, str], icons: tuple[str, ...] = ()) -> str:
+    """The user message: every document after its path, then the icon candidates."""
+    parts = [f"### {path}\n{text}" for path, text in texts.items()]
+    if icons:
+        parts.append("### Icon candidates\n" + "\n".join(icons))
+    return "\n\n".join(parts)
 
 
 def _squash(text: str) -> str:
@@ -128,9 +132,10 @@ class ReadmeAssistant:
         texts = {path: redact(text) for path, text in self._readme.texts(settings, repo_id).items()}
         if not texts:
             return ReadmeResult(0, 0, 0, ("No document could be read again.",), 0, 0)
+        icons = self._readme.icon_candidates(repo_id)
         reply = self._ai.generate(
             system_prompt(),
-            build_prompt(texts),
+            build_prompt(texts, icons),
             plan.max_output_tokens,
             purpose="studio",
             title=f"README analysis of {repo_id}",
@@ -153,6 +158,9 @@ class ReadmeAssistant:
             file = _text(purpose.get("file"), 1024)
             if file not in texts:
                 file = ""
+        picked = data.get("icon")
+        icon = _text(picked.get("path"), 1024) if isinstance(picked, dict) else ""
+        kept = self._readme.keep_icon(settings, repo_id, icon)
         self._readme.save_ai(
             repo_id,
             (tagline, summary, file) if summary else None,
@@ -169,6 +177,7 @@ class ReadmeAssistant:
             reply.input_tokens,
             reply.output_tokens,
             len(featured),
+            icon if kept else "",
         )
 
 

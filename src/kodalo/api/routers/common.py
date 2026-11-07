@@ -9,8 +9,12 @@ from fastapi import Depends, HTTPException, Path, Query, status
 from kodalo.api.deps import (
     get_ai_connections,
     get_appearance,
+    get_brand_service,
+    get_copy_assistant,
+    get_design_assistant,
     get_github_connectivity,
     get_ideas_assistant,
+    get_platforms,
     get_readme_assistant,
     get_readme_service,
     get_repo_analyzer,
@@ -20,6 +24,7 @@ from kodalo.api.schemas import (
     AiProvider,
 )
 from kodalo.core.ai import AiConnections
+from kodalo.core.brands.brand import BrandService
 from kodalo.core.repositories import (
     ReadmeAssistant,
     ReadmeService,
@@ -39,11 +44,15 @@ from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import (
     GitHubConnectivity,
 )
+from kodalo.core.settings.platforms import Platforms
 from kodalo.core.studio import StudioInvalidError
+from kodalo.core.studio.copy import CopyAssistant
+from kodalo.core.studio.design import DesignAssistant
 from kodalo.core.studio.ideas import IdeasAssistant
 
 GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
 ThemeSetting = Annotated[Appearance, Depends(get_appearance)]
+PlatformSettings = Annotated[Platforms, Depends(get_platforms)]
 AiSetting = Annotated[AiConnections, Depends(get_ai_connections)]
 AiProviderPath = Annotated[AiProvider, Path(description="The AI provider.")]
 AiModelName = Annotated[str, Path(min_length=1, max_length=128, description="The model name.")]
@@ -52,6 +61,9 @@ Analyzer = Annotated[RepoAnalyzer, Depends(get_repo_analyzer)]
 Readme = Annotated[ReadmeService, Depends(get_readme_service)]
 ReadmeAi = Annotated[ReadmeAssistant, Depends(get_readme_assistant)]
 IdeasAi = Annotated[IdeasAssistant, Depends(get_ideas_assistant)]
+CopyAi = Annotated[CopyAssistant, Depends(get_copy_assistant)]
+DesignAi = Annotated[DesignAssistant, Depends(get_design_assistant)]
+BrandsSvc = Annotated[BrandService, Depends(get_brand_service)]
 
 RepoPath = Annotated[str, Path(max_length=64, description="Stored repository id.")]
 

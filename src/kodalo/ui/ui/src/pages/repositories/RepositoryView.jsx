@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { openExternal, planAnalysis, runAnalysis } from '../../api.js';
+import { iconUrl, openExternal, planAnalysis, runAnalysis } from '../../api.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import Section from '../../components/Section.jsx';
 import { Button } from '../../components/controls.jsx';
@@ -234,6 +234,19 @@ export default function RepositoryView({ repo, busy, onRefresh, onReload, onRun 
     ['Home page', webLink(repo.homepage)],
     ['Default branch', orDash(repo.default_branch)],
     ['License', orDash(repo.license)],
+    [
+      'Icon',
+      repo.has_icon ? (
+        <span className="repo-icon">
+          <img src={iconUrl(repo)} alt="Repository icon" width="32" height="32" />
+          {repo.icon_path}
+        </span>
+      ) : repo.icon_checked ? (
+        'None found'
+      ) : (
+        'Not looked for yet (Refresh with AI on the README analysis looks for it)'
+      ),
+    ],
     [
       'Topics',
       repo.topics.length ? (

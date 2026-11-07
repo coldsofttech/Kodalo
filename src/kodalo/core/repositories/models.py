@@ -137,6 +137,12 @@ class RepoInfo:
     skipped: tuple[SkippedFile, ...] = ()  # project files that were not read
     paths: tuple[Entry, ...] = ()  # every file and folder read; not stored
     has_social_preview: bool = False  # a saved image of the owner's social preview
+    icon_candidates: tuple[str, ...] = ()  # files that may be the icon, best first
+    icon_path: str = ""  # the file the README analysis with AI picked
+    icon_checked_at: str | None = None  # set with no icon_path: it looked and found none
+    has_icon: bool = False  # the picked icon was saved
+    icon_box: tuple[float, float, float, float] | None = None  # the logo in the social preview
+    icon_box_checked: bool = False  # the designer looked for the logo in the social preview
 
 
 def with_percent(sizes: dict[str, int]) -> tuple[Language, ...]:

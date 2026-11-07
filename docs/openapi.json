@@ -844,6 +844,27 @@
         "title": "AiUsageRowResponse",
         "type": "object"
       },
+      "AltOpeningResponse": {
+        "description": "A different opening line for the same caption.",
+        "properties": {
+          "hook_id": {
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 200,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text",
+          "hook_id"
+        ],
+        "title": "AltOpeningResponse",
+        "type": "object"
+      },
       "AnalysisPlanResponse": {
         "description": "What asking the AI to analyze a repository would send and cost. Nothing has been sent yet.",
         "properties": {
@@ -1804,6 +1825,37 @@
         "title": "CapabilityResponse",
         "type": "object"
       },
+      "CaptionModel": {
+        "description": "The caption without its hashtags.",
+        "properties": {
+          "body": {
+            "items": {
+              "maxLength": 300,
+              "type": "string"
+            },
+            "maxItems": 8,
+            "title": "Body",
+            "type": "array"
+          },
+          "cta": {
+            "maxLength": 200,
+            "title": "Cta",
+            "type": "string"
+          },
+          "opening": {
+            "maxLength": 200,
+            "title": "Opening",
+            "type": "string"
+          }
+        },
+        "required": [
+          "opening",
+          "body",
+          "cta"
+        ],
+        "title": "CaptionModel",
+        "type": "object"
+      },
       "ClaimFlagResponse": {
         "properties": {
           "reason": {
@@ -1973,6 +2025,368 @@
           "colors"
         ],
         "title": "ContrastRequest",
+        "type": "object"
+      },
+      "CopyEdit": {
+        "description": "The text as the user edited it. The saved copy is replaced.",
+        "properties": {
+          "alt_opening": {
+            "description": "The alternative opening line.",
+            "maxLength": 200,
+            "title": "Alt Opening",
+            "type": "string"
+          },
+          "brand_id": {
+            "description": "The brand the post is for.",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "caption": {
+            "$ref": "#/components/schemas/CaptionModel"
+          },
+          "hashtags": {
+            "items": {
+              "maxLength": 60,
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Hashtags",
+            "type": "array"
+          },
+          "hook_id": {
+            "default": "",
+            "description": "The hook to open with; empty for the idea's own.",
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "idea_id": {
+            "examples": [
+              "idea-1"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post of the ideas.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          },
+          "slides": {
+            "items": {
+              "$ref": "#/components/schemas/SlideModel"
+            },
+            "maxItems": 12,
+            "minItems": 1,
+            "title": "Slides",
+            "type": "array"
+          }
+        },
+        "required": [
+          "brand_id",
+          "post_type",
+          "idea_id",
+          "slides",
+          "caption",
+          "alt_opening",
+          "hashtags"
+        ],
+        "title": "CopyEdit",
+        "type": "object"
+      },
+      "CopyPlanResponse": {
+        "description": "What asking the AI for the copy would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              1500
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "items": {
+            "description": "The post idea the copy is for.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Items",
+            "type": "array"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "items",
+          "input_tokens",
+          "max_output_tokens"
+        ],
+        "title": "CopyPlanResponse",
+        "type": "object"
+      },
+      "CopyRequest": {
+        "description": "Which post idea to write, with which hook, for the platform of the chosen brand.",
+        "properties": {
+          "brand_id": {
+            "description": "The brand the post is for.",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "hook_id": {
+            "default": "",
+            "description": "The hook to open with; empty for the idea's own.",
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "idea_id": {
+            "examples": [
+              "idea-1"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post of the ideas.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brand_id",
+          "post_type",
+          "idea_id"
+        ],
+        "title": "CopyRequest",
+        "type": "object"
+      },
+      "DesignPlanResponse": {
+        "description": "What asking the AI for the design would send and cost. Nothing has been sent yet.",
+        "properties": {
+          "input_tokens": {
+            "description": "Estimated tokens sent.",
+            "examples": [
+              1500
+            ],
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "items": {
+            "description": "The post idea the copy is for.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Items",
+            "type": "array"
+          },
+          "label": {
+            "examples": [
+              "Claude API"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "max_output_tokens": {
+            "description": "The most tokens the answer can use.",
+            "minimum": 0.0,
+            "title": "Max Output Tokens",
+            "type": "integer"
+          },
+          "model": {
+            "examples": [
+              "claude-haiku-5-5"
+            ],
+            "maxLength": 128,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "maxLength": 32,
+            "title": "Provider",
+            "type": "string"
+          },
+          "sees_social_preview": {
+            "description": "Whether the repository's social preview is sent too, to find its logo.",
+            "title": "Sees Social Preview",
+            "type": "boolean"
+          },
+          "writes_html": {
+            "description": "Whether the AI writes each slide as HTML and CSS (much longer answers).",
+            "title": "Writes Html",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "provider",
+          "label",
+          "model",
+          "items",
+          "input_tokens",
+          "max_output_tokens",
+          "sees_social_preview",
+          "writes_html"
+        ],
+        "title": "DesignPlanResponse",
+        "type": "object"
+      },
+      "DesignResponse": {
+        "description": "How the slides of a written post are laid out.",
+        "properties": {
+          "hook_id": {
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "idea_id": {
+            "maxLength": 64,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "logo_box": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LogoBox"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The logo in the social preview, if found."
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "platform": {
+            "examples": [
+              "instagram"
+            ],
+            "maxLength": 32,
+            "title": "Platform",
+            "type": "string"
+          },
+          "slides": {
+            "items": {
+              "$ref": "#/components/schemas/SlideDesignResponse"
+            },
+            "maxItems": 12,
+            "title": "Slides",
+            "type": "array"
+          },
+          "warnings": {
+            "description": "Plain sentences about what changed.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "platform",
+          "idea_id",
+          "hook_id",
+          "slides",
+          "logo_box",
+          "warnings",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "DesignResponse",
         "type": "object"
       },
       "DoctorCheck": {
@@ -3580,6 +3994,43 @@
         "title": "Logo",
         "type": "object"
       },
+      "LogoBox": {
+        "description": "Where the logo is in the social preview, as fractions of its width and height.",
+        "properties": {
+          "h": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "H",
+            "type": "number"
+          },
+          "w": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 1.0,
+            "title": "W",
+            "type": "number"
+          },
+          "x": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "X",
+            "type": "number"
+          },
+          "y": {
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Y",
+            "type": "number"
+          }
+        },
+        "required": [
+          "x",
+          "y",
+          "w",
+          "h"
+        ],
+        "title": "LogoBox",
+        "type": "object"
+      },
       "LogoPayload": {
         "properties": {
           "content_base64": {
@@ -3985,6 +4436,135 @@
         "title": "PillarResponse",
         "type": "object"
       },
+      "PlatformSettingsResponse": {
+        "description": "What a platform's posts get.",
+        "properties": {
+          "build_custom_images": {
+            "description": "The designer may build custom images as needed.",
+            "title": "Build Custom Images",
+            "type": "boolean"
+          },
+          "default_hashtags": {
+            "description": "Hashtags every post carries, before the ones the AI writes.",
+            "items": {
+              "maxLength": 61,
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Default Hashtags",
+            "type": "array"
+          },
+          "hashtag_count": {
+            "description": "Hashtags on each post, the default ones included.",
+            "examples": [
+              5
+            ],
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Hashtag Count",
+            "type": "integer"
+          },
+          "platform": {
+            "const": "instagram",
+            "examples": [
+              "instagram"
+            ],
+            "title": "Platform",
+            "type": "string"
+          },
+          "use_ai_templates": {
+            "description": "The AI writes the HTML and CSS of each slide instead of the fixed templates.",
+            "title": "Use Ai Templates",
+            "type": "boolean"
+          },
+          "use_icons": {
+            "description": "The designer may use icons.",
+            "title": "Use Icons",
+            "type": "boolean"
+          },
+          "use_repo_icon": {
+            "description": "The designer may use the repository's icon.",
+            "title": "Use Repo Icon",
+            "type": "boolean"
+          },
+          "use_social_preview": {
+            "description": "The designer may use the repository's social preview.",
+            "title": "Use Social Preview",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "platform",
+          "hashtag_count",
+          "default_hashtags",
+          "use_social_preview",
+          "use_repo_icon",
+          "use_icons",
+          "build_custom_images",
+          "use_ai_templates"
+        ],
+        "title": "PlatformSettingsResponse",
+        "type": "object"
+      },
+      "PlatformSettingsUpdate": {
+        "description": "The hashtag settings of a platform. The saved ones are replaced.",
+        "properties": {
+          "build_custom_images": {
+            "default": false,
+            "title": "Build Custom Images",
+            "type": "boolean"
+          },
+          "default_hashtags": {
+            "examples": [
+              [
+                "#sweepito"
+              ]
+            ],
+            "items": {
+              "maxLength": 61,
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Default Hashtags",
+            "type": "array"
+          },
+          "hashtag_count": {
+            "examples": [
+              5
+            ],
+            "maximum": 30.0,
+            "minimum": 0.0,
+            "title": "Hashtag Count",
+            "type": "integer"
+          },
+          "use_ai_templates": {
+            "default": false,
+            "title": "Use Ai Templates",
+            "type": "boolean"
+          },
+          "use_icons": {
+            "default": false,
+            "title": "Use Icons",
+            "type": "boolean"
+          },
+          "use_repo_icon": {
+            "default": false,
+            "title": "Use Repo Icon",
+            "type": "boolean"
+          },
+          "use_social_preview": {
+            "default": false,
+            "title": "Use Social Preview",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "hashtag_count",
+          "default_hashtags"
+        ],
+        "title": "PlatformSettingsUpdate",
+        "type": "object"
+      },
       "PlatformSizeResponse": {
         "properties": {
           "height": {
@@ -4020,6 +4600,108 @@
           "height"
         ],
         "title": "PlatformSizeResponse",
+        "type": "object"
+      },
+      "PostCopyResponse": {
+        "description": "The written post: slides, caption, alternative opening and hashtags.",
+        "properties": {
+          "alt_opening": {
+            "$ref": "#/components/schemas/AltOpeningResponse"
+          },
+          "caption": {
+            "$ref": "#/components/schemas/CaptionModel"
+          },
+          "format": {
+            "enum": [
+              "single_image",
+              "carousel"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "hashtags": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Hashtags",
+            "type": "array"
+          },
+          "hook_id": {
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "hook_text": {
+            "maxLength": 200,
+            "title": "Hook Text",
+            "type": "string"
+          },
+          "idea_id": {
+            "maxLength": 64,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "input_tokens": {
+            "minimum": 0.0,
+            "title": "Input Tokens",
+            "type": "integer"
+          },
+          "output_tokens": {
+            "minimum": 0.0,
+            "title": "Output Tokens",
+            "type": "integer"
+          },
+          "platform": {
+            "examples": [
+              "instagram"
+            ],
+            "maxLength": 32,
+            "title": "Platform",
+            "type": "string"
+          },
+          "review_flags": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewFlagResponse"
+            },
+            "maxItems": 20,
+            "title": "Review Flags",
+            "type": "array"
+          },
+          "slides": {
+            "items": {
+              "$ref": "#/components/schemas/SlideModel"
+            },
+            "maxItems": 12,
+            "title": "Slides",
+            "type": "array"
+          },
+          "warnings": {
+            "description": "Plain sentences about what to check.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "platform",
+          "idea_id",
+          "hook_id",
+          "hook_text",
+          "format",
+          "slides",
+          "caption",
+          "alt_opening",
+          "hashtags",
+          "review_flags",
+          "warnings",
+          "input_tokens",
+          "output_tokens"
+        ],
+        "title": "PostCopyResponse",
         "type": "object"
       },
       "PostIdeaResponse": {
@@ -4328,6 +5010,12 @@
             "title": "Features",
             "type": "integer"
           },
+          "icon": {
+            "description": "The icon kept from the repository; empty when none.",
+            "maxLength": 1024,
+            "title": "Icon",
+            "type": "string"
+          },
           "input_tokens": {
             "description": "Tokens the provider counted for the request.",
             "minimum": 0.0,
@@ -4367,6 +5055,7 @@
           "capabilities",
           "features",
           "use_cases",
+          "icon",
           "skipped",
           "input_tokens",
           "output_tokens"
@@ -4476,6 +5165,11 @@
             "title": "Frameworks",
             "type": "array"
           },
+          "has_icon": {
+            "description": "Whether the repository's own icon is saved.",
+            "title": "Has Icon",
+            "type": "boolean"
+          },
           "has_social_preview": {
             "description": "Whether the owner's social preview image is saved.",
             "title": "Has Social Preview",
@@ -4484,6 +5178,17 @@
           "homepage": {
             "maxLength": 512,
             "title": "Homepage",
+            "type": "string"
+          },
+          "icon_checked": {
+            "description": "Whether the README analysis with AI has looked for an icon. Checked with no icon means it found none.",
+            "title": "Icon Checked",
+            "type": "boolean"
+          },
+          "icon_path": {
+            "description": "The icon's path in the repository; empty when none.",
+            "maxLength": 1024,
+            "title": "Icon Path",
             "type": "string"
           },
           "id": {
@@ -4684,9 +5389,42 @@
           "monorepo_signals",
           "documentation",
           "skipped",
-          "has_social_preview"
+          "has_social_preview",
+          "has_icon",
+          "icon_path",
+          "icon_checked"
         ],
         "title": "RepoResponse",
+        "type": "object"
+      },
+      "ReviewFlagResponse": {
+        "description": "A sentence to check before posting.",
+        "properties": {
+          "reason": {
+            "maxLength": 300,
+            "title": "Reason",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 300,
+            "title": "Text",
+            "type": "string"
+          },
+          "type": {
+            "examples": [
+              "needs_review"
+            ],
+            "maxLength": 24,
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "text",
+          "reason"
+        ],
+        "title": "ReviewFlagResponse",
         "type": "object"
       },
       "SkippedFileResponse": {
@@ -4714,6 +5452,138 @@
           "reason"
         ],
         "title": "SkippedFileResponse",
+        "type": "object"
+      },
+      "SlideDesignResponse": {
+        "description": "How one slide is laid out. Its text is the saved copy's, never the design's.",
+        "properties": {
+          "accent": {
+            "enum": [
+              "primary",
+              "secondary"
+            ],
+            "title": "Accent",
+            "type": "string"
+          },
+          "align": {
+            "enum": [
+              "left",
+              "center"
+            ],
+            "title": "Align",
+            "type": "string"
+          },
+          "has_html": {
+            "description": "Whether the AI wrote the slide as HTML and CSS, served by `design/slide`.",
+            "title": "Has Html",
+            "type": "boolean"
+          },
+          "has_svg": {
+            "description": "Whether the slide has a drawing, served by `design/svg`.",
+            "title": "Has Svg",
+            "type": "boolean"
+          },
+          "icon": {
+            "description": "A Bootstrap Icons name without bi-; or empty.",
+            "maxLength": 64,
+            "title": "Icon",
+            "type": "string"
+          },
+          "image_fit": {
+            "enum": [
+              "cover",
+              "contain"
+            ],
+            "title": "Image Fit",
+            "type": "string"
+          },
+          "image_source": {
+            "enum": [
+              "none",
+              "social_preview",
+              "repo_icon",
+              "custom_svg"
+            ],
+            "title": "Image Source",
+            "type": "string"
+          },
+          "media": {
+            "enum": [
+              "none",
+              "top",
+              "bottom"
+            ],
+            "title": "Media",
+            "type": "string"
+          },
+          "template": {
+            "enum": [
+              "hook",
+              "problem",
+              "step",
+              "proof",
+              "summary",
+              "cta",
+              "image"
+            ],
+            "title": "Template",
+            "type": "string"
+          }
+        },
+        "required": [
+          "template",
+          "align",
+          "media",
+          "accent",
+          "icon",
+          "image_source",
+          "image_fit",
+          "has_svg",
+          "has_html"
+        ],
+        "title": "SlideDesignResponse",
+        "type": "object"
+      },
+      "SlideModel": {
+        "description": "One slide of a carousel, or the text of a single image.",
+        "properties": {
+          "alt_text": {
+            "maxLength": 200,
+            "title": "Alt Text",
+            "type": "string"
+          },
+          "body": {
+            "maxLength": 300,
+            "title": "Body",
+            "type": "string"
+          },
+          "headline": {
+            "maxLength": 120,
+            "title": "Headline",
+            "type": "string"
+          },
+          "role": {
+            "examples": [
+              "hook"
+            ],
+            "maxLength": 16,
+            "title": "Role",
+            "type": "string"
+          },
+          "visual_note": {
+            "maxLength": 300,
+            "title": "Visual Note",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "headline",
+          "body",
+          "visual_note",
+          "alt_text"
+        ],
+        "title": "SlideModel",
         "type": "object"
       },
       "SocialPlatformResponse": {
@@ -7408,6 +8278,61 @@
         ]
       }
     },
+    "/api/v1/repositories/{repo_id}/icon": {
+      "get": {
+        "description": "Return the icon the README analysis with AI found in the repository and kept.\n``has_icon`` on the repository says whether there is one.",
+        "operationId": "get_icon_api_v1_repositories__repo_id__icon_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/jpeg": {},
+              "image/png": {},
+              "image/svg+xml": {},
+              "image/webp": {}
+            },
+            "description": "The icon image."
+          },
+          "404": {
+            "description": "No repository has that id, or it has no icon."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the repository's icon",
+        "tags": [
+          "v1",
+          "v1"
+        ]
+      }
+    },
     "/api/v1/repositories/{repo_id}/social-preview": {
       "get": {
         "description": "Return the social preview the owner uploaded on GitHub, saved when the repository was read\nwith the GitHub CLI. ``has_social_preview`` on the repository says whether there is one.",
@@ -8386,6 +9311,111 @@
         ]
       }
     },
+    "/api/v1/settings/platforms/{platform}": {
+      "get": {
+        "description": "Return how many hashtags a post for this platform gets and the ones every post carries.",
+        "operationId": "get_platform_api_v1_settings_platforms__platform__get",
+        "parameters": [
+          {
+            "description": "The social platform.",
+            "in": "path",
+            "name": "platform",
+            "required": true,
+            "schema": {
+              "const": "instagram",
+              "description": "The social platform.",
+              "examples": [
+                "instagram"
+              ],
+              "title": "Platform",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a platform's settings",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Choose the number of hashtags (the default ones included), the default hashtags and the\nvisuals the designer may use. The post copywriter uses the hashtag settings.",
+        "operationId": "set_platform_api_v1_settings_platforms__platform__put",
+        "parameters": [
+          {
+            "description": "The social platform.",
+            "in": "path",
+            "name": "platform",
+            "required": true,
+            "schema": {
+              "const": "instagram",
+              "description": "The social platform.",
+              "examples": [
+                "instagram"
+              ],
+              "title": "Platform",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformSettingsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlatformSettingsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set a platform's settings",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/settings/theme": {
       "get": {
         "description": "Return the theme the window uses. The default, system, follows the operating system.",
@@ -8697,9 +9727,950 @@
         ]
       }
     },
-    "/api/v1/studio/repositories/{repo_id}/ideas": {
+    "/api/v1/studio/repositories/{repo_id}/copy": {
+      "get": {
+        "description": "Return the copy saved for this idea and hook; 404 when none was written yet.",
+        "operationId": "get_copy_api_v1_studio_repositories__repo_id__copy_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The brand the post is for.",
+            "in": "query",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "The brand the post is for.",
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The kind of post of the ideas.",
+            "in": "query",
+            "name": "post_type",
+            "required": true,
+            "schema": {
+              "description": "The kind of post of the ideas.",
+              "enum": [
+                "tool",
+                "feature"
+              ],
+              "title": "Post Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which list the focus is in; empty for a tool post.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Which list the focus is in; empty for a tool post.",
+              "enum": [
+                "",
+                "features",
+                "use_cases",
+                "capabilities"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The focus's name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The focus's name.",
+              "maxLength": 128,
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "idea-1"
+              ],
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Idea Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The hook to open with; empty for the idea's own.",
+            "in": "query",
+            "name": "hook_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The hook to open with; empty for the idea's own.",
+              "maxLength": 64,
+              "title": "Hook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCopyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the saved post copy",
+        "tags": [
+          "v1"
+        ]
+      },
       "post": {
-        "description": "Send the saved README analysis for the chosen tool, feature, use case or capability once\nto the default AI model and return a strategy, three angles with hooks and five post ideas.\nClaims are kept only when their quote was in what was sent. Nothing is saved.",
+        "description": "Send the chosen idea once to the default AI model and return the slide script or image\ntext, a caption with an alternative opening, alt text and hashtags. The result is saved for\nthis idea and hook, replacing the copy saved before.",
+        "operationId": "make_copy_api_v1_studio_repositories__repo_id__copy_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCopyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Write the post copy with the AI",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Replace the saved copy with the text as the user edited it; 404 when none was written.",
+        "operationId": "save_copy_api_v1_studio_repositories__repo_id__copy_put",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyEdit"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostCopyResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Save the edited post copy",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/copy/plan": {
+      "post": {
+        "description": "Say what the AI would be sent for the chosen idea and estimate the tokens. Nothing is\nsent.",
+        "operationId": "plan_copy_api_v1_studio_repositories__repo_id__copy_plan_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CopyPlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan the AI post copy request",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/design": {
+      "get": {
+        "description": "Return the design saved for this post; 404 when none was made yet.",
+        "operationId": "get_design_api_v1_studio_repositories__repo_id__design_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The brand the post is for.",
+            "in": "query",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "The brand the post is for.",
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The kind of post of the ideas.",
+            "in": "query",
+            "name": "post_type",
+            "required": true,
+            "schema": {
+              "description": "The kind of post of the ideas.",
+              "enum": [
+                "tool",
+                "feature"
+              ],
+              "title": "Post Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which list the focus is in; empty for a tool post.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Which list the focus is in; empty for a tool post.",
+              "enum": [
+                "",
+                "features",
+                "use_cases",
+                "capabilities"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The focus's name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The focus's name.",
+              "maxLength": 128,
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "idea-1"
+              ],
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Idea Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The hook to open with; empty for the idea's own.",
+            "in": "query",
+            "name": "hook_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The hook to open with; empty for the idea's own.",
+              "maxLength": 64,
+              "title": "Hook Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the saved post design",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Ask the default AI model once how to lay out each slide of the saved copy: template,\nalignment, picture, icon and drawing, from what Settings > Platforms allows. The text is never\nthe AI's. The plan is saved for this post, replacing the one saved before.",
+        "operationId": "make_design_api_v1_studio_repositories__repo_id__design_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Design the post with the AI",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/design/plan": {
+      "post": {
+        "description": "Say what the AI would be sent to design the saved copy and estimate the tokens. Nothing is\nsent.",
+        "operationId": "plan_design_api_v1_studio_repositories__repo_id__design_plan_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesignPlanResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Plan the AI post design request",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/design/slide": {
+      "get": {
+        "description": "Return the page of a slide the AI wrote as HTML and CSS: cleaned, with the brand's colors\nfor the mode, the pictures and icons filled in, and a policy that lets it load nothing and run\nnothing. It is meant to be shown in a sandboxed frame.",
+        "operationId": "get_design_slide_api_v1_studio_repositories__repo_id__design_slide_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The brand the post is for.",
+            "in": "query",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "The brand the post is for.",
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The kind of post of the ideas.",
+            "in": "query",
+            "name": "post_type",
+            "required": true,
+            "schema": {
+              "description": "The kind of post of the ideas.",
+              "enum": [
+                "tool",
+                "feature"
+              ],
+              "title": "Post Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which list the focus is in; empty for a tool post.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Which list the focus is in; empty for a tool post.",
+              "enum": [
+                "",
+                "features",
+                "use_cases",
+                "capabilities"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The focus's name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The focus's name.",
+              "maxLength": 128,
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "idea-1"
+              ],
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Idea Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The hook to open with; empty for the idea's own.",
+            "in": "query",
+            "name": "hook_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The hook to open with; empty for the idea's own.",
+              "maxLength": 64,
+              "title": "Hook Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The slide, counted from 0.",
+            "in": "query",
+            "name": "slide",
+            "required": true,
+            "schema": {
+              "description": "The slide, counted from 0.",
+              "maximum": 11,
+              "minimum": 0,
+              "title": "Slide",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The brand's colors.",
+            "in": "query",
+            "name": "mode",
+            "required": false,
+            "schema": {
+              "default": "light",
+              "description": "The brand's colors.",
+              "enum": [
+                "light",
+                "dark"
+              ],
+              "title": "Mode",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "text/html": {}
+            },
+            "description": "The slide page."
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get one AI-written slide as a page",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/design/svg": {
+      "get": {
+        "description": "Return the drawing the AI made for one slide, already cleaned: plain shapes only.",
+        "operationId": "get_design_svg_api_v1_studio_repositories__repo_id__design_svg_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The brand the post is for.",
+            "in": "query",
+            "name": "brand_id",
+            "required": true,
+            "schema": {
+              "description": "The brand the post is for.",
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Brand Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The kind of post of the ideas.",
+            "in": "query",
+            "name": "post_type",
+            "required": true,
+            "schema": {
+              "description": "The kind of post of the ideas.",
+              "enum": [
+                "tool",
+                "feature"
+              ],
+              "title": "Post Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which list the focus is in; empty for a tool post.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Which list the focus is in; empty for a tool post.",
+              "enum": [
+                "",
+                "features",
+                "use_cases",
+                "capabilities"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The focus's name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The focus's name.",
+              "maxLength": 128,
+              "title": "Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "examples": [
+                "idea-1"
+              ],
+              "maxLength": 64,
+              "minLength": 1,
+              "title": "Idea Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The hook to open with; empty for the idea's own.",
+            "in": "query",
+            "name": "hook_id",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The hook to open with; empty for the idea's own.",
+              "maxLength": 64,
+              "title": "Hook Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The slide, counted from 0.",
+            "in": "query",
+            "name": "slide",
+            "required": true,
+            "schema": {
+              "description": "The slide, counted from 0.",
+              "maximum": 11,
+              "minimum": 0,
+              "title": "Slide",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              },
+              "image/svg+xml": {}
+            },
+            "description": "The cleaned SVG."
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the drawing of one slide",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/ideas": {
+      "get": {
+        "description": "Return the post ideas saved for this repository and focus; 404 when none were made yet.",
+        "operationId": "get_ideas_api_v1_studio_repositories__repo_id__ideas_get",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The kind of post.",
+            "in": "query",
+            "name": "post_type",
+            "required": true,
+            "schema": {
+              "description": "The kind of post.",
+              "enum": [
+                "tool",
+                "feature"
+              ],
+              "title": "Post Type",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Which list the focus is in; empty for a tool post.",
+            "in": "query",
+            "name": "kind",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "Which list the focus is in; empty for a tool post.",
+              "enum": [
+                "",
+                "features",
+                "use_cases",
+                "capabilities"
+              ],
+              "title": "Kind",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The focus's name.",
+            "in": "query",
+            "name": "name",
+            "required": false,
+            "schema": {
+              "default": "",
+              "description": "The focus's name.",
+              "maxLength": 128,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeasResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the saved post ideas",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Send the saved README analysis for the chosen tool, feature, use case or capability once\nto the default AI model and return a strategy, three angles with hooks and five post ideas.\nClaims are kept only when their quote was in what was sent. The result is saved for this\nrepository and focus, replacing the ones saved before.",
         "operationId": "make_ideas_api_v1_studio_repositories__repo_id__ideas_post",
         "parameters": [
           {

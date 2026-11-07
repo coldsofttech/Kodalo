@@ -18,7 +18,10 @@ from kodalo.core.repositories import (
 )
 from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import GitHubConnectivity
+from kodalo.core.settings.platforms import Platforms
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
+from kodalo.core.studio.copy import CopyAssistant
+from kodalo.core.studio.design import DesignAssistant
 from kodalo.core.studio.ideas import IdeasAssistant
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
@@ -42,6 +45,9 @@ class Services:
     readme: ReadmeService
     assistant: ReadmeAssistant
     ideas: IdeasAssistant
+    copy: CopyAssistant
+    platforms: Platforms
+    design: DesignAssistant
 
 
 def data_dir() -> Path:
@@ -59,11 +65,15 @@ def _build_services() -> Services:
         frameworks_dir=folder / "frameworks",
         tooling_dir=folder / "tooling",
         previews_dir=folder / "social_previews",
+        icons_dir=folder / "repo_icons",
     )
     ai = AiConnections(database)
     with suppress(Exception):  # old history is removed when the services start
         ai.history.purge_expired()
     readme = ReadmeService(database, repos)
+    ideas = IdeasAssistant(readme, ai, database)
+    platforms = Platforms(database)
+    copy = CopyAssistant(readme, repos, ideas, ai, platforms, database)
     return Services(
         database,
         BrandService(database, folder),
@@ -74,7 +84,10 @@ def _build_services() -> Services:
         RepoAnalyzer(repos, ai, folder / "parsers", folder / "frameworks", folder / "tooling"),
         readme,
         ReadmeAssistant(readme, ai),
-        IdeasAssistant(readme, ai),
+        ideas,
+        copy,
+        platforms,
+        DesignAssistant(copy, repos, platforms, ai, database),
     )
 
 
@@ -96,6 +109,22 @@ def get_github_connectivity() -> GitHubConnectivity:
     """Return the GitHub connectivity setting, opening the database on first use."""
     try:
         return _services().github
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_design_assistant() -> DesignAssistant:
+    """Return the AI post design assistant, opening the database on first use."""
+    try:
+        return _services().design
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_platforms() -> Platforms:
+    """Return the platform settings, opening the database on first use."""
+    try:
+        return _services().platforms
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
@@ -161,6 +190,14 @@ def configure(data_dir: Path | None) -> None:
     global _data_dir
     reset_services()
     _data_dir = data_dir
+
+
+def get_copy_assistant() -> CopyAssistant:
+    """Return the AI post copy assistant, opening the database on first use."""
+    try:
+        return _services().copy
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 
 
 def get_ideas_assistant() -> IdeasAssistant:

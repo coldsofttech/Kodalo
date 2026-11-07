@@ -51,6 +51,13 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `repositories add --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 2000 KB (default 200). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
 
+### `settings platforms`
+
+| Command | What it does |
+| --- | --- |
+| `settings platforms show <platform>` | Show how many hashtags a post for that platform gets (`hashtags per post`) and the default hashtags every post carries. `<platform>` is `instagram`. `--json` for machine-readable output. |
+| `settings platforms set <platform>` | `--hashtags N` sets the number of hashtags on each post, the default ones included, 0 to 30 (default 5). `--default-hashtags "#a #b"` sets the hashtags every post carries before the ones the AI writes; an empty value removes them. `--use-social-preview/--no-social-preview`, `--use-repo-icon/--no-repo-icon`, `--use-icons/--no-icons` and `--build-custom-images/--no-custom-images` choose which visuals the designer may use, and `--use-ai-templates/--no-ai-templates` lets the AI write the HTML and CSS of each slide instead of the fixed templates (all off until chosen). What is left out stays as it is. Exits with 1 when the number is out of range or there are more default hashtags than hashtags. |
+
 ### `settings ai`
 
 Connect Kodalo to an AI provider: `claude_api` (Claude API), `claude_code` (the Claude Code program on this computer), `chatgpt_api` (ChatGPT API) or `gemini_api` (Gemini API). Several connections can be on at once, and one is the default. An API key is never an argument: `--key` asks for it at a hidden prompt (or reads it when piped), and it is kept in the system keychain (Windows Credential Manager), never in the database. Only the last four characters are shown afterwards. Claude Code uses your own sign-in and needs no key; `test` only checks that `claude` is installed.
@@ -85,7 +92,22 @@ Connect Kodalo to an AI provider: `claude_api` (Claude API), `claude_code` (the 
 
 ### `studio`
 
-Studio's post steps will be added here. Checking, reading and analyzing a repository moved to `repositories`.
+Make a post from an added repository, step by step: ideas, then copy, then design. Checking, reading and analyzing a repository is done with `repositories`. Every step takes the repository id, and the steps after ideas also take the brand (`--brand`, name or id; its canvas must be for Instagram) and the idea (`--idea`, e.g. `idea-1`; `--hook` picks another hook). A tool post is the default; for a feature post add `--type feature`, `--kind` (`features`, `use_cases` or `capabilities`) and `--name`. Commands that ask the AI print what would be sent and the expected tokens, then ask first; `--yes` skips the question. `--json` prints machine-readable output. A command that shows something saved exits with 1 when nothing was made yet.
+
+| Command | What it does |
+| --- | --- |
+| `studio ideas plan <id>` | Say what the AI would be sent for the ideas and what it costs. Nothing is sent. |
+| `studio ideas make <id>` | Ask the default AI model for a strategy, three angles with hooks and five post ideas. Replaces the ones saved before. |
+| `studio ideas show <id>` | Show the saved ideas. |
+| `studio copy plan <id>` | Say what the AI would be sent for the copy. Nothing is sent. |
+| `studio copy make <id>` | Write the slides, caption, alternative opening and hashtags of an idea with the AI. Replaces the copy saved before. |
+| `studio copy show <id>` | Show the saved copy. |
+| `studio copy edit <id> --file <json>` | Replace the saved copy with your edit. The file has the shape of `studio copy show --json`; the limits are applied. |
+| `studio design plan <id>` | Say what the AI would be sent to design the saved copy. Nothing is sent. |
+| `studio design make <id>` | Ask the AI how to lay out each slide. Replaces the design saved before. |
+| `studio design show <id>` | Show the saved design. |
+| `studio design slide <id> --slide N` | Export one AI-written slide as a self-contained HTML page; `--mode light\|dark`, `--output` writes a file instead of stdout. |
+| `studio design svg <id> --slide N` | Export the drawing the AI made for one slide as SVG; `--output` writes a file. |
 
 ### `brand`
 

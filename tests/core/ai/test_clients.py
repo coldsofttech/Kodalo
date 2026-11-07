@@ -180,3 +180,55 @@ def test_claude_code_failure_gives_its_own_reason(monkeypatch: pytest.MonkeyPatc
     request = _claude_code(monkeypatch, lambda command, **kwargs: Errored())
     with pytest.raises(AiConnectionError, match="did not answer: Prompt is too long"):
         clients.generate(request)
+
+
+IMAGES = (("image/png", b"\x89PNG\r\n\x1a\n"),)
+
+
+@pytest.mark.parametrize(
+    ("provider", "answer"),
+    [
+        ("claude_api", {"content": [{"text": "ok"}], "usage": {}}),
+        ("chatgpt_api", {"choices": [{"message": {"content": "ok"}}], "usage": {}}),
+        ("gemini_api", {"candidates": [{"content": {"parts": [{"text": "ok"}]}}]}),
+    ],
+)
+def test_an_image_is_sent_to_each_api_provider(
+    monkeypatch: pytest.MonkeyPatch, provider: str, answer: dict[str, Any]
+) -> None:
+    seen = _serve(monkeypatch, answer)
+    request = GenerateRequest(provider, "https://x", "k", "m", "S", "P", 10, images=IMAGES)
+
+    assert clients.generate(request).text == "ok"
+
+    body = json.loads(seen[0].data)  # type: ignore[arg-type]
+    assert "iVBORw0KGgo" in json.dumps(body)  # the PNG header, base64
+    assert body.get("messages") or body.get("contents")
+
+
+def test_claude_code_gets_only_a_file_reader_for_an_image(monkeypatch: pytest.MonkeyPatch) -> None:
+    seen: dict[str, Any] = {}
+
+    class Done:
+        returncode = 0
+        stdout = json.dumps({"result": "ok", "usage": {}})
+
+    def run(command: list[str], **kwargs: Any) -> Done:
+        seen["command"] = command
+        seen["input"] = kwargs["input"]
+        seen["files"] = sorted(p.name for p in Path(kwargs["cwd"]).iterdir())
+        return Done()
+
+    request = _claude_code(monkeypatch, run)
+    request = GenerateRequest(
+        "claude_code", "", "", "haiku", "SYSTEM", "PROMPT", 100, None, 30, images=IMAGES
+    )
+
+    clients.generate(request)
+
+    command = seen["command"]
+    assert command[command.index("--tools") + 1] == "Read"
+    assert command[command.index("--allowedTools") + 1] == "Read"
+    assert command[command.index("--max-turns") + 1] != "1"
+    assert "image-1.png" in seen["input"]
+    assert "image-1.png" in seen["files"]

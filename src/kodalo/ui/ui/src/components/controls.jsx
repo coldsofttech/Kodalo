@@ -65,6 +65,27 @@ export function TextField({
   );
 }
 
+/** @param {{ label: string, value: string, onChange: (value: string) => void, hint?: string, maxLength?: number, rows?: number, disabled?: boolean }} props */
+export function TextArea({ label, value, onChange, hint, maxLength, rows = 3, disabled }) {
+  const ref = useElement('value', value, TEXT_EVENTS, (el) => onChange(String(el.value ?? '')));
+  return (
+    <div className="field">
+      <fluent-text-area
+        ref={ref}
+        aria-label={label}
+        maxlength={maxLength}
+        rows={rows}
+        disabled={disabled}
+        resize="vertical"
+        appearance="outline"
+      >
+        {label}
+      </fluent-text-area>
+      {hint ? <p className="hint">{hint}</p> : null}
+    </div>
+  );
+}
+
 /** @param {{ label: string, value: number, min: number, max: number, onChange: (value: number) => void, hint?: string }} props */
 export function NumberField({ label, value, min, max, onChange, hint }) {
   const ref = useElement('value', String(value), TEXT_EVENTS, (el) => {

@@ -519,6 +519,20 @@ class ReadmeService:
                 )
         return texts
 
+    def icon_candidates(self, repo_id: str) -> tuple[str, ...]:
+        """The files that may be the icon of the stored repository, best first."""
+        return self._repos.get(repo_id).icon_candidates
+
+    def keep_icon(self, settings: GitHubSettings, repo_id: str, path: str) -> bool:
+        """Copy the icon the AI picked from the repository into the data folder. A path that is
+        not one of the candidates, or a file that is not an image, counts as no icon. Returns
+        whether one was kept; either way the repository is marked as looked at."""
+        info = self._repos.get(repo_id)
+        data = (
+            self._repos.read_bytes(settings, info, path) if path in info.icon_candidates else None
+        )
+        return self._repos.save_icon(repo_id, path, data)
+
     def save_ai(
         self,
         repo_id: str,

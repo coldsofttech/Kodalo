@@ -1,23 +1,6 @@
 /** Helpers for the post ideas the AI returns. */
 
 /**
- * Whether an idea repeats one of the statements that should not be repeated without care.
- * @param {any} idea
- * @param {{ text: string }[]} avoid
- */
-export function overlapsAvoided(idea, avoid) {
-  const text = [
-    idea.working_title,
-    idea.objective,
-    ...idea.outline,
-    ...idea.claims_used.flatMap((/** @type {any} */ c) => [c.text, c.quote]),
-  ]
-    .join(' ')
-    .toLowerCase();
-  return avoid.filter((claim) => claim.text && text.includes(claim.text.toLowerCase()));
-}
-
-/**
  * The idea as plain text to paste elsewhere, with the chosen hook and the sources of its claims.
  * @param {any} idea
  * @param {string} hook

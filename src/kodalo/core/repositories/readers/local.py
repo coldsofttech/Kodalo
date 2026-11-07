@@ -144,6 +144,17 @@ def read_file(folder: Path, path: str) -> str | None:
         return None
 
 
+def read_bytes(folder: Path, path: str, limit: int) -> bytes | None:
+    """Return the bytes of one file in ``folder``, or ``None`` when over ``limit`` or unreadable."""
+    try:
+        target = (folder / path).resolve()
+        if not target.is_relative_to(folder.resolve()) or target.stat().st_size > limit:
+            return None
+        return target.read_bytes()
+    except OSError:
+        return None
+
+
 def _top_level(folder: Path) -> tuple[Entry, ...]:
     try:
         children = [c for c in folder.iterdir() if c.name != ".git"]

@@ -9,15 +9,19 @@ model. Nothing is saved: the result is shown and reused by the caller.
 
 import json
 import re
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from importlib import resources
 from typing import Any
+
+from sqlalchemy import select
 
 from kodalo.core.ai import AiConnections
 from kodalo.core.repositories.ai.parsers import _reply_json, estimate_tokens
 from kodalo.core.repositories.errors import RepoNotFoundError
 from kodalo.core.repositories.readme import Feature, ReadmeAnalysis, ReadmeService
 from kodalo.core.settings.ai import AiInvalidError
+from kodalo.core.storage import Database
+from kodalo.core.storage.models import StudioIdeas
 
 POST_TYPES = ("tool", "feature")
 FOCUS_KINDS = ("features", "use_cases", "capabilities")
@@ -152,9 +156,35 @@ def _lines(value: object, limit: int, count: int) -> tuple[str, ...]:
 class IdeasAssistant:
     """Builds the input for one selection and runs the single AI request."""
 
-    def __init__(self, readme: ReadmeService, ai: AiConnections) -> None:
+    def __init__(self, readme: ReadmeService, ai: AiConnections, database: Database) -> None:
         self._readme = readme
         self._ai = ai
+        self._database = database
+
+    def saved(self, repo_id: str, post_type: str, kind: str = "", name: str = "") -> Ideas | None:
+        """The ideas kept for this repository and focus, or ``None`` when none were made yet."""
+        with self._database.session() as session:
+            row = session.scalars(
+                select(StudioIdeas).where(
+                    StudioIdeas.repository_id == repo_id,
+                    StudioIdeas.focus_key == _focus_key(post_type, kind, name),
+                )
+            ).first()
+            return _ideas_from_json(row.payload) if row is not None else None
+
+    def _save(self, repo_id: str, post_type: str, kind: str, name: str, ideas: Ideas) -> None:
+        payload = json.dumps(asdict(ideas), ensure_ascii=False)
+        key = _focus_key(post_type, kind, name)
+        with self._database.session() as session:
+            row = session.scalars(
+                select(StudioIdeas).where(
+                    StudioIdeas.repository_id == repo_id, StudioIdeas.focus_key == key
+                )
+            ).first()
+            if row is None:
+                session.add(StudioIdeas(repository_id=repo_id, focus_key=key, payload=payload))
+            else:
+                row.payload = payload
 
     def _request(
         self, repo_id: str, post_type: str, kind: str, name: str
@@ -205,7 +235,7 @@ class IdeasAssistant:
         warnings: list[str] = []
         angles = _angles(data.get("angles"), quotes, warnings)
         ideas = _ideas(data.get("post_ideas"), angles, quotes, warnings)
-        return Ideas(
+        made = Ideas(
             post_type,
             name,
             _strategy(data.get("strategy"), quotes, warnings),
@@ -216,6 +246,60 @@ class IdeasAssistant:
             reply.input_tokens,
             reply.output_tokens,
         )
+        self._save(repo_id, post_type, kind, name, made)
+        return made
+
+
+def _focus_key(post_type: str, kind: str, name: str) -> str:
+    return f"{post_type}|{kind}|{name}"[:600]
+
+
+def _claims_from(items: list[dict[str, Any]]) -> tuple[Claim, ...]:
+    return tuple(Claim(**item) for item in items)
+
+
+def _ideas_from_json(payload: str) -> Ideas:
+    """Rebuild what ``asdict`` wrote when the ideas were saved."""
+    data = json.loads(payload)
+    strategy = data["strategy"]
+    return Ideas(
+        data["post_type"],
+        data["focus"],
+        Strategy(
+            strategy["objective"],
+            strategy["audience"],
+            tuple(strategy["pain_points"]),
+            strategy["positioning"],
+            tuple((name, text) for name, text in strategy["pillars"]),
+            _claims_from(strategy["key_messages"]),
+        ),
+        tuple(
+            Angle(
+                **{
+                    **angle,
+                    "key_claims": _claims_from(angle["key_claims"]),
+                    "hooks": tuple(Hook(**hook) for hook in angle["hooks"]),
+                    "cautions": tuple(angle["cautions"]),
+                }
+            )
+            for angle in data["angles"]
+        ),
+        tuple(
+            PostIdea(
+                **{
+                    **idea,
+                    "outline": tuple(idea["outline"]),
+                    "asset_needs": tuple(idea["asset_needs"]),
+                    "claims_used": _claims_from(idea["claims_used"]),
+                }
+            )
+            for idea in data["post_ideas"]
+        ),
+        tuple(AvoidedClaim(**item) for item in data["claims_to_avoid"]),
+        tuple(data["warnings"]),
+        data["input_tokens"],
+        data["output_tokens"],
+    )
 
 
 def _feature_entry(feature: Feature) -> dict[str, Any]:

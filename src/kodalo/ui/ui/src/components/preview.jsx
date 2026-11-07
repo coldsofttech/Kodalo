@@ -121,9 +121,9 @@ function Slide({ brand, data, layout, mode, kind, index, total, isLast, onExpand
 /**
  * One slide at the size of the window, in a modal dialog. Esc closes it (the browser's own
  * behavior), the arrow keys and the buttons step through the slides, and a click outside closes it.
- * @param {{ slide: any, index: number, count: number, onStep: (delta: number) => void, onClose: () => void }} props
+ * @param {{ slide?: any, index: number, count: number, onStep: (delta: number) => void, onClose: () => void, children?: import('react').ReactNode }} props
  */
-function FullScreen({ slide, index, count, onStep, onClose }) {
+export function FullScreen({ slide, index, count, onStep, onClose, children }) {
   const dialog = useRef(/** @type {HTMLDialogElement | null} */ (null));
   useEffect(() => {
     const element = dialog.current;
@@ -181,7 +181,7 @@ function FullScreen({ slide, index, count, onStep, onClose }) {
           <i className="bi bi-x-lg" aria-hidden="true" />
         </button>
       </div>
-      <Slide {...slide} />
+      {children ?? <Slide {...slide} />}
     </dialog>
   );
 }

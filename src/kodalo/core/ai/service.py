@@ -126,7 +126,14 @@ class AiConnections:
         raise AiInvalidError("Choose a default AI connection in Settings first.")
 
     def generate(
-        self, system: str, prompt: str, max_tokens: int, *, purpose: str, title: str
+        self,
+        system: str,
+        prompt: str,
+        max_tokens: int,
+        *,
+        purpose: str,
+        title: str,
+        images: tuple[tuple[str, bytes], ...] = (),
     ) -> Generation:
         """Send ``prompt`` to the default model. The model's saved settings apply, and its
         maximum tokens, when set, caps ``max_tokens``. The call is added to the history under
@@ -143,6 +150,7 @@ class AiConnections:
             max_tokens=min(max_tokens, target.max_tokens or max_tokens),
             temperature=target.temperature,
             timeout_s=target.timeout_s,
+            images=images,
         )
         sent = f"{system}\n\n{prompt}"
         try:

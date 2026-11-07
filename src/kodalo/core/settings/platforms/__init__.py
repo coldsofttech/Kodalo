@@ -1,0 +1,23 @@
+"""Platforms: how many hashtags a post gets and which ones every post carries."""
+
+from kodalo.core.settings.platforms.errors import PlatformInvalidError
+from kodalo.core.settings.platforms.service import (
+    DEFAULT_HASHTAG_COUNT,
+    MAX_HASHTAGS,
+    PLATFORMS,
+    VISUALS,
+    Platforms,
+    PlatformSettings,
+    clean_hashtags,
+)
+
+__all__ = [
+    "DEFAULT_HASHTAG_COUNT",
+    "MAX_HASHTAGS",
+    "PLATFORMS",
+    "VISUALS",
+    "PlatformInvalidError",
+    "PlatformSettings",
+    "Platforms",
+    "clean_hashtags",
+]

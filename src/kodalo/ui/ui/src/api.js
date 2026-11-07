@@ -225,6 +225,18 @@ export const getGithubSettings = () => request(GITHUB_SETTINGS);
 /** @param {{ mode: string, local_folder?: string, manifest_limit?: number, document_limit?: number, document_max_kb?: number }} body */
 export const saveGithubSettings = (body) => request(GITHUB_SETTINGS, { method: 'PUT', json: body });
 export const getTheme = () => request('/api/v1/settings/theme');
+/** @param {string} platform */
+export const getPlatformSettings = (platform) =>
+  request(`/api/v1/settings/platforms/${encodeURIComponent(platform)}`);
+/**
+ * @param {string} platform
+ * @param {{ hashtag_count: number, default_hashtags: string[] }} body
+ */
+export const savePlatformSettings = (platform, body) =>
+  request(`/api/v1/settings/platforms/${encodeURIComponent(platform)}`, {
+    method: 'PUT',
+    json: body,
+  });
 /** @param {string} theme */
 export const saveTheme = (theme) =>
   request('/api/v1/settings/theme', { method: 'PUT', json: { theme } });
@@ -274,6 +286,15 @@ export const planIdeas = (repoId, body) =>
     json: body,
   });
 /**
+ * The post ideas saved for this repository and focus; rejects when none were made yet.
+ * @param {string} repoId
+ * @param {{ post_type: string, kind: string, name: string }} body
+ */
+export const getIdeas = (repoId, body) =>
+  request(
+    `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/ideas?${new URLSearchParams(body)}`,
+  );
+/**
  * Ask the AI once for a strategy, three angles and five post ideas for a tool or a feature.
  * @param {string} repoId
  * @param {{ post_type: string, kind: string, name: string }} body
@@ -283,6 +304,76 @@ export const makeIdeas = (repoId, body) =>
     method: 'POST',
     json: body,
   });
+/** @typedef {{ brand_id: string, post_type: string, kind: string, name: string, idea_id: string, hook_id: string }} CopyRequest */
+const copyUrl = (/** @type {string} */ repoId) =>
+  `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/copy`;
+/**
+ * The post copy saved for this idea and hook; rejects with status 404 when none was written yet.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const getCopy = (repoId, body) => request(`${copyUrl(repoId)}?${new URLSearchParams(body)}`);
+/**
+ * What asking the AI for the post copy would send and cost; nothing is sent.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const planCopy = (repoId, body) =>
+  request(`${copyUrl(repoId)}/plan`, { method: 'POST', json: body });
+/**
+ * Ask the AI once to write the slides, caption, alt text and hashtags of a post idea.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const makeCopy = (repoId, body) => request(copyUrl(repoId), { method: 'POST', json: body });
+/**
+ * Save the copy as the user edited it.
+ * @param {string} repoId
+ * @param {CopyRequest & object} body
+ */
+export const saveCopy = (repoId, body) => request(copyUrl(repoId), { method: 'PUT', json: body });
+const designUrl = (/** @type {string} */ repoId) =>
+  `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/design`;
+/**
+ * The design saved for this post; rejects with status 404 when none was made yet.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const getDesign = (repoId, body) =>
+  request(`${designUrl(repoId)}?${new URLSearchParams(body)}`);
+/**
+ * What asking the AI to design the post would send and cost; nothing is sent.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const planDesign = (repoId, body) =>
+  request(`${designUrl(repoId)}/plan`, { method: 'POST', json: body });
+/**
+ * Ask the AI once how to lay out each slide of the written post.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ */
+export const makeDesign = (repoId, body) =>
+  request(designUrl(repoId), { method: 'POST', json: body });
+/**
+ * Where the drawing of one slide is served.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ * @param {number} slide
+ * @param {string} [version] changes when the design does, so the browser asks again
+ */
+export const designSvgUrl = (repoId, body, slide, version = '') =>
+  `${designUrl(repoId)}/svg?${new URLSearchParams({ ...body, slide: String(slide), v: version })}`;
+/**
+ * Where an AI-written slide is served as a page, for a sandboxed frame.
+ * @param {string} repoId
+ * @param {CopyRequest} body
+ * @param {number} slide
+ * @param {'light' | 'dark'} mode
+ * @param {string} [version] changes when the design does, so the browser asks again
+ */
+export const designSlideUrl = (repoId, body, slide, mode, version = '') =>
+  `${designUrl(repoId)}/slide?${new URLSearchParams({ ...body, slide: String(slide), mode, v: version })}`;
 export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
 
 const AI = '/api/v1/settings/ai/connections';
@@ -342,6 +433,10 @@ export const getAiUsage = (/** @type {Parameters<typeof aiQuery>[0]} */ filter) 
   request(
     `${AI_SETTINGS}/usage?${aiQuery({ period: filter.period, start: filter.start, end: filter.end })}`,
   );
+
+/** Where the saved icon of a repository is served; the scan time busts the cache. */
+export const iconUrl = (/** @type {any} */ repo) =>
+  `${REPOSITORIES}/${encodeURIComponent(repo.id)}/icon?v=${encodeURIComponent(repo.last_scanned_at ?? '')}`;
 
 /** Where the saved social preview image of a repository is served; the scan time busts the cache. */
 export const socialPreviewUrl = (/** @type {any} */ repo) =>

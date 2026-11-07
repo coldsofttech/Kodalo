@@ -5,6 +5,7 @@ import {
   fluentButton,
   fluentNumberField,
   fluentSwitch,
+  fluentTextArea,
   fluentTextField,
   provideFluentDesignSystem,
   StandardLuminance,
@@ -15,6 +16,7 @@ provideFluentDesignSystem().register(
   fluentButton(),
   fluentNumberField(),
   fluentSwitch(),
+  fluentTextArea(),
   fluentTextField(),
 );
 

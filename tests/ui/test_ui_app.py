@@ -141,3 +141,26 @@ def test_run_passes_the_ready_line_to_the_callback(shell_on_windows: type[FakeSh
 
     on_ready = shell_on_windows.instances[0].run_kwargs["on_ready"]  # type: ignore[index]
     assert callable(on_ready)
+
+
+def test_a_windows_connection_reset_is_not_logged_but_other_errors_are() -> None:
+    import logging
+
+    ui_app.quiet_connection_resets()
+    ui_app.quiet_connection_resets()  # asking twice adds the filter once
+    logger = logging.getLogger("asyncio")
+    assert sum(isinstance(f, ui_app._ResetFilter) for f in logger.filters) == 1
+    keep = ui_app._ResetFilter()
+
+    def record(error: BaseException) -> logging.LogRecord:
+        return logging.LogRecord(
+            "asyncio", logging.ERROR, "", 0, "x", None, (type(error), error, None)
+        )
+
+    reset = ConnectionResetError(10054, "forcibly closed")
+    reset.winerror = 10054
+    other = ConnectionResetError(104, "reset")
+    assert not keep.filter(record(reset))
+    assert keep.filter(record(other))
+    assert keep.filter(record(ValueError("boom")))
+    assert keep.filter(logging.LogRecord("asyncio", logging.ERROR, "", 0, "x", None, None))

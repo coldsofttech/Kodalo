@@ -3,6 +3,7 @@
 Error messages never carry the key or anything the provider sent back.
 """
 
+import base64
 import json
 import shutil
 import subprocess
@@ -90,6 +91,7 @@ class GenerateRequest:
     max_tokens: int
     temperature: float | None = None
     timeout_s: int | None = None
+    images: tuple[tuple[str, bytes], ...] = ()  # (media type, bytes) of images to look at
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,11 @@ Generator = Callable[[GenerateRequest], Generation]
 """Sends a :class:`GenerateRequest` and returns the answer."""
 
 _GENERATE_TIMEOUT = 120
+_IMAGE_SUFFIX = {
+    "image/png": ".png",
+    "image/jpeg": ".jpg",
+    "image/webp": ".webp",
+}
 
 
 def generate(request: GenerateRequest) -> Generation:
@@ -117,7 +124,7 @@ def generate(request: GenerateRequest) -> Generation:
             "model": request.model,
             "max_tokens": request.max_tokens,
             "system": request.system,
-            "messages": [{"role": "user", "content": request.prompt}],
+            "messages": [{"role": "user", "content": _claude_content(request)}],
         }
         if request.temperature is not None:
             body["temperature"] = request.temperature
@@ -138,7 +145,7 @@ def generate(request: GenerateRequest) -> Generation:
             "response_format": {"type": "json_object"},
             "messages": [
                 {"role": "system", "content": request.system},
-                {"role": "user", "content": request.prompt},
+                {"role": "user", "content": _openai_content(request)},
             ],
         }
         if request.temperature is not None:
@@ -167,7 +174,7 @@ def generate(request: GenerateRequest) -> Generation:
             {"x-goog-api-key": request.api_key},
             {
                 "systemInstruction": {"parts": [{"text": request.system}]},
-                "contents": [{"role": "user", "parts": [{"text": request.prompt}]}],
+                "contents": [{"role": "user", "parts": _gemini_parts(request)}],
                 "generationConfig": config,
             },
             timeout,
@@ -182,6 +189,43 @@ def generate(request: GenerateRequest) -> Generation:
             text, _count(usage, "promptTokenCount"), _count(usage, "candidatesTokenCount")
         )
     raise AiConnectionError(f"Unknown provider: {request.provider}.")
+
+
+def _claude_content(request: GenerateRequest) -> str | list[dict[str, Any]]:
+    if not request.images:
+        return request.prompt
+    images: list[dict[str, Any]] = [
+        {
+            "type": "image",
+            "source": {
+                "type": "base64",
+                "media_type": media_type,
+                "data": base64.b64encode(data).decode("ascii"),
+            },
+        }
+        for media_type, data in request.images
+    ]
+    return [*images, {"type": "text", "text": request.prompt}]
+
+
+def _openai_content(request: GenerateRequest) -> str | list[dict[str, Any]]:
+    if not request.images:
+        return request.prompt
+    parts: list[dict[str, Any]] = [{"type": "text", "text": request.prompt}]
+    for media_type, data in request.images:
+        encoded = base64.b64encode(data).decode("ascii")
+        parts.append(
+            {"type": "image_url", "image_url": {"url": f"data:{media_type};base64,{encoded}"}}
+        )
+    return parts
+
+
+def _gemini_parts(request: GenerateRequest) -> list[dict[str, Any]]:
+    parts: list[dict[str, Any]] = [{"text": request.prompt}]
+    for media_type, data in request.images:
+        encoded = base64.b64encode(data).decode("ascii")
+        parts.append({"inlineData": {"mimeType": media_type, "data": encoded}})
+    return parts
 
 
 def _claude_code_failure(result: "subprocess.CompletedProcess[str]", data: Any) -> str:
@@ -206,15 +250,36 @@ def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
         with tempfile.TemporaryDirectory(prefix="kodalo-ai-") as folder:
             instructions = Path(folder) / "instructions.txt"
             instructions.write_text(request.system, encoding="utf-8")
-            command = [program, "-p", "--output-format", "json", "--max-turns", "1"]
-            command += ["--tools", "", "--system-prompt-file", str(instructions)]
+            prompt = request.prompt
+            if request.images:
+                # The only tool Claude Code gets is a read-only file reader, to look at the
+                # images saved in this empty folder.
+                names = []
+                for number, (media_type, image) in enumerate(request.images, start=1):
+                    name = f"image-{number}{_IMAGE_SUFFIX.get(media_type, '.png')}"
+                    (Path(folder) / name).write_bytes(image)
+                    names.append(name)
+                files = ", ".join(names)
+                prompt = f"Look at the image file(s) {files} with the Read tool.\n\n{prompt}"
+            command = [
+                program,
+                "-p",
+                "--output-format",
+                "json",
+                "--max-turns",
+                "4" if request.images else "1",
+            ]
+            command += ["--tools", "Read" if request.images else ""]
+            if request.images:
+                command += ["--allowedTools", "Read"]
+            command += ["--system-prompt-file", str(instructions)]
             command += ["--strict-mcp-config", "--setting-sources", ""]
             command += ["--disable-slash-commands", "--no-session-persistence"]
             if request.model:
                 command += ["--model", request.model]
             result = subprocess.run(  # noqa: S603
                 command,
-                input=request.prompt,
+                input=prompt,
                 capture_output=True,
                 text=True,
                 encoding="utf-8",

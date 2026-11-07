@@ -1,6 +1,7 @@
 """Request and response models. They define the API contract in the OpenAPI document."""
 
-from typing import Any, Literal, Self
+from dataclasses import asdict
+from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -33,7 +34,10 @@ from kodalo.core.settings.ai import (
     Usage,
 )
 from kodalo.core.settings.github import ConnectionCheck, GitHubSettings
+from kodalo.core.settings.platforms import PlatformSettings
 from kodalo.core.studio import Source
+from kodalo.core.studio.copy import CopyPlan, PostCopy
+from kodalo.core.studio.design import Design, DesignPlan
 from kodalo.core.studio.ideas import Claim, Ideas, IdeasPlan
 
 
@@ -819,11 +823,22 @@ class RepoResponse(BaseModel):
     has_social_preview: bool = Field(
         description="Whether the owner's social preview image is saved."
     )
+    has_icon: bool = Field(description="Whether the repository's own icon is saved.")
+    icon_path: str = Field(
+        max_length=1024, description="The icon's path in the repository; empty when none."
+    )
+    icon_checked: bool = Field(
+        description="Whether the README analysis with AI has looked for an icon. Checked with "
+        "no icon means it found none."
+    )
 
     @classmethod
     def from_core(cls, info: RepoInfo) -> Self:
         return cls(
             has_social_preview=info.has_social_preview,
+            has_icon=info.has_icon,
+            icon_path=info.icon_path,
+            icon_checked=info.icon_checked_at is not None,
             id=info.id,
             url=info.url,
             owner=info.owner,
@@ -1143,6 +1158,9 @@ class ReadmeResultResponse(BaseModel):
     capabilities: int = Field(ge=0, description="Capabilities saved.")
     features: int = Field(ge=0, description="Features saved.")
     use_cases: int = Field(ge=0, description="Use cases saved.")
+    icon: str = Field(
+        max_length=1024, description="The icon kept from the repository; empty when none."
+    )
     skipped: list[str] = Field(max_length=100, description="Plain sentences about what was left.")
     input_tokens: int = Field(ge=0, description="Tokens the provider counted for the request.")
     output_tokens: int = Field(ge=0, description="Tokens the provider counted for the answer.")
@@ -1154,6 +1172,7 @@ class ReadmeResultResponse(BaseModel):
             capabilities=result.capabilities,
             features=result.features,
             use_cases=result.use_cases,
+            icon=result.icon[:1024],
             skipped=[s[:300] for s in result.skipped],
             input_tokens=result.input_tokens,
             output_tokens=result.output_tokens,
@@ -1474,3 +1493,259 @@ class AiPurgeResponse(BaseModel):
     """How many history entries a purge removed."""
 
     deleted: int = Field(ge=0)
+
+
+class CopyRequest(BaseModel):
+    """Which post idea to write, with which hook, for the platform of the chosen brand."""
+
+    brand_id: str = Field(min_length=1, max_length=64, description="The brand the post is for.")
+    post_type: Literal["tool", "feature"] = Field(description="The kind of post of the ideas.")
+    kind: Literal["", "features", "use_cases", "capabilities"] = Field(
+        default="", description="Which list the focus is in; empty for a tool post."
+    )
+    name: str = Field(default="", max_length=128, description="The focus's name.")
+    idea_id: str = Field(min_length=1, max_length=64, examples=["idea-1"])
+    hook_id: str = Field(
+        default="", max_length=64, description="The hook to open with; empty for the idea's own."
+    )
+
+
+class SlideModel(BaseModel):
+    """One slide of a carousel, or the text of a single image."""
+
+    role: str = Field(max_length=16, examples=["hook"])
+    headline: str = Field(max_length=120)
+    body: str = Field(max_length=300)
+    visual_note: str = Field(max_length=300)
+    alt_text: str = Field(max_length=200)
+
+
+class CaptionModel(BaseModel):
+    """The caption without its hashtags."""
+
+    opening: str = Field(max_length=200)
+    body: list[Annotated[str, Field(max_length=300)]] = Field(max_length=8)
+    cta: str = Field(max_length=200)
+
+
+class CopyEdit(CopyRequest):
+    """The text as the user edited it. The saved copy is replaced."""
+
+    slides: list[SlideModel] = Field(min_length=1, max_length=12)
+    caption: CaptionModel
+    alt_opening: str = Field(max_length=200, description="The alternative opening line.")
+    hashtags: list[Annotated[str, Field(max_length=60)]] = Field(max_length=30)
+
+
+class CopyPlanResponse(BaseModel):
+    """What asking the AI for the copy would send and cost. Nothing has been sent yet."""
+
+    provider: str = Field(max_length=32)
+    label: str = Field(max_length=64, examples=["Claude API"])
+    model: str = Field(max_length=128, examples=["claude-haiku-5-5"])
+    items: list[str] = Field(max_length=20, description="The post idea the copy is for.")
+    input_tokens: int = Field(ge=0, description="Estimated tokens sent.", examples=[1500])
+    max_output_tokens: int = Field(ge=0, description="The most tokens the answer can use.")
+
+    @classmethod
+    def from_core(cls, plan: CopyPlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            items=[i[:128] for i in plan.items],
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+        )
+
+
+class ReviewFlagResponse(BaseModel):
+    """A sentence to check before posting."""
+
+    type: str = Field(max_length=24, examples=["needs_review"])
+    text: str = Field(max_length=300)
+    reason: str = Field(max_length=300)
+
+
+class AltOpeningResponse(BaseModel):
+    """A different opening line for the same caption."""
+
+    text: str = Field(max_length=200)
+    hook_id: str = Field(max_length=64)
+
+
+class PostCopyResponse(BaseModel):
+    """The written post: slides, caption, alternative opening and hashtags."""
+
+    platform: str = Field(max_length=32, examples=["instagram"])
+    idea_id: str = Field(max_length=64)
+    hook_id: str = Field(max_length=64)
+    hook_text: str = Field(max_length=200)
+    format: Literal["single_image", "carousel"]
+    slides: list[SlideModel] = Field(max_length=12)
+    caption: CaptionModel
+    alt_opening: AltOpeningResponse
+    hashtags: list[str] = Field(max_length=30)
+    review_flags: list[ReviewFlagResponse] = Field(max_length=20)
+    warnings: list[str] = Field(max_length=100, description="Plain sentences about what to check.")
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+
+    @classmethod
+    def from_core(cls, post: PostCopy) -> Self:
+        return cls(
+            platform=post.platform,
+            idea_id=post.idea_id,
+            hook_id=post.hook_id,
+            hook_text=post.hook_text[:200],
+            format="carousel" if post.format == "carousel" else "single_image",
+            slides=[SlideModel(**asdict(s)) for s in post.slides],
+            caption=CaptionModel(
+                opening=post.caption.opening, body=list(post.caption.body), cta=post.caption.cta
+            ),
+            alt_opening=AltOpeningResponse(
+                text=post.alt_opening.text, hook_id=post.alt_opening.hook_id
+            ),
+            hashtags=list(post.hashtags),
+            review_flags=[ReviewFlagResponse(**asdict(f)) for f in post.review_flags],
+            warnings=[w[:300] for w in post.warnings],
+            input_tokens=post.input_tokens,
+            output_tokens=post.output_tokens,
+        )
+
+
+class PlatformSettingsResponse(BaseModel):
+    """What a platform's posts get."""
+
+    platform: Literal["instagram"] = Field(examples=["instagram"])
+    hashtag_count: int = Field(
+        ge=0, le=30, description="Hashtags on each post, the default ones included.", examples=[5]
+    )
+    default_hashtags: list[Annotated[str, Field(max_length=61)]] = Field(
+        max_length=30, description="Hashtags every post carries, before the ones the AI writes."
+    )
+    use_social_preview: bool = Field(
+        description="The designer may use the repository's social preview."
+    )
+    use_repo_icon: bool = Field(description="The designer may use the repository's icon.")
+    use_icons: bool = Field(description="The designer may use icons.")
+    build_custom_images: bool = Field(description="The designer may build custom images as needed.")
+    use_ai_templates: bool = Field(
+        description="The AI writes the HTML and CSS of each slide instead of the fixed templates."
+    )
+
+    @classmethod
+    def from_core(cls, settings: PlatformSettings) -> Self:
+        return cls(
+            platform="instagram",
+            hashtag_count=settings.hashtag_count,
+            default_hashtags=list(settings.default_hashtags),
+            use_social_preview=settings.use_social_preview,
+            use_repo_icon=settings.use_repo_icon,
+            use_icons=settings.use_icons,
+            build_custom_images=settings.build_custom_images,
+            use_ai_templates=settings.use_ai_templates,
+        )
+
+
+class PlatformSettingsUpdate(BaseModel):
+    """The hashtag settings of a platform. The saved ones are replaced."""
+
+    hashtag_count: int = Field(ge=0, le=30, examples=[5])
+    default_hashtags: list[Annotated[str, Field(max_length=61)]] = Field(
+        max_length=30, examples=[["#sweepito"]]
+    )
+    use_social_preview: bool = False
+    use_repo_icon: bool = False
+    use_icons: bool = False
+    build_custom_images: bool = False
+    use_ai_templates: bool = False
+
+
+class DesignPlanResponse(CopyPlanResponse):
+    """What asking the AI for the design would send and cost. Nothing has been sent yet."""
+
+    sees_social_preview: bool = Field(
+        description="Whether the repository's social preview is sent too, to find its logo."
+    )
+    writes_html: bool = Field(
+        description="Whether the AI writes each slide as HTML and CSS (much longer answers)."
+    )
+
+    @classmethod
+    def from_design(cls, plan: DesignPlan) -> Self:
+        return cls(
+            provider=plan.provider,
+            label=plan.label,
+            model=plan.model,
+            items=[i[:128] for i in plan.items],
+            input_tokens=plan.input_tokens,
+            max_output_tokens=plan.max_output_tokens,
+            sees_social_preview=plan.sees_social_preview,
+            writes_html=plan.writes_html,
+        )
+
+
+class SlideDesignResponse(BaseModel):
+    """How one slide is laid out. Its text is the saved copy's, never the design's."""
+
+    template: Literal["hook", "problem", "step", "proof", "summary", "cta", "image"]
+    align: Literal["left", "center"]
+    media: Literal["none", "top", "bottom"]
+    accent: Literal["primary", "secondary"]
+    icon: str = Field(max_length=64, description="A Bootstrap Icons name without bi-; or empty.")
+    image_source: Literal["none", "social_preview", "repo_icon", "custom_svg"]
+    image_fit: Literal["cover", "contain"]
+    has_svg: bool = Field(description="Whether the slide has a drawing, served by `design/svg`.")
+    has_html: bool = Field(
+        description="Whether the AI wrote the slide as HTML and CSS, served by `design/slide`."
+    )
+
+
+class LogoBox(BaseModel):
+    """Where the logo is in the social preview, as fractions of its width and height."""
+
+    x: float = Field(ge=0, le=1)
+    y: float = Field(ge=0, le=1)
+    w: float = Field(gt=0, le=1)
+    h: float = Field(gt=0, le=1)
+
+
+class DesignResponse(BaseModel):
+    """How the slides of a written post are laid out."""
+
+    platform: str = Field(max_length=32, examples=["instagram"])
+    idea_id: str = Field(max_length=64)
+    hook_id: str = Field(max_length=64)
+    slides: list[SlideDesignResponse] = Field(max_length=12)
+    logo_box: LogoBox | None = Field(description="The logo in the social preview, if found.")
+    warnings: list[str] = Field(max_length=100, description="Plain sentences about what changed.")
+    input_tokens: int = Field(ge=0)
+    output_tokens: int = Field(ge=0)
+
+    @classmethod
+    def from_core(cls, design: Design) -> Self:
+        box = design.logo_box
+        return cls(
+            platform=design.platform,
+            idea_id=design.idea_id,
+            hook_id=design.hook_id,
+            slides=[
+                SlideDesignResponse(
+                    template=s.template,  # type: ignore[arg-type]
+                    align=s.align,  # type: ignore[arg-type]
+                    media=s.media,  # type: ignore[arg-type]
+                    accent=s.accent,  # type: ignore[arg-type]
+                    icon=s.icon,
+                    image_source=s.image_source,  # type: ignore[arg-type]
+                    image_fit=s.image_fit,  # type: ignore[arg-type]
+                    has_svg=bool(s.svg),
+                    has_html=bool(s.html),
+                )
+                for s in design.slides
+            ],
+            logo_box=LogoBox(x=box[0], y=box[1], w=box[2], h=box[3]) if box else None,
+            warnings=[w[:300] for w in design.warnings],
+            input_tokens=design.input_tokens,
+            output_tokens=design.output_tokens,
+        )

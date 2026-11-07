@@ -25,6 +25,11 @@ from kodalo.core.repositories.configs.manifest import (
 )
 from kodalo.core.repositories.documentation import find_documentation, is_secret
 from kodalo.core.repositories.errors import RepoDetailsError, RepoNotFoundError
+from kodalo.core.repositories.icon import (
+    MAX_ICON_BYTES,
+    icon_candidates,
+    icon_type,
+)
 from kodalo.core.repositories.layout import (
     MAX_MANIFESTS,
     DirectoryRule,
@@ -47,7 +52,9 @@ from kodalo.core.repositories.models import (
 )
 from kodalo.core.repositories.parsers.manifest import parse_manifest
 from kodalo.core.repositories.readers.github import Fetch, gh_fetch, read_github, web_fetch
+from kodalo.core.repositories.readers.github import read_bytes as _read_github_bytes
 from kodalo.core.repositories.readers.github import read_file as read_github_file
+from kodalo.core.repositories.readers.local import read_bytes as _read_local_bytes
 from kodalo.core.repositories.readers.local import read_file as read_local_file
 from kodalo.core.repositories.readers.local import read_local
 from kodalo.core.repositories.social_preview import PreviewFetch, gh_social_preview, image_type
@@ -75,6 +82,15 @@ SKIP_SENSITIVE = "secret"
 SKIP_UNREADABLE = "too large or unreadable"  # over 200 KB, binary, or the read failed
 
 
+def _box(text: str) -> tuple[float, float, float, float] | None:
+    """The logo's box from its saved JSON, or ``None`` when there is none or it is not valid."""
+    try:
+        x, y, w, h = (float(v) for v in json.loads(text or "[]"))
+    except (ValueError, TypeError):
+        return None
+    return (x, y, w, h)
+
+
 def _info(row: Repository) -> RepoInfo:
     return RepoInfo(
         id=row.id,
@@ -98,6 +114,11 @@ def _info(row: Repository) -> RepoInfo:
         warnings=tuple(json.loads(row.warnings_json)),
         local_path=row.local_path,
         last_scanned_at=row.last_scanned_at,
+        icon_candidates=tuple(json.loads(row.icon_candidates_json)),
+        icon_path=row.icon_path,
+        icon_checked_at=row.icon_checked_at,
+        icon_box=_box(row.icon_box_json),
+        icon_box_checked=row.icon_box_json != "",
         notable_dirs=tuple(NotableDir(d.path, d.purpose, d.pattern_id) for d in row.notable_dirs),
         manifests=tuple(_manifest(m) for m in row.manifests),
         is_monorepo=row.is_monorepo,
@@ -253,12 +274,14 @@ class RepoService:
         tooling_dir: Path | None = None,
         previews_dir: Path | None = None,
         preview: PreviewFetch = gh_social_preview,
+        icons_dir: Path | None = None,
     ) -> None:
         self._database = database
         self._parsers_dir = parsers_dir
         self._frameworks_dir = frameworks_dir
         self._tooling_dir = tooling_dir
         self._previews_dir = previews_dir
+        self._icons_dir = icons_dir
         self._preview = preview
         self._gh = gh
         self._web = web
@@ -306,8 +329,67 @@ class RepoService:
                 return path, media_type
         return None
 
+    def icon(self, repo_id: str) -> tuple[Path, str] | None:
+        """Return the saved icon file and its media type, if there is one."""
+        if self._icons_dir is None:
+            return None
+        kinds = (
+            ("png", "image/png"),
+            ("jpg", "image/jpeg"),
+            ("webp", "image/webp"),
+            ("svg", "image/svg+xml"),
+        )
+        for extension, media_type in kinds:
+            path = self._icons_dir / f"{repo_id}.{extension}"
+            if path.is_file():
+                return path, media_type
+        return None
+
+    def save_icon(self, repo_id: str, path: str, data: bytes | None) -> bool:
+        """Keep the icon the README analysis picked (``path`` in the repository, its bytes in
+        ``data``), or note that none was found when ``data`` is ``None`` or not an image. Returns
+        whether an icon was kept."""
+        kind = icon_type(data) if data and len(data) <= MAX_ICON_BYTES else None
+        if self._icons_dir is not None:
+            for extension in ("png", "jpg", "webp", "svg"):
+                (self._icons_dir / f"{repo_id}.{extension}").unlink(missing_ok=True)
+            if data and kind:
+                self._icons_dir.mkdir(parents=True, exist_ok=True)
+                (self._icons_dir / f"{repo_id}.{kind}").write_bytes(data)
+            else:
+                kind = None
+        else:
+            kind = None
+        with self._database.session() as session:
+            row = session.get(Repository, repo_id)
+            if row is None:
+                raise RepoNotFoundError("That repository is not stored.")
+            row.icon_path = path if kind else ""
+            row.icon_ext = kind or ""
+            row.icon_checked_at = utc_now()
+        return kind is not None
+
+    def save_icon_box(self, repo_id: str, box: tuple[float, float, float, float] | None) -> None:
+        """Keep where the logo is in the social preview, or that there is none."""
+        with self._database.session() as session:
+            row = session.get(Repository, repo_id)
+            if row is None:
+                raise RepoNotFoundError("That repository is not stored.")
+            row.icon_box_json = json.dumps(list(box) if box else [])
+
+    def read_bytes(self, settings: GitHubSettings, info: RepoInfo, path: str) -> bytes | None:
+        """Return the bytes of one file of a stored repository, or ``None`` when unreadable."""
+        if info.local_path:
+            return _read_local_bytes(Path(info.local_path), path, MAX_ICON_BYTES)
+        fetch = self._gh if settings.mode == "gh_cli" else self._web
+        return _read_github_bytes(fetch, info.owner, info.name, path, MAX_ICON_BYTES)
+
     def _shown(self, info: RepoInfo) -> RepoInfo:
-        return replace(info, has_social_preview=self.social_preview(info.id) is not None)
+        return replace(
+            info,
+            has_social_preview=self.social_preview(info.id) is not None,
+            has_icon=self.icon(info.id) is not None,
+        )
 
     def _forget_preview(self, repo_id: str) -> None:
         if self._previews_dir is None:
@@ -471,6 +553,7 @@ class RepoService:
             row.local_path = info.local_path
             row.documentation_json = json.dumps(asdict(info.documentation))
             row.skipped_json = json.dumps([asdict(s) for s in info.skipped])
+            row.icon_candidates_json = json.dumps(list(icon_candidates(info.paths)))
             row.last_scanned_at = utc_now()
             row.languages.clear()
             row.topics.clear()

@@ -4,6 +4,7 @@ Cornea serves the built frontend, gates every mounted router behind its session 
 registers the native actions. It never prints or exits; the CLI shows errors and picks exit codes.
 """
 
+import logging
 import sys
 from collections.abc import Callable
 from pathlib import Path
@@ -66,6 +67,29 @@ def write_json_file(path: str, text: str) -> None:
     target.write_bytes(data)
 
 
+_WINDOWS_CONNECTION_RESET = 10054
+
+
+class _ResetFilter(logging.Filter):
+    """Drop Python's log of a connection the other side closed abruptly on Windows. The window
+    cancels requests when it reloads a picture or a frame, which is normal and harmless, but
+    asyncio's Windows event loop reports it as an error while closing the socket."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        error = record.exc_info[1] if record.exc_info else None
+        return not (
+            isinstance(error, ConnectionResetError)
+            and getattr(error, "winerror", None) == _WINDOWS_CONNECTION_RESET
+        )
+
+
+def quiet_connection_resets() -> None:
+    """Keep the harmless "connection forcibly closed" messages out of the console."""
+    logger = logging.getLogger("asyncio")
+    if not any(isinstance(f, _ResetFilter) for f in logger.filters):
+        logger.addFilter(_ResetFilter())
+
+
 def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
     """Build the Cornea shell.
 
@@ -121,6 +145,7 @@ def run_ui(
     Raises:
         UiUnavailableError: If the UI needs Windows, or Cornea is not installed.
     """
+    quiet_connection_resets()
     shell = build_shell(dev=dev, window=window)
     if on_ready is None:
         shell.run()
