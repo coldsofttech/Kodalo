@@ -118,8 +118,8 @@ def test_design_needs_an_existing_brand(studio: Studio) -> None:
     assert [r.status_code for r in responses] == [404, 404, 404, 404, 404]
 
 
-@pytest.mark.usefixtures("custom_canvas")
-def test_a_design_is_only_made_for_instagram(studio: Studio) -> None:
+@pytest.mark.usefixtures("unsupported_canvas")
+def test_a_design_is_only_made_for_supported_platforms(studio: Studio) -> None:
     plan = studio.client.post(f"{studio.url}/design/plan", json=studio.ask())
     made = studio.client.post(f"{studio.url}/design", json=studio.ask())
 

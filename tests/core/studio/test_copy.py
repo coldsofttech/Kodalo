@@ -139,6 +139,10 @@ def test_the_prompt_for_instagram_is_bundled() -> None:
     assert "Instagram post" in cp.system_prompt("instagram")
 
 
+def test_the_prompt_for_a_custom_canvas_is_bundled() -> None:
+    assert "custom canvas" in cp.system_prompt("custom")
+
+
 def test_the_copy_is_written_cleaned_and_kept(database: Database) -> None:
     ai = FakeAi(REPLY)
     assistant = _assistant(database, ai)

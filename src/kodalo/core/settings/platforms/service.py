@@ -16,7 +16,7 @@ from kodalo.core.settings.platforms.errors import PlatformInvalidError
 from kodalo.core.storage import Database
 from kodalo.core.storage.models import Setting
 
-PLATFORMS: tuple[str, ...] = ("instagram",)
+PLATFORMS: tuple[str, ...] = ("instagram", "custom")
 MAX_HASHTAGS = 30  # Instagram allows up to 30 hashtags on a post
 DEFAULT_HASHTAG_COUNT = 5
 _COUNT_KEY = "hashtag_count"

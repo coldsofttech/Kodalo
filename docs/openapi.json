@@ -4465,7 +4465,10 @@
             "type": "integer"
           },
           "platform": {
-            "const": "instagram",
+            "enum": [
+              "instagram",
+              "custom"
+            ],
             "examples": [
               "instagram"
             ],
@@ -8089,6 +8092,7 @@
         "summary": "List repositories",
         "tags": [
           "v1",
+          "v1",
           "v1"
         ]
       },
@@ -8131,6 +8135,7 @@
         },
         "summary": "Add a repository",
         "tags": [
+          "v1",
           "v1",
           "v1"
         ]
@@ -8177,6 +8182,7 @@
         "summary": "Check a repository address or folder",
         "tags": [
           "v1",
+          "v1",
           "v1"
         ]
       }
@@ -8222,6 +8228,7 @@
         },
         "summary": "Remove a repository",
         "tags": [
+          "v1",
           "v1",
           "v1"
         ]
@@ -8273,6 +8280,7 @@
         },
         "summary": "Get a repository",
         "tags": [
+          "v1",
           "v1",
           "v1"
         ]
@@ -8329,6 +8337,7 @@
         "summary": "Get the repository's icon",
         "tags": [
           "v1",
+          "v1",
           "v1"
         ]
       }
@@ -8378,6 +8387,7 @@
         },
         "summary": "Get a repository's social preview image",
         "tags": [
+          "v1",
           "v1",
           "v1"
         ]
@@ -9322,8 +9332,11 @@
             "name": "platform",
             "required": true,
             "schema": {
-              "const": "instagram",
               "description": "The social platform.",
+              "enum": [
+                "instagram",
+                "custom"
+              ],
               "examples": [
                 "instagram"
               ],
@@ -9372,8 +9385,11 @@
             "name": "platform",
             "required": true,
             "schema": {
-              "const": "instagram",
               "description": "The social platform.",
+              "enum": [
+                "instagram",
+                "custom"
+              ],
               "examples": [
                 "instagram"
               ],
@@ -9533,6 +9549,8 @@
         },
         "summary": "List stored repositories",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -9575,6 +9593,8 @@
         },
         "summary": "Read a repository",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -9627,6 +9647,8 @@
         },
         "summary": "Get a stored repository",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -9675,6 +9697,8 @@
         },
         "summary": "Analyze a repository with the AI",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -9723,6 +9747,8 @@
         },
         "summary": "Plan the AI analysis",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -9854,6 +9880,8 @@
         },
         "summary": "Get the saved post copy",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -9910,6 +9938,8 @@
         },
         "summary": "Write the post copy with the AI",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -9963,6 +9993,8 @@
         },
         "summary": "Save the edited post copy",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10021,6 +10053,8 @@
         },
         "summary": "Plan the AI post copy request",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10152,6 +10186,8 @@
         },
         "summary": "Get the saved post design",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -10208,6 +10244,8 @@
         },
         "summary": "Design the post with the AI",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10266,6 +10304,8 @@
         },
         "summary": "Plan the AI post design request",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10425,6 +10465,8 @@
         },
         "summary": "Get one AI-written slide as a page",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10568,6 +10610,8 @@
         },
         "summary": "Get the drawing of one slide",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10666,6 +10710,8 @@
         },
         "summary": "Get the saved post ideas",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -10722,6 +10768,8 @@
         },
         "summary": "Plan post ideas with the AI",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10780,6 +10828,8 @@
         },
         "summary": "Plan the AI post ideas request",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10832,6 +10882,8 @@
         },
         "summary": "Get the saved README analysis",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       },
@@ -10895,6 +10947,8 @@
         },
         "summary": "Read the README and docs",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10943,6 +10997,8 @@
         },
         "summary": "Read the documents with the AI",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -10991,6 +11047,8 @@
         },
         "summary": "Plan the AI README analysis",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }
@@ -11029,6 +11087,8 @@
         },
         "summary": "Check a repository to start a post from",
         "tags": [
+          "v1",
+          "v1",
           "v1"
         ]
       }

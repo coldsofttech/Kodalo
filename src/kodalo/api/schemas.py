@@ -1617,7 +1617,7 @@ class PostCopyResponse(BaseModel):
 class PlatformSettingsResponse(BaseModel):
     """What a platform's posts get."""
 
-    platform: Literal["instagram"] = Field(examples=["instagram"])
+    platform: Literal["instagram", "custom"] = Field(examples=["instagram"])
     hashtag_count: int = Field(
         ge=0, le=30, description="Hashtags on each post, the default ones included.", examples=[5]
     )
@@ -1637,7 +1637,7 @@ class PlatformSettingsResponse(BaseModel):
     @classmethod
     def from_core(cls, settings: PlatformSettings) -> Self:
         return cls(
-            platform="instagram",
+            platform=settings.platform,  # type: ignore[arg-type]
             hashtag_count=settings.hashtag_count,
             default_hashtags=list(settings.default_hashtags),
             use_social_preview=settings.use_social_preview,

@@ -96,8 +96,8 @@ def test_copy_needs_an_existing_brand(studio: Studio) -> None:
     assert (saved.status_code, plan.status_code, made.status_code) == (404, 404, 404)
 
 
-@pytest.mark.usefixtures("custom_canvas")
-def test_copy_is_only_written_for_instagram(studio: Studio) -> None:
+@pytest.mark.usefixtures("unsupported_canvas")
+def test_copy_is_only_written_for_supported_platforms(studio: Studio) -> None:
     responses = [
         studio.client.get(f"{studio.url}/copy", params=studio.ask()),
         studio.client.post(f"{studio.url}/copy/plan", json=studio.ask()),
@@ -105,7 +105,24 @@ def test_copy_is_only_written_for_instagram(studio: Studio) -> None:
     ]
 
     assert [r.status_code for r in responses] == [422, 422, 422]
-    assert "Instagram" in responses[0].json()["detail"]
+    assert "tiktok" in responses[0].json()["detail"]
+
+
+@pytest.mark.usefixtures("custom_canvas")
+def test_copy_is_written_for_a_custom_canvas(
+    studio: Studio, services: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chosen: list[Any] = []
+    monkeypatch.setattr(
+        services.copy,
+        "generate",
+        lambda choice: samples.record(chosen, choice, samples.post_copy()),
+    )
+
+    made = studio.client.post(f"{studio.url}/copy", json=studio.ask(hook_id="hook-1-1"))
+
+    assert made.status_code == 200
+    assert chosen[0].platform == "custom"
 
 
 def test_ai_errors_while_writing_become_http_errors(

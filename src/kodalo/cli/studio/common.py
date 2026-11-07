@@ -13,7 +13,7 @@ from kodalo.core.ai import AiConnections
 from kodalo.core.brands.brand import Brand, BrandError, BrandService
 from kodalo.core.repositories import ReadmeService, RepoError, RepoService
 from kodalo.core.settings.ai import AiConnectionError, AiInvalidError, AiSecretError
-from kodalo.core.settings.platforms import Platforms
+from kodalo.core.settings.platforms import PLATFORMS, Platforms
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 from kodalo.core.studio import StudioInvalidError
 from kodalo.core.studio.copy import Choice, CopyAssistant
@@ -109,13 +109,13 @@ def choose(
     idea_id: str,
     hook_id: str,
 ) -> tuple[Choice, Brand]:
-    """The idea to write and the brand it is for. Only Instagram is supported so far."""
+    """The idea to write and the brand it is for (Instagram or a custom canvas)."""
     brand = services.brands.find(brand_ref)
     platform = brand.canvas.platform_id
-    if platform != "instagram":
+    if platform not in PLATFORMS:
         raise StudioInvalidError(
-            "Posts can only be written for Instagram so far. Choose a brand whose canvas is for "
-            "Instagram."
+            f"Posts cannot be written for {platform} yet. Choose a brand whose canvas is for "
+            f"one of: {', '.join(PLATFORMS)}."
         )
     services.repos.get(repo_id)
     return Choice(platform, repo_id, post_type, kind, name, idea_id, hook_id), brand

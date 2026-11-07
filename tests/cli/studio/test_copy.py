@@ -118,12 +118,12 @@ def test_an_unknown_brand_is_an_error(studio: Studio, asked: list[Any]) -> None:
     assert out.strip()
 
 
-@pytest.mark.usefixtures("custom_canvas")
-def test_copy_is_only_written_for_instagram(studio: Studio) -> None:
+@pytest.mark.usefixtures("unsupported_canvas")
+def test_copy_is_only_written_for_supported_platforms(studio: Studio) -> None:
     code, out = studio.post("copy", "plan")
 
     assert code == 1
-    assert "Instagram" in out
+    assert "tiktok" in out
 
 
 def test_brand_and_idea_are_required(studio: Studio) -> None:

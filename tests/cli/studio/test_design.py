@@ -113,9 +113,9 @@ def test_the_slide_number_and_mode_are_limited(studio: Studio) -> None:
     assert studio.post("design", "slide", "--mode", "sepia")[0] == 2
 
 
-@pytest.mark.usefixtures("custom_canvas")
-def test_a_design_is_only_made_for_instagram(studio: Studio) -> None:
+@pytest.mark.usefixtures("unsupported_canvas")
+def test_a_design_is_only_made_for_supported_platforms(studio: Studio) -> None:
     code, out = studio.post("design", "plan")
 
     assert code == 1
-    assert "Instagram" in out
+    assert "tiktok" in out

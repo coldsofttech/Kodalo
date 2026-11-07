@@ -34,6 +34,19 @@ describe('Platforms', () => {
     expect(await axe(container)).toHaveNoViolations();
   });
 
+  it('keeps the settings of the Custom platform apart from Instagram', async () => {
+    const calls = mockApi(createBackend([]).handler);
+    render(<Platforms />);
+
+    await userEvent.selectOptions(await screen.findByLabelText('Platform'), 'custom');
+    typeInto(await screen.findByLabelText('Default hashtags'), '#kodalo');
+    await userEvent.click(screen.getByLabelText('Save'));
+
+    await screen.findByText('Saved.');
+    const put = calls.find((c) => c.method === 'PUT');
+    expect(put.path).toBe('/api/v1/settings/platforms/custom');
+  });
+
   it('shows what is saved when it opens, and a failed save is shown', async () => {
     const backend = createBackend([]);
     mockApi(backend.handler);

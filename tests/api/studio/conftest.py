@@ -52,6 +52,13 @@ def services(studio: Studio) -> deps.Services:
 
 @pytest.fixture
 def custom_canvas(monkeypatch: pytest.MonkeyPatch, services: deps.Services) -> None:
-    """Make every brand look as if its canvas was not made for Instagram."""
+    """Make every brand look as if its canvas was made for the custom platform."""
     canvas = SimpleNamespace(platform_id="custom", width=100, height=100)
+    monkeypatch.setattr(services.brands, "get", lambda brand_id: SimpleNamespace(canvas=canvas))
+
+
+@pytest.fixture
+def unsupported_canvas(monkeypatch: pytest.MonkeyPatch, services: deps.Services) -> None:
+    """Make every brand look as if its canvas was made for a platform with no skill files."""
+    canvas = SimpleNamespace(platform_id="tiktok", width=100, height=100)
     monkeypatch.setattr(services.brands, "get", lambda brand_id: SimpleNamespace(canvas=canvas))

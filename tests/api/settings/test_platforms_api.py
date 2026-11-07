@@ -33,6 +33,16 @@ def test_defaults_then_saved(client: TestClient) -> None:
     assert client.get(URL).json()["use_icons"] is True
 
 
+def test_custom_has_its_own_settings(client: TestClient) -> None:
+    custom = "/api/v1/settings/platforms/custom"
+
+    saved = client.put(custom, json={"hashtag_count": 3, "default_hashtags": ["#Kodalo"]})
+
+    assert saved.json()["platform"] == "custom"
+    assert client.get(custom).json()["default_hashtags"] == ["#kodalo"]
+    assert client.get(URL).json()["hashtag_count"] == 5
+
+
 def test_a_bad_request_is_refused(client: TestClient) -> None:
     too_many = client.put(URL, json={"hashtag_count": 1, "default_hashtags": ["#a", "#b"]})
 

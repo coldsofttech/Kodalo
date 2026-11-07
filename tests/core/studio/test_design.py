@@ -379,6 +379,8 @@ def test_the_ai_html_prompt_is_used_and_costs_more_output(database: Database) ->
     assert plan.max_output_tokens == ds.MAX_HTML_OUTPUT_TOKENS
     assert "stylesheet shared by every slide" in ds.system_prompt("instagram", html=True)
     assert "stylesheet shared by every slide" not in ds.system_prompt("instagram")
+    assert "stylesheet shared by every slide" in ds.system_prompt("custom", html=True)
+    assert "stylesheet shared by every slide" not in ds.system_prompt("custom")
 
 
 def test_the_page_has_the_brand_colors_for_the_mode_and_the_slide_number(

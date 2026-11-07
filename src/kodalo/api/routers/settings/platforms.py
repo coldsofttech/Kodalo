@@ -11,7 +11,8 @@ from kodalo.core.settings.platforms import PlatformInvalidError
 router = APIRouter()
 
 PlatformName = Annotated[
-    Literal["instagram"], Path(description="The social platform.", examples=["instagram"])
+    Literal["instagram", "custom"],
+    Path(description="The social platform.", examples=["instagram"]),
 ]
 
 

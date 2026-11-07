@@ -2,7 +2,10 @@ import { useEffect, useState } from 'react';
 import { getPlatformSettings, savePlatformSettings } from '../../api.js';
 import { Button, NumberField, Select, Switch, TextField } from '../../components/controls.jsx';
 
-const PLATFORM_CHOICES = [['instagram', 'Instagram']];
+const PLATFORM_CHOICES = [
+  ['instagram', 'Instagram'],
+  ['custom', 'Custom'],
+];
 const NO_VISUALS = {
   use_social_preview: false,
   use_repo_icon: false,
