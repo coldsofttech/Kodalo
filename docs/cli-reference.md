@@ -1766,7 +1766,7 @@ $ kodalo studio ideas [OPTIONS] COMMAND [ARGS]...
 **Commands**:
 
 * `plan`: Say what the AI would be sent and what it...
-* `make`: Ask the default AI model for a strategy,...
+* `make`: Ask the AI for a strategy, three angles...
 * `show`: Show the saved post ideas.
 
 #### `kodalo studio ideas plan`
@@ -1793,7 +1793,7 @@ $ kodalo studio ideas plan [OPTIONS] {repo_id}
 
 #### `kodalo studio ideas make`
 
-Ask the default AI model for a strategy, three angles and five post ideas. Saved.
+Ask the AI for a strategy, three angles and post ideas. New ones are added to the saved.
 
 **Usage**:
 
@@ -1980,8 +1980,8 @@ $ kodalo studio design [OPTIONS] COMMAND [ARGS]...
 * `make`: Ask the default AI model how to lay out...
 * `show`: Show the saved design.
 * `slide`: Export one slide as a self-contained HTML...
-* `export`: Make a picture of every slide and write...
 * `svg`: Export the drawing the AI made for one...
+* `export`: Make a picture of every slide and write...
 
 #### `kodalo studio design plan`
 
@@ -2087,6 +2087,32 @@ $ kodalo studio design slide [OPTIONS] {repo_id}
 * `-o, --output <file>`: Write to a file.
 * `--help`: Show this message and exit.
 
+#### `kodalo studio design svg`
+
+Export the drawing the AI made for one slide as SVG (to stdout without --output).
+
+**Usage**:
+
+```console
+$ kodalo studio design svg [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `--slide <int range>`: The slide, from 0.  [default: 0; 0&lt;=x&lt;=11]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `-o, --output <file>`: Write to a file.
+* `--help`: Show this message and exit.
+
 #### `kodalo studio design export`
 
 Make a picture of every slide and write them, with a caption.txt, into a new folder inside
@@ -2113,30 +2139,4 @@ $ kodalo studio design export [OPTIONS] {repo_id}
 * `--name <str>`: Feature post: the name of the focus.
 * `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
 * `--json`: Output as JSON.
-* `--help`: Show this message and exit.
-
-#### `kodalo studio design svg`
-
-Export the drawing the AI made for one slide as SVG (to stdout without --output).
-
-**Usage**:
-
-```console
-$ kodalo studio design svg [OPTIONS] {repo_id}
-```
-
-**Arguments**:
-
-* `repo_id`: Id of an added repository (see repositories list).  [required]
-
-**Options**:
-
-* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
-* `--idea <str>`: The post idea, e.g. idea-1.  [required]
-* `--slide <int range>`: The slide, from 0.  [default: 0; 0&lt;=x&lt;=11]
-* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
-* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
-* `--name <str>`: Feature post: the name of the focus.
-* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
-* `-o, --output <file>`: Write to a file.
 * `--help`: Show this message and exit.

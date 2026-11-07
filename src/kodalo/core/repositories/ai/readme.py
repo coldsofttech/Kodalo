@@ -113,7 +113,7 @@ class ReadmeAssistant:
         read = [d for d in self._analysis(repo_id).documents if d.status == "read"]
         if not read:
             return ReadmePlan("", "", "", (), 0, 0)
-        target = self._ai.default_target()
+        target = self._ai.default_target("repo_features")
         tokens = estimate_tokens(system_prompt()) + sum(d.size for d in read) // 3 + len(read)
         return ReadmePlan(
             provider=target.provider,
@@ -139,6 +139,7 @@ class ReadmeAssistant:
             plan.max_output_tokens,
             purpose="studio",
             title=f"README analysis of {repo_id}",
+            task="repo_features",
         )
         data = _reply_json(reply.text)
         if not isinstance(data, dict) or not any(key in data for key in _KEYS):

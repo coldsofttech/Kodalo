@@ -41,7 +41,7 @@ describe('PostView', () => {
     expect(screen.getByText('Slide 2')).toBeVisible();
     expect(screen.getByText('Caption')).toBeVisible();
     expect(screen.getByText('#sweepito')).toBeInTheDocument();
-    expect(screen.getByText(/Check: Runs after commits/)).toBeVisible();
+    expect(screen.queryByText(/Check:/)).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Slide 1 headline')).not.toBeInTheDocument();
     expect(screen.queryByLabelText('Save changes')).not.toBeInTheDocument();
     expect(await axe(container)).toHaveNoViolations();

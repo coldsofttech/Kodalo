@@ -599,6 +599,65 @@
         "title": "AiHistorySettingsUpdate",
         "type": "object"
       },
+      "AiIdeaCount": {
+        "description": "How many post ideas Studio asks the AI for.",
+        "properties": {
+          "idea_count": {
+            "description": "From 1 to 20.",
+            "examples": [
+              5
+            ],
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Idea Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "idea_count"
+        ],
+        "title": "AiIdeaCount",
+        "type": "object"
+      },
+      "AiModelDefaultsResponse": {
+        "description": "The settings a model starts with: shipped for a well-known model, else Kodalo's standard.",
+        "properties": {
+          "max_tokens": {
+            "examples": [
+              128000
+            ],
+            "maximum": 1000000.0,
+            "minimum": 1.0,
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "temperature": {
+            "examples": [
+              1.0
+            ],
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Temperature",
+            "type": "number"
+          },
+          "timeout_s": {
+            "examples": [
+              300
+            ],
+            "maximum": 600.0,
+            "minimum": 1.0,
+            "title": "Timeout S",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_tokens",
+          "temperature",
+          "timeout_s"
+        ],
+        "title": "AiModelDefaultsResponse",
+        "type": "object"
+      },
       "AiModelResponse": {
         "description": "A model of an AI connection. An empty setting means the provider's own default.",
         "properties": {
@@ -752,6 +811,88 @@
           "deleted"
         ],
         "title": "AiPurgeResponse",
+        "type": "object"
+      },
+      "AiTaskModelResponse": {
+        "description": "A job done by AI and the model chosen for it.",
+        "properties": {
+          "description": {
+            "examples": [
+              "Writes the text of a post."
+            ],
+            "maxLength": 256,
+            "title": "Description",
+            "type": "string"
+          },
+          "label": {
+            "examples": [
+              "Studio copywriter"
+            ],
+            "maxLength": 64,
+            "title": "Label",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "The chosen model, or empty to use the default connection's default model.",
+            "examples": [
+              "claude-sonnet-5-5"
+            ],
+            "title": "Model"
+          },
+          "task": {
+            "enum": [
+              "palette",
+              "repo_metadata",
+              "repo_features",
+              "studio_ideas",
+              "studio_copy",
+              "studio_design"
+            ],
+            "examples": [
+              "studio_copy"
+            ],
+            "title": "Task",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task",
+          "label",
+          "description"
+        ],
+        "title": "AiTaskModelResponse",
+        "type": "object"
+      },
+      "AiTaskModelUpdate": {
+        "description": "The model for a job; empty uses the default connection's default model.",
+        "properties": {
+          "model": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "claude-opus-5-5"
+            ],
+            "title": "Model"
+          }
+        },
+        "title": "AiTaskModelUpdate",
         "type": "object"
       },
       "AiUsageResponse": {
@@ -1036,10 +1177,11 @@
             "type": "array"
           },
           "hooks": {
+            "description": "Grows as new ideas are added to the saved ones.",
             "items": {
               "$ref": "#/components/schemas/HookResponse"
             },
-            "maxItems": 3,
+            "maxItems": 1000,
             "title": "Hooks",
             "type": "array"
           },
@@ -3161,6 +3303,50 @@
         "title": "HookResponse",
         "type": "object"
       },
+      "IdeaPostedUpdate": {
+        "description": "The focus the idea is in, and whether its post was posted.",
+        "properties": {
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name; empty for a tool post.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          },
+          "posted": {
+            "description": "True to flag the idea as posted, false to clear it.",
+            "title": "Posted",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "post_type",
+          "posted"
+        ],
+        "title": "IdeaPostedUpdate",
+        "type": "object"
+      },
       "IdeasPlanResponse": {
         "description": "What asking the AI for post ideas would send and cost. Nothing has been sent yet.",
         "properties": {
@@ -3260,13 +3446,13 @@
         "type": "object"
       },
       "IdeasResponse": {
-        "description": "A strategy, three angles and five post ideas for one selection.",
+        "description": "A strategy, angles and post ideas for one selection. Refreshing adds to the saved ones.",
         "properties": {
           "angles": {
             "items": {
               "$ref": "#/components/schemas/AngleResponse"
             },
-            "maxItems": 3,
+            "maxItems": 1000,
             "title": "Angles",
             "type": "array"
           },
@@ -3301,7 +3487,7 @@
             "items": {
               "$ref": "#/components/schemas/PostIdeaResponse"
             },
-            "maxItems": 5,
+            "maxItems": 1000,
             "title": "Post Ideas",
             "type": "array"
           },
@@ -4982,6 +5168,12 @@
             "maxItems": 8,
             "title": "Outline",
             "type": "array"
+          },
+          "posted": {
+            "default": false,
+            "description": "Whether the post made from this idea was posted already.",
+            "title": "Posted",
+            "type": "boolean"
           },
           "risk_notes": {
             "maxLength": 300,
@@ -8940,6 +9132,66 @@
         ]
       }
     },
+    "/api/v1/settings/ai/connections/{provider}/model-defaults": {
+      "get": {
+        "description": "Return the max tokens, temperature and timeout a model starts with.",
+        "operationId": "get_ai_model_defaults_api_v1_settings_ai_connections__provider__model_defaults_get",
+        "parameters": [
+          {
+            "description": "The AI provider.",
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "description": "The AI provider.",
+              "enum": [
+                "claude_api",
+                "claude_code",
+                "chatgpt_api",
+                "gemini_api"
+              ],
+              "title": "Provider",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The model name, such as opus.",
+            "in": "query",
+            "name": "name",
+            "required": true,
+            "schema": {
+              "description": "The model name, such as opus.",
+              "maxLength": 128,
+              "minLength": 1,
+              "title": "Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiModelDefaultsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get a model's starting settings",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/settings/ai/connections/{provider}/models": {
       "get": {
         "description": "Return the saved models of a connection.",
@@ -9460,6 +9712,162 @@
           }
         },
         "summary": "Get one AI call",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/studio-ideas": {
+      "get": {
+        "description": "Return how many post ideas Studio asks for.",
+        "operationId": "get_ai_idea_count_api_v1_settings_ai_studio_ideas_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiIdeaCount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the number of post ideas",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Choose how many post ideas Studio asks for. Ideas already saved are not changed.",
+        "operationId": "set_ai_idea_count_api_v1_settings_ai_studio_ideas_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiIdeaCount"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiIdeaCount"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the number of post ideas",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/task-models": {
+      "get": {
+        "description": "Return each job done by AI with the model chosen for it, if any.",
+        "operationId": "list_ai_task_models_api_v1_settings_ai_task_models_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiTaskModelResponse"
+                  },
+                  "title": "Response List Ai Task Models Api V1 Settings Ai Task Models Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "List the model for each AI job",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/ai/task-models/{task}": {
+      "put": {
+        "description": "Choose a model of the default connection for a job. Without a model, the job uses the\nconnection's default model.",
+        "operationId": "set_ai_task_model_api_v1_settings_ai_task_models__task__put",
+        "parameters": [
+          {
+            "description": "The job.",
+            "in": "path",
+            "name": "task",
+            "required": true,
+            "schema": {
+              "description": "The job.",
+              "enum": [
+                "palette",
+                "repo_metadata",
+                "repo_features",
+                "studio_ideas",
+                "studio_copy",
+                "studio_design"
+              ],
+              "title": "Task",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AiTaskModelUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/AiTaskModelResponse"
+                  },
+                  "title": "Response Set Ai Task Model Api V1 Settings Ai Task Models  Task  Put",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "The connection has no such model."
+          },
+          "422": {
+            "description": "The AI connection value is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Set the model for an AI job",
         "tags": [
           "v1"
         ]
@@ -11431,6 +11839,83 @@
           }
         },
         "summary": "Plan the AI post ideas request",
+        "tags": [
+          "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/ideas/{idea_id}/posted": {
+      "put": {
+        "description": "Flag the idea as posted so it is not posted twice, or clear the flag. 404 when the ideas\nor the idea are not saved.",
+        "operationId": "set_idea_posted_api_v1_studio_repositories__repo_id__ideas__idea_id__posted_put",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          },
+          {
+            "description": "The idea's id.",
+            "in": "path",
+            "name": "idea_id",
+            "required": true,
+            "schema": {
+              "description": "The idea's id.",
+              "maxLength": 32,
+              "minLength": 1,
+              "title": "Idea Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeaPostedUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostIdeaResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Flag a post idea as posted",
         "tags": [
           "v1",
           "v1",

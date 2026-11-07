@@ -95,7 +95,7 @@ class RepoAnalyzer:
         asked = _asked(sample)
         if not samples and not asked:
             return AnalyzerPlan("", "", "", (), (), (), (), 0, 0)
-        target = self._ai.default_target()
+        target = self._ai.default_target("repo_metadata")
         output = parsers.OUTPUT_TOKENS_PER_FILE * len(samples)
         if asked:
             output += OUTPUT_TOKENS_PER_FRAMEWORK * frameworks.MAX_FRAMEWORKS
@@ -127,6 +127,7 @@ class RepoAnalyzer:
             self._plan(samples, sample).max_output_tokens,
             purpose="studio",
             title=f"Repository analysis for {info.owner}/{info.name}",
+            task="repo_metadata",
         )
         data = parsers._reply_json(reply.text)
         kinds = ("configs", FRAMEWORKS.key, TOOLING.key)

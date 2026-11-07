@@ -17,10 +17,13 @@ built from those claims in code, not by the model.
 
 ## What comes back
 
-A strategy, exactly three angles with three hooks each and up to five post ideas. Ideas are plans,
+A strategy, exactly three angles with three hooks each and as many post ideas as Settings > AI asks for (5 by default, 1 to 20). Ideas are plans,
 not finished copy. A claim is kept only when its quote is one of the quotes that were sent; others
-are left out and listed as warnings. Nothing is saved on the computer: the window keeps the result
-for the same choice and `Refresh with AI` asks again.
+are left out and listed as warnings. The ideas are saved for the same choice. `Refresh with AI`
+asks again and adds the new ideas to the saved ones: the ones saved stay as they are, the AI is told
+their titles so it does not repeat them, and an idea with the same title is skipped. An idea can be
+flagged as posted (automatically after posting to Instagram, or when you say so after an export);
+the Ideas step shows a Posted badge on it.
 
 ## Prompt
 

@@ -74,7 +74,7 @@ class PaletteSuggester:
     def plan(self) -> PalettePlan:
         """Work out what a suggestion would send and cost. Nothing is sent."""
         existing = self._palettes.list_palettes()
-        target = self._ai.default_target()
+        target = self._ai.default_target("palette")
         return PalettePlan(
             provider=target.provider,
             label=target.label,
@@ -94,6 +94,7 @@ class PaletteSuggester:
             MAX_OUTPUT_TOKENS,
             purpose="palette",
             title="Suggest a palette",
+            task="palette",
         )
         data = _reply_json(reply.text)
         name = data.get("name") if isinstance(data, dict) else None

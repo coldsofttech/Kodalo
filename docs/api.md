@@ -15,9 +15,13 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | `PUT /api/v1/settings/ai/connections/default` | Make a saved, enabled connection the default |
 | `POST /api/v1/settings/ai/connections/{provider}/test` | Try the connection; a failure is reported in the body, not as an error |
 | `GET /api/v1/settings/ai/connections/{provider}/models` | The saved models |
+| `GET /api/v1/settings/ai/connections/{provider}/model-defaults?name=` | The `max_tokens`, `temperature` and `timeout_s` a model starts with: the shipped values of a well-known model (`core/ai/models/defaults.json`, where `opus` stands for its full Claude model), otherwise Kodalo's standard for its family |
 | `POST /api/v1/settings/ai/connections/{provider}/models/refresh` | Ask the provider for its models and save them (502 when it cannot be reached); models added by hand are kept |
 | `PUT`, `DELETE /api/v1/settings/ai/connections/{provider}/models/{name}` | Add a model or change its `max_tokens`, `temperature` and `timeout_s`, or forget it. A new model gets Kodalo's standard settings (see `core/ai/defaults.py`) for any left out; for a saved model they replace the saved ones, so a missing one is cleared |
 | `PUT /api/v1/settings/ai/connections/{provider}/default-model` | Choose the model the connection uses by default |
+| `GET /api/v1/settings/ai/task-models` | The six jobs done by AI (`palette`, `repo_metadata`, `repo_features`, `studio_ideas`, `studio_copy`, `studio_design`) with the `model` chosen for each, or `null` for the connection's default model |
+| `GET`, `PUT /api/v1/settings/ai/studio-ideas` | How many post ideas Studio asks the AI for (`idea_count`, 1 to 20, 5 by default). Errors: `422` |
+| `PUT /api/v1/settings/ai/task-models/{task}` | Choose a model of the default connection for one job (`model`), or send `null` to go back to the default. Errors: `404` for a model the connection does not have, `422` |
 | `GET /api/v1/settings/ai/history` | The calls made to AI providers, newest first and without their text: `period` (`day`, `week`, `month`, `year`, `all`, or `custom` with `start` and `end` as `2026-11-01`), `limit` (1 to 200) and `offset`. Errors: `422` |
 | `GET /api/v1/settings/ai/history/{id}` | One call with `prompt_text` and `reply_text` (both `null` when the text was not kept). Errors: `404` |
 | `DELETE /api/v1/settings/ai/history` | Purge: remove every entry and return how many (`deleted`) |
@@ -36,6 +40,7 @@ Cornea authenticates every request before it reaches a route (see [security](sec
 | `POST /api/v1/studio/repositories/{id}/readme` | Read the README and the docs it links to (no AI) and keep the purpose, installation methods, capabilities and the documents read or skipped; see [readme-analysis.md](readme-analysis.md). A saved analysis is returned unless `refresh` is set. Errors: `404`, `502` |
 | `GET /api/v1/studio/repositories/{id}/readme` | The saved README analysis; `404` until it was read |
 | `POST /api/v1/studio/repositories/{id}/readme/analysis/plan` | List the documents one AI request would send (`documents`, the ones the README analysis read) and estimate the tokens. Nothing is sent and no document is read. Errors: `404`, `422` (no default connection or model), `502` |
+| `PUT /api/v1/studio/repositories/{id}/ideas/{idea_id}/posted` | Flag a post idea as posted so it is not posted twice, or clear the flag (body: the focus `post_type`, `kind`, `name`, and `posted`). Errors: `404`, `422` |
 | `POST /api/v1/studio/repositories/{id}/ideas/plan` | Say what one AI request for the chosen post would send (`items`) and estimate the tokens. Nothing is sent. Errors: `404`, `422`, `502` |
 | `GET /api/v1/studio/repositories/{id}/copy` | The copy saved for a post idea and hook (query: `brand_id`, `post_type`, `kind`, `name`, `idea_id`, `hook_id`). Errors: `404` when none was written yet or the brand is missing, `422` when the brand's canvas is not for Instagram |
 | `POST /api/v1/studio/repositories/{id}/copy/plan` | Say what one AI request for the copy of the chosen idea would send and estimate the tokens (same body as the query above). Nothing is sent. Errors: `404`, `422`, `502` |

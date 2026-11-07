@@ -424,7 +424,7 @@ function aiHistoryRoutes(history, method, rest, body) {
  * The AI connection routes, kept in memory. `rest` is the path after /settings/ai/connections.
  * @param {any[]} list @param {string} method @param {string[]} rest @param {any} body
  */
-function aiRoutes(list, method, rest, body) {
+function aiRoutes(list, method, rest, body, query = new URLSearchParams()) {
   if (rest.length === 0) return list;
   if (rest[0] === 'default') {
     for (const item of list) item.is_default = item.provider === body.provider;
@@ -452,6 +452,9 @@ function aiRoutes(list, method, rest, body) {
     item.status = 'ok';
     item.status_detail = 'Connected. 2 models available.';
     return { provider: item.provider, ok: true, detail: item.status_detail };
+  }
+  if (rest[1] === 'model-defaults') {
+    return { max_tokens: 8192, temperature: 0.7, timeout_s: 90, name: query.get('name') };
   }
   if (rest[1] === 'default-model') {
     for (const model of item.models) model.is_default = model.name === body.name;
@@ -704,7 +707,7 @@ export function createBackend(initial = []) {
       }
       if (parts[1] === 'ai' && parts[2] === 'usage') return usageOf(state.aiHistory.calls);
       if (parts[1] === 'ai' && parts[2] === 'connections')
-        return aiRoutes(state.ai, method, parts.slice(3), body);
+        return aiRoutes(state.ai, method, parts.slice(3), body, url.searchParams);
       if (parts[2] === 'check') return { mode: state.github.mode, ok: true, detail: 'Works.' };
       if (method === 'PUT') state.github = { local_folder: '', ...state.github, ...body };
       return state.github;

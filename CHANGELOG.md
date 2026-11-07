@@ -6,6 +6,10 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Studio shows a Posted badge on post ideas that were posted to Instagram. After an export it asks whether to mark the idea as posted.
+- Refreshing post ideas with AI now adds new ideas to the saved ones instead of replacing them, skipping repeats.
+- Settings > AI: choose how many post ideas Studio asks for (1 to 20, 5 by default).
+- Settings > AI > Models per job: choose which model of your AI connection suggests palettes, reads repository details and features, and comes up with, writes and designs Studio posts.
 - Studio has Post and Export icon buttons beside the Slides heading. Post publishes to Instagram, installing the third-party tool Cloudflared if needed; Export saves the slides as pictures and the caption as a text file to post by hand.
 - Instagram now connects with an access token and your Instagram account ID.
 - Settings > Platforms > Instagram: connect your Instagram account by pasting an access token. It is checked with Instagram and kept in your system keychain, never in the database (also `kodalo settings platforms instagram`).

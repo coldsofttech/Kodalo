@@ -62,7 +62,7 @@ class _Ai:
         self.reply = reply
         self.prompts: list[str] = []
 
-    def default_target(self) -> AiTarget:
+    def default_target(self, task: str | None = None) -> AiTarget:
         return AiTarget("claude_api", "Claude API", "m", 5000, None, None)
 
     def generate(self, system: str, prompt: str, max_tokens: int, **_: str) -> Generation:

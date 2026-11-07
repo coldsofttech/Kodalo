@@ -64,10 +64,10 @@ function DesignSlide({ brand, mode, index, repo, request, version, onExpand }) {
 }
 
 /**
- * @param {{ design: any, copy: any, brand: any, repo: any, request: any }} props
+ * @param {{ design: any, copy: any, brand: any, repo: any, request: any, onPosted?: (ideaId: string, posted: boolean) => void }} props
  * `request` is what identifies the post when a slide page is fetched.
  */
-export default function DesignView({ design, copy, brand, repo, request }) {
+export default function DesignView({ design, copy, brand, repo, request, onPosted }) {
   const [mode, setMode] = useState(/** @type {'light' | 'dark'} */ ('light'));
   const [expanded, setExpanded] = useState(/** @type {number | null} */ (null));
   const total = design.slides.length;
@@ -85,7 +85,14 @@ export default function DesignView({ design, copy, brand, repo, request }) {
   return (
     <>
       {brand.canvas.platform_id === 'instagram' ? (
-        <InstagramPost title={title} repo={repo} request={request} mode={mode} slides={total} />
+        <InstagramPost
+          title={title}
+          repo={repo}
+          request={request}
+          mode={mode}
+          slides={total}
+          onPosted={onPosted}
+        />
       ) : (
         title
       )}

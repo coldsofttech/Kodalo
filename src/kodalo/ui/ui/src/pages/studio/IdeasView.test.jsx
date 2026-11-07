@@ -58,6 +58,15 @@ const setup = (props = {}) => {
 };
 
 describe('IdeasView', () => {
+  it('marks an idea that was already posted', () => {
+    const posted = {
+      ...IDEAS,
+      post_ideas: [{ ...IDEAS.post_ideas[0], posted: true }, IDEAS.post_ideas[1]],
+    };
+    setup({ ideas: posted });
+    expect(screen.getAllByText('Posted')).toHaveLength(1);
+  });
+
   it('lists the post ideas with their format, objective and hook', () => {
     setup();
     const group = screen.getByRole('radiogroup', { name: 'Post ideas' });

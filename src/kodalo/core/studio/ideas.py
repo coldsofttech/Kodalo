@@ -2,14 +2,14 @@
 
 The model is sent only what the README analysis saved: the purpose, and the selected features,
 use cases or capabilities with their evidence quotes and the claims that need care. It returns a
-strategy, three angles with hooks and five post ideas. A claim is kept only when its quote is one
-that was sent, and the claims to avoid are worked out here from the saved analysis, not by the
-model. Nothing is saved: the result is shown and reused by the caller.
+strategy, three angles with hooks and the chosen number of post ideas. A claim is kept only
+when its quote is one that was sent, and the claims to avoid are worked out here from the saved
+analysis, not by the model. A new run adds its ideas to the saved ones.
 """
 
 import json
 import re
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from importlib import resources
 from typing import Any
 
@@ -37,8 +37,8 @@ HOOK_TYPES = ("question", "bold_statement", "contrast", "curiosity", "number")
 FORMATS = ("single_image", "carousel")
 CTA_TYPES = ("learn_more", "try_it", "save", "follow", "read_docs")
 MAX_ANGLES = 3
-MAX_IDEAS = 5
-MAX_OUTPUT_TOKENS = 6000
+BASE_OUTPUT_TOKENS = 2000
+TOKENS_PER_IDEA = 800
 _TOOL_FEATURES = 8
 
 
@@ -83,6 +83,7 @@ class PostIdea:
     cta_type: str
     claims_used: tuple[Claim, ...]
     risk_notes: str
+    posted: bool = False
 
 
 @dataclass(frozen=True)
@@ -129,6 +130,11 @@ class Ideas:
     output_tokens: int
 
 
+def output_tokens(count: int) -> int:
+    """The most tokens the answer may use for ``count`` post ideas."""
+    return BASE_OUTPUT_TOKENS + TOKENS_PER_IDEA * count
+
+
 def system_prompt() -> str:
     """The instructions sent to every provider: the bundled skill file without its front matter."""
     path = resources.files("kodalo.core.ai") / "prompts" / "marketing"
@@ -172,6 +178,26 @@ class IdeasAssistant:
             ).first()
             return _ideas_from_json(row.payload) if row is not None else None
 
+    def mark_posted(
+        self, repo_id: str, post_type: str, kind: str, name: str, idea_id: str, posted: bool
+    ) -> PostIdea:
+        """Flag the idea ``idea_id`` as posted, or clear the flag. Raises ``RepoNotFoundError``
+        when the ideas or the idea are not saved."""
+        saved = self.saved(repo_id, post_type, kind, name)
+        found = next((i for i in saved.post_ideas if i.id == idea_id), None) if saved else None
+        if saved is None or found is None:
+            raise RepoNotFoundError("That post idea is not saved.")
+        changed = replace(found, posted=posted)
+        updated = tuple(changed if i.id == idea_id else i for i in saved.post_ideas)
+        self._save(repo_id, post_type, kind, name, replace(saved, post_ideas=updated))
+        return changed
+
+    def _saved_ideas(
+        self, repo_id: str, post_type: str, kind: str, name: str
+    ) -> tuple[PostIdea, ...]:
+        found = self.saved(repo_id, post_type, kind, name)
+        return found.post_ideas if found is not None else ()
+
     def _save(self, repo_id: str, post_type: str, kind: str, name: str, ideas: Ideas) -> None:
         payload = json.dumps(asdict(ideas), ensure_ascii=False)
         key = _focus_key(post_type, kind, name)
@@ -196,23 +222,30 @@ class IdeasAssistant:
         payload = {
             "focus": post_type,
             "product": {"tagline": analysis.tagline, "summary": analysis.summary},
+            "post_idea_count": self._ai.idea_count(),
+            "already_made": [
+                i.working_title for i in self._saved_ideas(repo_id, post_type, kind, name)
+            ],
             "selected": selected,
             "claims_to_avoid": [a.text for a in avoid],
         }
         names = tuple(str(item["name"]) for item in selected)
         return json.dumps(payload, ensure_ascii=False, indent=1), quotes, avoid, names
 
+    def _limit(self) -> int:
+        return output_tokens(self._ai.idea_count())
+
     def plan(self, repo_id: str, post_type: str, kind: str = "", name: str = "") -> IdeasPlan:
         """Work out what would be sent and what asking would cost. Nothing is sent."""
         prompt, _, _, names = self._request(repo_id, post_type, kind, name)
-        target = self._ai.default_target()
+        target = self._ai.default_target("studio_ideas")
         return IdeasPlan(
             target.provider,
             target.label,
             target.model,
             names,
             estimate_tokens(system_prompt(), prompt),
-            min(MAX_OUTPUT_TOKENS, target.max_tokens or MAX_OUTPUT_TOKENS),
+            min(self._limit(), target.max_tokens or self._limit()),
         )
 
     def generate(self, repo_id: str, post_type: str, kind: str = "", name: str = "") -> Ideas:
@@ -223,9 +256,10 @@ class IdeasAssistant:
         reply = self._ai.generate(
             system_prompt(),
             prompt,
-            MAX_OUTPUT_TOKENS,
+            self._limit(),
             purpose="studio",
             title=f"Post ideas for {name or 'the whole tool'} in {repo_id}",
+            task="studio_ideas",
         )
         data = _reply_json(reply.text)
         if not isinstance(data, dict) or "post_ideas" not in data:
@@ -234,7 +268,7 @@ class IdeasAssistant:
             )
         warnings: list[str] = []
         angles = _angles(data.get("angles"), quotes, warnings)
-        ideas = _ideas(data.get("post_ideas"), angles, quotes, warnings)
+        ideas = _ideas(data.get("post_ideas"), angles, quotes, warnings, self._ai.idea_count())
         made = Ideas(
             post_type,
             name,
@@ -246,8 +280,88 @@ class IdeasAssistant:
             reply.input_tokens,
             reply.output_tokens,
         )
+        previous = self.saved(repo_id, post_type, kind, name)
+        if previous is not None:
+            made = _merge(previous, made)
         self._save(repo_id, post_type, kind, name, made)
         return made
+
+
+def _free_id(taken: set[str], wanted: str, prefix: str) -> str:
+    """``wanted`` when no one has it, else the next unused ``prefix-N``."""
+    if wanted and wanted not in taken:
+        return wanted
+    number = len(taken) + 1
+    while f"{prefix}-{number}" in taken:
+        number += 1
+    return f"{prefix}-{number}"
+
+
+def _merge(old: Ideas, new: Ideas) -> Ideas:
+    """Add what a new run made to what was saved. Saved angles, hooks and ideas stay as they are
+    (copy and designs refer to them); a new angle or hook the saved ones already have is not added
+    again, and neither is an idea with the same title. The saved strategy is kept."""
+    angles = list(old.angles)
+    angle_ids = {a.id for a in angles}
+    hook_ids = {h.id for a in angles for h in a.hooks}
+    angle_map: dict[str, str] = {}
+    hook_map: dict[str, str] = {}
+    for angle in new.angles:
+        same = next((a for a in angles if _squash(a.name) == _squash(angle.name)), None)
+        if same is None:
+            fresh = _free_id(angle_ids, angle.id, "angle")
+            angle_ids.add(fresh)
+            hooks = []
+            for hook in angle.hooks:
+                hook_id = _free_id(hook_ids, hook.id, "hook")
+                hook_ids.add(hook_id)
+                hook_map[hook.id] = hook_id
+                hooks.append(replace(hook, id=hook_id))
+            angle_map[angle.id] = fresh
+            angles.append(replace(angle, id=fresh, hooks=tuple(hooks)))
+            continue
+        angle_map[angle.id] = same.id
+        known = {_squash(h.text): h for h in same.hooks}
+        extra = list(same.hooks)
+        for hook in angle.hooks:
+            match = known.get(_squash(hook.text))
+            if match is not None:
+                hook_map[hook.id] = match.id
+                continue
+            hook_id = _free_id(hook_ids, hook.id, "hook")
+            hook_ids.add(hook_id)
+            hook_map[hook.id] = hook_id
+            extra.append(replace(hook, id=hook_id))
+        angles[angles.index(same)] = replace(same, hooks=tuple(extra))
+    ideas = list(old.post_ideas)
+    idea_ids = {i.id for i in ideas}
+    titles = {_squash(i.working_title) for i in ideas}
+    skipped = 0
+    for idea in new.post_ideas:
+        if _squash(idea.working_title) in titles:
+            skipped += 1
+            continue
+        idea_id = _free_id(idea_ids, idea.id, "idea")
+        idea_ids.add(idea_id)
+        titles.add(_squash(idea.working_title))
+        ideas.append(
+            replace(
+                idea,
+                id=idea_id,
+                angle_id=angle_map.get(idea.angle_id, ""),
+                hook_id=hook_map.get(idea.hook_id, ""),
+            )
+        )
+    warnings = list(new.warnings)
+    if skipped:
+        warnings.append(f"{skipped} idea(s) already made were left out")
+    return replace(
+        new,
+        strategy=old.strategy,
+        angles=tuple(angles),
+        post_ideas=tuple(ideas),
+        warnings=tuple(warnings),
+    )
 
 
 def _focus_key(post_type: str, kind: str, name: str) -> str:
@@ -455,11 +569,15 @@ def _angles(value: object, quotes: list[str], warnings: list[str]) -> tuple[Angl
 
 
 def _ideas(
-    value: object, angles: tuple[Angle, ...], quotes: list[str], warnings: list[str]
+    value: object,
+    angles: tuple[Angle, ...],
+    quotes: list[str],
+    warnings: list[str],
+    limit: int,
 ) -> tuple[PostIdea, ...]:
     known = {a.id: {h.id for h in a.hooks} for a in angles}
     found: list[PostIdea] = []
-    for index, item in enumerate(_items(value)[:MAX_IDEAS], start=1):
+    for index, item in enumerate(_items(value)[:limit], start=1):
         angle_id, hook_id = _text(item.get("angle_id"), 32), _text(item.get("hook_id"), 32)
         shape, cta = _text(item.get("format"), 16), _text(item.get("cta_type"), 16)
         title = _text(item.get("working_title"), 120)

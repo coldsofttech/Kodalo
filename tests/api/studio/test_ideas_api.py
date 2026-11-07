@@ -1,3 +1,4 @@
+from dataclasses import replace
 from typing import Any
 
 import pytest
@@ -97,3 +98,45 @@ def test_ai_errors_become_http_errors(
 
     assert response.status_code == status_code
     assert response.json()["detail"] == str(error)
+
+
+def test_an_idea_is_flagged_as_posted(
+    studio: Studio, services: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    seen: list[Any] = []
+    flagged = samples.ideas().post_ideas[0]
+    monkeypatch.setattr(
+        services.ideas,
+        "mark_posted",
+        lambda *args: samples.record(seen, args, replace(flagged, posted=args[-1])),
+    )
+
+    response = studio.client.put(f"{studio.url}/ideas/idea-1/posted", json={**TOOL, "posted": True})
+
+    assert response.status_code == 200
+    assert response.json()["posted"] is True
+    assert seen == [(studio.repo_id, "tool", "", "", "idea-1", True)]
+
+
+def test_flagging_an_unsaved_idea_is_404(studio: Studio) -> None:
+    response = studio.client.put(f"{studio.url}/ideas/idea-1/posted", json={**TOOL, "posted": True})
+
+    assert response.status_code == 404
+
+
+def test_ideas_can_grow_past_the_first_five(
+    studio: Studio, services: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    first = samples.ideas()
+    many = replace(
+        first,
+        angles=first.angles * 4,
+        post_ideas=tuple(replace(first.post_ideas[0], id=f"idea-{n}") for n in range(1, 13)),
+    )
+    monkeypatch.setattr(services.ideas, "saved", lambda *args: many)
+
+    response = studio.client.get(f"{studio.url}/ideas", params=TOOL)
+
+    assert response.status_code == 200
+    assert len(response.json()["post_ideas"]) == 12
+    assert len(response.json()["angles"]) == 4

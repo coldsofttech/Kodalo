@@ -5,7 +5,7 @@ from typing import Annotated, Any, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
-from kodalo.core.ai import AiConnection, AiModel
+from kodalo.core.ai import TASKS, AiConnection, AiModel
 from kodalo.core.ai import ConnectionCheck as AiCheck
 from kodalo.core.brands.brand import Brand, BrandColors, BrandData, ContrastResult, FontInfo
 from kodalo.core.brands.brand.logos import MAX_LOGO_BYTES
@@ -38,7 +38,7 @@ from kodalo.core.settings.platforms import InstagramAccount, PlatformSettings
 from kodalo.core.studio import Source
 from kodalo.core.studio.copy import CopyPlan, PostCopy
 from kodalo.core.studio.design import Design, DesignPlan
-from kodalo.core.studio.ideas import Claim, Ideas, IdeasPlan
+from kodalo.core.studio.ideas import Claim, Ideas, IdeasPlan, PostIdea
 
 
 class HealthResponse(BaseModel):
@@ -475,6 +475,14 @@ class GitHubCheckResponse(BaseModel):
 AiProvider = Literal["claude_api", "claude_code", "chatgpt_api", "gemini_api"]
 
 
+class AiModelDefaultsResponse(BaseModel):
+    """The settings a model starts with: shipped for a well-known model, else Kodalo's standard."""
+
+    max_tokens: int = Field(ge=1, le=1_000_000, examples=[128000])
+    temperature: float = Field(ge=0, le=2, examples=[1.0])
+    timeout_s: int = Field(ge=1, le=600, examples=[300])
+
+
 class AiModelResponse(BaseModel):
     """A model of an AI connection. An empty setting means the provider's own default."""
 
@@ -597,6 +605,56 @@ class AiDefaultModel(BaseModel):
     """The model a connection uses by default."""
 
     name: str = Field(min_length=1, max_length=128, examples=["claude-sonnet-5-5"])
+
+
+AiTaskName = Literal[
+    "palette",
+    "repo_metadata",
+    "repo_features",
+    "studio_ideas",
+    "studio_copy",
+    "studio_design",
+]
+
+
+class AiTaskModelResponse(BaseModel):
+    """A job done by AI and the model chosen for it."""
+
+    task: AiTaskName = Field(examples=["studio_copy"])
+    label: str = Field(max_length=64, examples=["Studio copywriter"])
+    description: str = Field(max_length=256, examples=["Writes the text of a post."])
+    model: str | None = Field(
+        default=None,
+        max_length=128,
+        description="The chosen model, or empty to use the default connection's default model.",
+        examples=["claude-sonnet-5-5"],
+    )
+
+    @classmethod
+    def from_core(cls, chosen: dict[str, str]) -> list[Self]:
+        return [
+            cls(
+                task=task.id,  # type: ignore[arg-type]
+                label=task.label,
+                description=task.description,
+                model=chosen.get(task.id),
+            )
+            for task in TASKS
+        ]
+
+
+class AiTaskModelUpdate(BaseModel):
+    """The model for a job; empty uses the default connection's default model."""
+
+    model: str | None = Field(
+        default=None, min_length=1, max_length=128, examples=["claude-opus-5-5"]
+    )
+
+
+class AiIdeaCount(BaseModel):
+    """How many post ideas Studio asks the AI for."""
+
+    idea_count: int = Field(ge=1, le=20, description="From 1 to 20.", examples=[5])
 
 
 ThemeName = Literal["system", "light", "dark"]
@@ -1179,6 +1237,9 @@ class ReadmeResultResponse(BaseModel):
         )
 
 
+MAX_SAVED_IDEAS = 1000
+
+
 class IdeasRequest(BaseModel):
     """What the post is about: the whole tool, or one feature, use case or capability."""
 
@@ -1239,7 +1300,9 @@ class AngleResponse(BaseModel):
     summary: str = Field(max_length=300)
     audience_pain: str = Field(max_length=300)
     key_claims: list[ClaimResponse] = Field(max_length=5)
-    hooks: list[HookResponse] = Field(max_length=3)
+    hooks: list[HookResponse] = Field(
+        max_length=MAX_SAVED_IDEAS, description="Grows as new ideas are added to the saved ones."
+    )
     cautions: list[str] = Field(max_length=4)
 
 
@@ -1258,6 +1321,33 @@ class PostIdeaResponse(BaseModel):
     cta_type: str = Field(max_length=16, examples=["learn_more"])
     claims_used: list[ClaimResponse] = Field(max_length=6)
     risk_notes: str = Field(max_length=300)
+    posted: bool = Field(
+        default=False, description="Whether the post made from this idea was posted already."
+    )
+
+    @classmethod
+    def from_core(cls, i: PostIdea) -> Self:
+        return cls(
+            id=i.id,
+            angle_id=i.angle_id,
+            hook_id=i.hook_id,
+            format="carousel" if i.format == "carousel" else "single_image",
+            working_title=i.working_title,
+            objective=i.objective,
+            outline=list(i.outline),
+            visual_concept=i.visual_concept,
+            asset_needs=list(i.asset_needs),
+            cta_type=i.cta_type,
+            claims_used=[_claim(c) for c in i.claims_used],
+            risk_notes=i.risk_notes,
+            posted=i.posted,
+        )
+
+
+class IdeaPostedUpdate(IdeasRequest):
+    """The focus the idea is in, and whether its post was posted."""
+
+    posted: bool = Field(description="True to flag the idea as posted, false to clear it.")
 
 
 class PillarResponse(BaseModel):
@@ -1291,13 +1381,13 @@ def _claim(claim: Claim) -> ClaimResponse:
 
 
 class IdeasResponse(BaseModel):
-    """A strategy, three angles and five post ideas for one selection."""
+    """A strategy, angles and post ideas for one selection. Refreshing adds to the saved ones."""
 
     post_type: Literal["tool", "feature"]
     focus: str = Field(max_length=128, description="The focus's name; empty for a tool post.")
     strategy: StrategyResponse
-    angles: list[AngleResponse] = Field(max_length=3)
-    post_ideas: list[PostIdeaResponse] = Field(max_length=5)
+    angles: list[AngleResponse] = Field(max_length=MAX_SAVED_IDEAS)
+    post_ideas: list[PostIdeaResponse] = Field(max_length=MAX_SAVED_IDEAS)
     claims_to_avoid: list[AvoidedClaimResponse] = Field(
         max_length=100, description="Statements from the analysis not to repeat without care."
     )
@@ -1332,23 +1422,7 @@ class IdeasResponse(BaseModel):
                 )
                 for a in ideas.angles
             ],
-            post_ideas=[
-                PostIdeaResponse(
-                    id=i.id,
-                    angle_id=i.angle_id,
-                    hook_id=i.hook_id,
-                    format="carousel" if i.format == "carousel" else "single_image",
-                    working_title=i.working_title,
-                    objective=i.objective,
-                    outline=list(i.outline),
-                    visual_concept=i.visual_concept,
-                    asset_needs=list(i.asset_needs),
-                    cta_type=i.cta_type,
-                    claims_used=[_claim(c) for c in i.claims_used],
-                    risk_notes=i.risk_notes,
-                )
-                for i in ideas.post_ideas
-            ],
+            post_ideas=[PostIdeaResponse.from_core(i) for i in ideas.post_ideas],
             claims_to_avoid=[
                 AvoidedClaimResponse(text=a.text, type=a.type, reason=a.reason)
                 for a in ideas.claims_to_avoid

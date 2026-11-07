@@ -67,7 +67,7 @@ class FakeAi:
         self.images: tuple[tuple[str, bytes], ...] = ()
         self.prompt = ""
 
-    def default_target(self) -> AiTarget:
+    def default_target(self, task: str | None = None) -> AiTarget:
         return AiTarget("claude_api", "Claude API", "haiku", None, None, None)
 
     def generate(self, system: str, prompt: str, max_tokens: int, **kwargs: Any) -> Generation:

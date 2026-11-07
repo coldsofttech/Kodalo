@@ -1,4 +1,4 @@
-"""``studio ideas``: a strategy, three angles and five post ideas for a repository."""
+"""``studio ideas``: a strategy, three angles and post ideas for a repository."""
 
 import dataclasses
 
@@ -93,7 +93,7 @@ def make_command(
     yes: YesOption = False,
     as_json: JsonOption = False,
 ) -> None:
-    """Ask the default AI model for a strategy, three angles and five post ideas. Saved."""
+    """Ask the AI for a strategy, three angles and post ideas. New ones are added to the saved."""
     with open_services(ctx) as services:
         plan = services.ideas.plan(repo_id, post_type, kind, name)
         if not approve(

@@ -298,3 +298,55 @@ def test_refresh_keeps_edited_settings_of_a_known_model(
     models = {m.name: m for m in ai.refresh_models("claude_api")}
     assert models["model-a"].max_tokens == 111
     assert models["model-a"].temperature is None
+
+
+def _default_connection_with_models(ai: AiConnections) -> None:
+    ai.save("claude_api", api_key="sk-test-1234567890abcdef")
+    ai.set_default("claude_api")
+    ai.save_model("claude_api", "fast")
+    ai.save_model("claude_api", "smart")
+    ai.set_default_model("claude_api", "fast")
+
+
+def test_a_task_uses_its_own_model_and_others_the_default(ai: AiConnections) -> None:
+    _default_connection_with_models(ai)
+    ai.set_task_model("studio_copy", "smart")
+    assert ai.task_models() == {"studio_copy": "smart"}
+    assert ai.default_target("studio_copy").model == "smart"
+    assert ai.default_target("palette").model == "fast"
+    assert ai.default_target().model == "fast"
+
+
+def test_a_task_falls_back_when_its_model_is_gone(ai: AiConnections) -> None:
+    _default_connection_with_models(ai)
+    ai.set_task_model("studio_copy", "smart")
+    ai.remove_model("claude_api", "smart")
+    assert ai.default_target("studio_copy").model == "fast"
+
+
+def test_a_task_goes_back_to_the_default_when_cleared(ai: AiConnections) -> None:
+    _default_connection_with_models(ai)
+    ai.set_task_model("palette", "smart")
+    assert ai.set_task_model("palette", None) == {}
+
+
+def test_set_task_model_rejects_bad_input(ai: AiConnections) -> None:
+    with pytest.raises(AiInvalidError):
+        ai.set_task_model("nope", "x")
+    with pytest.raises(AiInvalidError):
+        ai.set_task_model("palette", "x")
+    _default_connection_with_models(ai)
+    with pytest.raises(AiNotFoundError):
+        ai.set_task_model("palette", "missing")
+
+
+def test_idea_count_defaults_to_five_and_is_kept(ai: AiConnections) -> None:
+    assert ai.idea_count() == 5
+    assert ai.set_idea_count(12) == 12
+    assert ai.idea_count() == 12
+
+
+@pytest.mark.parametrize("count", [0, 21])
+def test_idea_count_must_be_from_one_to_twenty(ai: AiConnections, count: int) -> None:
+    with pytest.raises(AiInvalidError):
+        ai.set_idea_count(count)

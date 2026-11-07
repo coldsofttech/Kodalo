@@ -298,7 +298,7 @@ class CopyAssistant:
     def plan(self, choice: Choice) -> CopyPlan:
         """Work out what would be sent and what asking would cost. Nothing is sent."""
         prompt, _, idea, _, _ = self._request(choice)
-        target = self._ai.default_target()
+        target = self._ai.default_target("studio_copy")
         return CopyPlan(
             target.provider,
             target.label,
@@ -319,6 +319,7 @@ class CopyAssistant:
             MAX_OUTPUT_TOKENS,
             purpose="studio",
             title=f"Copy for {idea.working_title} in {choice.repo_id}",
+            task="studio_copy",
         )
         data = _reply_json(reply.text)
         slides = _slides(data.get("slides")) if isinstance(data, dict) else ()

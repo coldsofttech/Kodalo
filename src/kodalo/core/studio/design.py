@@ -280,7 +280,7 @@ class DesignAssistant:
     def plan(self, choice: Choice, canvas: tuple[int, int]) -> DesignPlan:
         """Work out what would be sent and what asking would cost. Nothing is sent."""
         prompt, post, _, _, look = self._request(choice, canvas)
-        target = self._ai.default_target()
+        target = self._ai.default_target("studio_design")
         html = _platform_html(self._platforms.get(choice.platform))
         tokens = estimate_tokens(system_prompt(choice.platform, html), prompt)
         return DesignPlan(
@@ -343,6 +343,7 @@ class DesignAssistant:
             purpose="studio",
             title=f"Design for {choice.idea_id} in {choice.repo_id}",
             images=(preview,) if preview else (),
+            task="studio_design",
         )
         data = _reply_json(reply.text)
         if not isinstance(data, dict) or not isinstance(data.get("slides"), list):

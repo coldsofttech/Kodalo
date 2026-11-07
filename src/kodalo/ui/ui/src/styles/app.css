@@ -1130,6 +1130,15 @@ fluent-button.ai-button[disabled]::part(control) {
   font-size: 0.8rem;
 }
 
+.idea-posted {
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--ok);
+  border-radius: 999px;
+  color: var(--ok);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
 .idea-title {
   font-size: 1.05rem;
   font-weight: 600;

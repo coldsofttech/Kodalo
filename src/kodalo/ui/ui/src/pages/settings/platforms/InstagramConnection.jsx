@@ -74,17 +74,30 @@ export default function InstagramConnection() {
       <details className="guide">
         <summary>How to get an access token</summary>
         <ol>
-          <li>Switch your Instagram account to a Business or Creator (professional) account.</li>
           <li>
-            In the Meta developer dashboard, create an app with the Instagram API use case and set
-            up API setup with Unified login: create a configuration with your Instagram account.
+            In Instagram, open Settings &gt; Account type and switch to a professional account, then
+            choose Creator and pick a category.
           </li>
-          <li>Add your Instagram account as a tester or role on the app, and accept the invite.</li>
           <li>
-            In the API setup, choose Generate token for your account, grant the permissions and copy
-            the token and the account ID.
+            Sign in to developers.facebook.com with a Facebook account, go to My apps &gt; Create
+            app, enter an app name and choose "Manage messaging &amp; content on Instagram".
           </li>
-          <li>Paste both below and select Connect.</li>
+          <li>
+            In the app dashboard, open Instagram app &gt; Use cases &gt; Customize, then use Unified
+            login to create a business portfolio. Verifying it is optional for independent
+            developers.
+          </li>
+          <li>
+            Configure your app and create a new configuration. Make sure Instagram accounts is
+            selected as an asset, the system-user access token is set to never expire, and the
+            instagram_basic and instagram_content_publish permissions are added, then select Create.
+          </li>
+          <li>
+            In the next step, Generate access tokens, select Add account, then add your account as
+            an Instagram tester and accept the invitation on Instagram.
+          </li>
+          <li>Select Generate token, sign in, and copy the token.</li>
+          <li>Paste the app ID and the token below and select Connect.</li>
         </ol>
         <p>
           <a

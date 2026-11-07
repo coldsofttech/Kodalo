@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import {
+  getAiModelDefaults,
   listAiConnections,
   refreshAiModels,
   removeAiConnection,
@@ -180,11 +181,35 @@ function ProviderCard({ connection, others, onReload }) {
   const setField = (field) => (/** @type {string} */ value) =>
     setForm((current) => ({ ...current, [field]: value }));
 
-  /** Choosing a model that is already saved loads its settings, so it can be edited. */
+  /**
+   * Choosing a model that is already saved loads its settings, so it can be edited. A setting it
+   * does not have yet is filled in with the model's starting value, which can be changed.
+   */
   const changeName = (/** @type {string} */ value) => {
     const known = connection.models.find((model) => model.name === value);
-    if (known) editModel(known);
-    else setField('name')(value);
+    if (!known) {
+      setField('name')(value);
+      return;
+    }
+    editModel(known);
+    getAiModelDefaults(provider, value).then(
+      (starting) =>
+        setForm((current) =>
+          current.name !== value
+            ? current
+            : {
+                ...current,
+                maxTokens: current.maxTokens || String(starting.max_tokens),
+                temperature: current.temperature || String(starting.temperature),
+                timeout: current.timeout || String(starting.timeout_s),
+              },
+        ),
+      (failure) =>
+        setMessage({
+          ok: false,
+          text: failure instanceof Error ? failure.message : 'Something went wrong.',
+        }),
+    );
   };
 
   const heading = `heading-${provider}`;
@@ -348,8 +373,9 @@ function ProviderCard({ connection, others, onReload }) {
             />
           </div>
           <p className="hint">
-            Max tokens 1 to 1000000, temperature 0 to 2, timeout 1 to 600 seconds. A new model with
-            a setting left empty gets Kodalo&apos;s standard for that kind of model; on a saved
+            Max tokens 1 to 1000000, temperature 0 to 2, timeout 1 to 600 seconds. Choosing a saved
+            model fills any empty setting with its starting value, which you can change. A new model
+            with a setting left empty gets Kodalo&apos;s standard for that kind of model; on a saved
             model, empty goes back to the provider&apos;s own.
           </p>
           <div className="row actions">

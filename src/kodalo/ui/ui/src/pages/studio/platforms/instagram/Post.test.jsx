@@ -43,14 +43,18 @@ function backend(connection, options = {}) {
       return tunnel;
     }
     if (path.endsWith('/api/bridge/choose_folder')) return { available: true, result: folder };
+    if (method === 'PUT' && path.endsWith('/ideas/idea-1/posted'))
+      return { id: 'idea-1', posted: body.posted };
     if (method === 'POST' && path.endsWith('/design/post')) return onPost(body);
     if (method === 'POST' && path.endsWith('/design/export')) return onExport(body);
     return [404, { detail: 'No such route.' }];
   });
 }
 
-function show(slides = 3) {
-  return render(<InstagramPost repo={repo} request={request} mode="dark" slides={slides} />);
+function show(slides = 3, onPosted = vi.fn()) {
+  return render(
+    <InstagramPost repo={repo} request={request} mode="dark" slides={slides} onPosted={onPosted} />,
+  );
 }
 
 /** Open the banner and confirm, as the person does. */
@@ -148,6 +152,38 @@ describe('InstagramPost', () => {
     expect(order.filter((path) => !path.includes('/bridge/'))[0]).toMatch(/\/instagram\/tunnel$/);
     expect(order.at(-1)).toMatch(/\/design\/post$/);
     expect(screen.queryByText(/Installing Cloudflared/)).toBeNull();
+  });
+
+  it('flags the idea as posted after a post', async () => {
+    const calls = backend(account);
+    const onPosted = vi.fn();
+    show(3, onPosted);
+
+    await postIt();
+
+    expect(await screen.findByText(/Posted\./)).toBeInTheDocument();
+    const flag = calls.find((call) => call.method === 'PUT' && call.path.endsWith('/posted'));
+    expect(flag.body).toEqual({ post_type: 'tool', kind: '', name: '', posted: true });
+    expect(onPosted).toHaveBeenCalledWith('idea-1', true);
+  });
+
+  it('asks after an export and flags the idea only when the person says it was posted', async () => {
+    const calls = backend(none);
+    const onPosted = vi.fn();
+    show(3, onPosted);
+
+    await userEvent.click(await screen.findByLabelText('Export slides and caption'));
+    expect(await screen.findByText(/Did you post it\?/)).toBeInTheDocument();
+    expect(calls.some((call) => call.path.endsWith('/posted'))).toBe(false);
+
+    await userEvent.click(screen.getByLabelText('Not posted'));
+    expect(screen.queryByText(/Did you post it\?/)).toBeNull();
+    expect(onPosted).not.toHaveBeenCalled();
+
+    await userEvent.click(screen.getByLabelText('Export slides and caption'));
+    await userEvent.click(await screen.findByLabelText('Mark as posted'));
+    expect(onPosted).toHaveBeenCalledWith('idea-1', true);
+    expect(calls.filter((call) => call.path.endsWith('/posted'))).toHaveLength(1);
   });
 
   it('shows why cloudflared could not be installed and does not post', async () => {

@@ -24,10 +24,15 @@ from kodalo.api.schemas import (
     AiHistoryPageResponse,
     AiHistorySettingsResponse,
     AiHistorySettingsUpdate,
+    AiIdeaCount,
+    AiModelDefaultsResponse,
     AiModelResponse,
     AiModelUpdate,
     AiPeriod,
     AiPurgeResponse,
+    AiTaskModelResponse,
+    AiTaskModelUpdate,
+    AiTaskName,
     AiUsageResponse,
 )
 from kodalo.core.settings.ai import (
@@ -94,6 +99,26 @@ def list_ai_models(provider: AiProviderPath, ai: AiSetting) -> list[AiModelRespo
         return [AiModelResponse.from_core(m) for m in ai.models(provider)]
 
 
+@router.get(
+    f"{AI}/{{provider}}/model-defaults",
+    summary="Get a model's starting settings",
+    responses=COMMON | AI_INVALID,
+)
+def get_ai_model_defaults(
+    provider: AiProviderPath,
+    ai: AiSetting,
+    name: Annotated[
+        str, Query(min_length=1, max_length=128, description="The model name, such as opus.")
+    ],
+) -> AiModelDefaultsResponse:
+    """Return the max tokens, temperature and timeout a model starts with."""
+    with ai_errors():
+        found = ai.model_defaults(provider, name)
+    return AiModelDefaultsResponse(
+        max_tokens=found.max_tokens, temperature=found.temperature, timeout_s=found.timeout_s
+    )
+
+
 @router.post(
     f"{AI}/{{provider}}/models/refresh",
     summary="Refresh the models",
@@ -150,6 +175,47 @@ def remove_ai_model(provider: AiProviderPath, name: AiModelName, ai: AiSetting) 
     with ai_errors():
         ai.remove_model(provider, name)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+AI_TASKS = "/settings/ai/task-models"
+
+
+@router.get(AI_TASKS, summary="List the model for each AI job", responses=COMMON)
+def list_ai_task_models(ai: AiSetting) -> list[AiTaskModelResponse]:
+    """Return each job done by AI with the model chosen for it, if any."""
+    return AiTaskModelResponse.from_core(ai.task_models())
+
+
+@router.put(
+    f"{AI_TASKS}/{{task}}",
+    summary="Set the model for an AI job",
+    responses=COMMON | AI_INVALID | AI_NOT_FOUND,
+)
+def set_ai_task_model(
+    task: Annotated[AiTaskName, Path(description="The job.")],
+    body: AiTaskModelUpdate,
+    ai: AiSetting,
+) -> list[AiTaskModelResponse]:
+    """Choose a model of the default connection for a job. Without a model, the job uses the
+    connection's default model."""
+    with ai_errors():
+        return AiTaskModelResponse.from_core(ai.set_task_model(task, body.model))
+
+
+AI_IDEAS = "/settings/ai/studio-ideas"
+
+
+@router.get(AI_IDEAS, summary="Get the number of post ideas", responses=COMMON)
+def get_ai_idea_count(ai: AiSetting) -> AiIdeaCount:
+    """Return how many post ideas Studio asks for."""
+    return AiIdeaCount(idea_count=ai.idea_count())
+
+
+@router.put(AI_IDEAS, summary="Set the number of post ideas", responses=COMMON | AI_INVALID)
+def set_ai_idea_count(body: AiIdeaCount, ai: AiSetting) -> AiIdeaCount:
+    """Choose how many post ideas Studio asks for. Ideas already saved are not changed."""
+    with ai_errors():
+        return AiIdeaCount(idea_count=ai.set_idea_count(body.idea_count))
 
 
 AI_HISTORY = "/settings/ai/history"

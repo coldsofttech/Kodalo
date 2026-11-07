@@ -212,11 +212,6 @@ export default function PostView({ copy, busy, onSave }) {
         </details>
       </div>
 
-      {copy.review_flags.map((/** @type {any} */ flag) => (
-        <p key={`${flag.type}-${flag.text}`} className="hint">
-          Check: {flag.text} {flag.reason ? `(${flag.reason})` : ''}
-        </p>
-      ))}
       {copy.warnings.map((/** @type {string} */ line) => (
         <p key={line} className="hint">
           {line}

@@ -378,6 +378,17 @@ export const getDesign = (repoId, body) =>
 export const postToInstagram = (repoId, body) =>
   request(`${designUrl(repoId)}/post`, { method: 'POST', json: body });
 /**
+ * Flag a post idea as posted so it is not posted twice, or clear the flag.
+ * @param {string} repoId
+ * @param {string} ideaId
+ * @param {{ post_type: string, kind: string, name: string, posted: boolean }} body
+ */
+export const setIdeaPosted = (repoId, ideaId, body) =>
+  request(`/api/v1/studio/repositories/${repoId}/ideas/${encodeURIComponent(ideaId)}/posted`, {
+    method: 'PUT',
+    json: body,
+  });
+/**
  * Make the pictures and caption of the designed post in a new folder inside `body.folder`. It can
  * take a minute.
  * @param {string} repoId
@@ -444,6 +455,9 @@ export const refreshAiModels = (provider) =>
 export const saveAiModel = (provider, name, body) =>
   request(`${AI}/${provider}/models/${encodeURIComponent(name)}`, { method: 'PUT', json: body });
 /** @param {string} provider @param {string} name */
+export const getAiModelDefaults = (provider, name) =>
+  request(`${AI}/${provider}/model-defaults?name=${encodeURIComponent(name)}`);
+/** @param {string} provider @param {string} name */
 export const removeAiModel = (provider, name) =>
   request(`${AI}/${provider}/models/${encodeURIComponent(name)}`, { method: 'DELETE' });
 /** @param {string} provider @param {string} name */
@@ -451,6 +465,14 @@ export const setDefaultAiModel = (provider, name) =>
   request(`${AI}/${provider}/default-model`, { method: 'PUT', json: { name } });
 
 const AI_SETTINGS = '/api/v1/settings/ai';
+export const getAiIdeaCount = () => request(`${AI_SETTINGS}/studio-ideas`);
+/** @param {number} count */
+export const setAiIdeaCount = (count) =>
+  request(`${AI_SETTINGS}/studio-ideas`, { method: 'PUT', json: { idea_count: count } });
+export const listAiTaskModels = () => request(`${AI_SETTINGS}/task-models`);
+/** @param {string} task @param {string | null} model `null` uses the connection's default model */
+export const setAiTaskModel = (task, model) =>
+  request(`${AI_SETTINGS}/task-models/${task}`, { method: 'PUT', json: { model } });
 /** @param {{ period: string, start?: string, end?: string, limit?: number, offset?: number }} filter */
 const aiQuery = ({ period, start, end, limit, offset }) => {
   const query = new URLSearchParams({ period });

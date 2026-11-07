@@ -103,7 +103,7 @@ Make a post from an added repository, step by step: ideas, then copy, then desig
 | Command | What it does |
 | --- | --- |
 | `studio ideas plan <id>` | Say what the AI would be sent for the ideas and what it costs. Nothing is sent. |
-| `studio ideas make <id>` | Ask the default AI model for a strategy, three angles with hooks and five post ideas. Replaces the ones saved before. |
+| `studio ideas make <id>` | Ask the default AI model for a strategy, three angles with hooks and the number of post ideas set in Settings (5 by default). New ideas are added to the ones saved before; ones already made are skipped. |
 | `studio ideas show <id>` | Show the saved ideas. |
 | `studio copy plan <id>` | Say what the AI would be sent for the copy. Nothing is sent. |
 | `studio copy make <id>` | Write the slides, caption, alternative opening and hashtags of an idea with the AI. Replaces the copy saved before. |

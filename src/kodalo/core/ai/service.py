@@ -10,6 +10,9 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from kodalo.core.ai.clients import GenerateRequest, Generation, Generator, Prober, generate, probe
+from kodalo.core.ai.models.defaults import model_defaults
+from kodalo.core.ai.tasks import TASK_IDS
+from kodalo.core.settings.ai.defaults import ModelDefaults as StartingSettings
 from kodalo.core.settings.ai.defaults import defaults_for
 from kodalo.core.settings.ai.errors import (
     AiConnectionError,
@@ -20,8 +23,13 @@ from kodalo.core.settings.ai.history import AiHistory
 from kodalo.core.settings.ai.providers import PROVIDER_IDS, PROVIDERS, Kind, Provider, get_provider
 from kodalo.core.settings.ai.secrets import KeychainSecrets, SecretStore
 from kodalo.core.storage import Database
-from kodalo.core.storage.models import AiConnectionRow, AiModelRow, utc_now
+from kodalo.core.storage.models import AiConnectionRow, AiModelRow, Setting, utc_now
 
+TASK_GROUP = "ai"
+IDEA_COUNT_KEY = "studio_idea_count"
+DEFAULT_IDEA_COUNT = 5
+MIN_IDEAS = 1
+MAX_IDEAS = 20
 MAX_URL = 512
 MAX_MODEL_NAME = 128
 MAX_TOKENS_LIMIT = 1_000_000
@@ -106,12 +114,16 @@ class AiConnections:
 
     # -- using the default -----------------------------------------------------------------------
 
-    def default_target(self) -> AiTarget:
-        """Return the default connection and its default model. Raises ``AiInvalidError`` when
-        either is not set."""
+    def default_target(self, task: str | None = None) -> AiTarget:
+        """Return the default connection and the model for ``task``: the one chosen for it in
+        Settings, else the connection's default model. Raises ``AiInvalidError`` when the
+        connection or a model is not set."""
         for connection in self.list_all():
             if connection.is_default and connection.enabled:
+                chosen = self.task_models().get(task) if task is not None else None
                 name = connection.default_model
+                if chosen is not None and any(m.name == chosen for m in connection.models):
+                    name = chosen
                 model = next((m for m in connection.models if m.name == name), None)
                 if model is not None:
                     return AiTarget(
@@ -134,11 +146,13 @@ class AiConnections:
         purpose: str,
         title: str,
         images: tuple[tuple[str, bytes], ...] = (),
+        task: str | None = None,
     ) -> Generation:
-        """Send ``prompt`` to the default model. The model's saved settings apply, and its
-        maximum tokens, when set, caps ``max_tokens``. The call is added to the history under
-        ``title`` and ``purpose`` (one of ``PURPOSES``). Raises ``AiConnectionError``."""
-        target = self.default_target()
+        """Send ``prompt`` to the model for ``task`` (see ``default_target``). The model's saved
+        settings apply, and its maximum tokens, when set, caps ``max_tokens``. The call is added
+        to the history under ``title`` and ``purpose`` (one of ``PURPOSES``). Raises
+        ``AiConnectionError``."""
+        target = self.default_target(task)
         info = _provider(target.provider)
         request = GenerateRequest(
             provider=target.provider,
@@ -301,6 +315,11 @@ class AiConnections:
         """Return the saved models of ``provider``, by name."""
         return list(self.get(provider).models)
 
+    def model_defaults(self, provider: str, name: str) -> StartingSettings:
+        """Return the settings a model called ``name`` starts with under ``provider``."""
+        _provider(provider)
+        return starting_settings(provider, _valid_model(name))
+
     def refresh_models(self, provider: str) -> list[AiModel]:
         """Ask ``provider`` for its models and save them. Models typed in by hand are kept, and so
         are the settings of models that are still offered. Raises ``AiConnectionError``."""
@@ -317,7 +336,7 @@ class AiConnections:
             row = _require(session, info)
             existing = {model.name: model for model in row.models}
             for name in sorted(offered - existing.keys()):
-                standard = defaults_for(name)
+                standard = starting_settings(provider, name)
                 row.models.append(
                     AiModelRow(
                         name=name,
@@ -357,7 +376,7 @@ class AiConnections:
             row = _require(session, info)
             model = next((m for m in row.models if m.name == name), None)
             if model is None:
-                standard = defaults_for(name)
+                standard = starting_settings(provider, name)
                 model = AiModelRow(name=name, source="manual", is_default=False)
                 row.models.append(model)
                 max_tokens = standard.max_tokens if max_tokens is None else max_tokens
@@ -389,6 +408,105 @@ class AiConnections:
             row = _require(session, info)
             row.models.remove(_find_model(row, name))
 
+    # -- models per task -----------------------------------------------------------------------
+
+    def task_models(self) -> dict[str, str]:
+        """Return the model chosen for each task that has one. A task left out uses the default
+        connection's default model, and so does one whose model is no longer on that connection."""
+        with self._database.session() as session:
+            rows = session.scalars(
+                select(Setting).where(
+                    Setting.scope == "global",
+                    Setting.owner_id == "",
+                    Setting.group_name == TASK_GROUP,
+                    Setting.key.in_([_task_key(task) for task in TASK_IDS]),
+                )
+            )
+            by_key = {row.key: row.value for row in rows if row.value}
+        return {task: by_key[_task_key(task)] for task in TASK_IDS if _task_key(task) in by_key}
+
+    def set_task_model(self, task: str, name: str | None) -> dict[str, str]:
+        """Choose the model ``name`` of the default connection for ``task``; ``None`` goes back to
+        the connection's default model. Return the choices after the change."""
+        if task not in TASK_IDS:
+            raise AiInvalidError(f"Unknown task: {task}. Use one of: {', '.join(TASK_IDS)}.")
+        if name is not None:
+            name = _valid_model(name)
+            connection = next((c for c in self.list_all() if c.is_default and c.enabled), None)
+            if connection is None:
+                raise AiInvalidError("Choose a default AI connection in Settings first.")
+            if not any(m.name == name for m in connection.models):
+                raise AiNotFoundError(f"There is no model called {name} on this connection.")
+        with self._database.session() as session:
+            row = session.scalars(
+                select(Setting).where(
+                    Setting.scope == "global",
+                    Setting.owner_id == "",
+                    Setting.group_name == TASK_GROUP,
+                    Setting.key == _task_key(task),
+                )
+            ).first()
+            if name is None:
+                if row is not None:
+                    session.delete(row)
+            else:
+                if row is None:
+                    row = Setting(
+                        scope="global",
+                        owner_id="",
+                        group_name=TASK_GROUP,
+                        key=_task_key(task),
+                        mode="own",
+                    )
+                    session.add(row)
+                row.value = name
+                row.data_type = "string"
+        return self.task_models()
+
+    # -- post ideas ----------------------------------------------------------------------------
+
+    def idea_count(self) -> int:
+        """Return how many post ideas Studio asks for (5 until changed)."""
+        with self._database.session() as session:
+            row = session.scalars(
+                select(Setting).where(
+                    Setting.scope == "global",
+                    Setting.owner_id == "",
+                    Setting.group_name == TASK_GROUP,
+                    Setting.key == IDEA_COUNT_KEY,
+                )
+            ).first()
+        try:
+            count = int(row.value) if row is not None else DEFAULT_IDEA_COUNT
+        except ValueError:
+            return DEFAULT_IDEA_COUNT
+        return count if MIN_IDEAS <= count <= MAX_IDEAS else DEFAULT_IDEA_COUNT
+
+    def set_idea_count(self, count: int) -> int:
+        """Choose how many post ideas Studio asks for, from 1 to 20."""
+        _check_range("Post ideas", count, MIN_IDEAS, MAX_IDEAS)
+        with self._database.session() as session:
+            row = session.scalars(
+                select(Setting).where(
+                    Setting.scope == "global",
+                    Setting.owner_id == "",
+                    Setting.group_name == TASK_GROUP,
+                    Setting.key == IDEA_COUNT_KEY,
+                )
+            ).first()
+            if row is None:
+                row = Setting(
+                    scope="global",
+                    owner_id="",
+                    group_name=TASK_GROUP,
+                    key=IDEA_COUNT_KEY,
+                    mode="own",
+                )
+                session.add(row)
+            row.value = str(count)
+            row.data_type = "integer"
+        return count
+
     # -- helpers -------------------------------------------------------------------------------
 
     def _require_saved(self, provider: str) -> None:
@@ -419,6 +537,10 @@ class AiConnections:
             if row is not None:
                 row.last_status, row.last_detail = status, detail[:256]
                 row.last_checked_at = utc_now()
+
+
+def _task_key(task: str) -> str:
+    return f"task_model_{task}"
 
 
 def _provider(provider: str) -> Provider:
@@ -490,6 +612,15 @@ def _check_range(label: str, value: float | None, low: float, high: float) -> No
 
 def _hint(key: str) -> str:
     return key[-_HINT_LENGTH:] if len(key) >= 3 * _HINT_LENGTH else ""
+
+
+def starting_settings(provider: str, name: str) -> StartingSettings:
+    """Return the settings a new model starts with: the shipped defaults of a well-known model,
+    otherwise Kodalo's standard for its family."""
+    shipped = model_defaults(provider, name)
+    if shipped is None:
+        return defaults_for(name)
+    return StartingSettings(shipped.max_tokens, shipped.temperature, shipped.timeout_s)
 
 
 def _model(row: AiModelRow) -> AiModel:

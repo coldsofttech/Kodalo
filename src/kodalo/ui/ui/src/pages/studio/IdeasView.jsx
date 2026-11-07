@@ -78,6 +78,11 @@ export default function IdeasView({ ideas, brands, brandId, onBrand, pick, onPic
                     <i className={`bi ${FORMAT_ICONS[idea.format]}`} aria-hidden="true" />{' '}
                     {FORMATS[idea.format]}
                   </span>
+                  {idea.posted ? (
+                    <span className="idea-posted">
+                      <i className="bi bi-check-circle" aria-hidden="true" /> Posted
+                    </span>
+                  ) : null}
                 </span>
                 <span className="idea-title">{idea.working_title}</span>
                 <span className="idea-objective">{idea.objective}</span>

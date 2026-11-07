@@ -96,8 +96,19 @@ export default function RepositoriesPage({ visible, onOpenSettings, onChange }) 
     onChange?.();
   }
 
-  const next = () =>
+  /** Shows the overlay while `action` runs. @param {() => Promise<void>} action */
+  const withOverlay = (action) =>
     run(async () => {
+      setRefreshing('Adding the repository…');
+      try {
+        await action();
+      } finally {
+        setRefreshing('');
+      }
+    });
+
+  const next = () =>
+    withOverlay(async () => {
       const checked = await checkRepository(source);
       if (checked.kind === 'local_folder' && !checked.stored_id) {
         setDetails({ ...EMPTY_DETAILS, ...checked.suggested });
@@ -108,7 +119,7 @@ export default function RepositoriesPage({ visible, onOpenSettings, onChange }) 
     });
 
   const submitDetails = () =>
-    run(() =>
+    withOverlay(() =>
       add({
         details: {
           ...details,
@@ -131,8 +142,13 @@ export default function RepositoriesPage({ visible, onOpenSettings, onChange }) 
   /** Next: read what the README and the docs say (no AI) and show it. */
   const analyze = () =>
     run(async () => {
-      setReadme(await readReadme(repo.id, false));
-      setStep('analyze');
+      setRefreshing('Reading the README and the docs…');
+      try {
+        setReadme(await readReadme(repo.id, false));
+        setStep('analyze');
+      } finally {
+        setRefreshing('');
+      }
     });
 
   /** Read the README and the docs again. */
@@ -288,7 +304,15 @@ export default function RepositoriesPage({ visible, onOpenSettings, onChange }) 
                 {repos.map((item) => (
                   <tr key={item.id}>
                     <th scope="row">
-                      {item.owner}/{item.name}
+                      <button
+                        type="button"
+                        className="link"
+                        disabled={busy}
+                        title="Edit"
+                        onClick={() => edit(item)}
+                      >
+                        {item.owner}/{item.name}
+                      </button>
                     </th>
                     <td>{item.default_branch || '-'}</td>
                     <td>{item.license || '-'}</td>

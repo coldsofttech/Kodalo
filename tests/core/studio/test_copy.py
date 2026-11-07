@@ -105,7 +105,7 @@ class FakeAi:
         self.reply = reply
         self.calls = 0
 
-    def default_target(self) -> AiTarget:
+    def default_target(self, task: str | None = None) -> AiTarget:
         return AiTarget("claude_api", "Claude API", "haiku", None, 0.0, 30)
 
     def generate(self, system: str, prompt: str, max_tokens: int, **kwargs: Any) -> Generation:

@@ -192,6 +192,22 @@ export default function StudioPage({ visible, onOpenRepositories }) {
     setStep('design');
   };
 
+  /** The idea was flagged as posted (or cleared): show it on the Ideas step. */
+  const markPosted = (/** @type {string} */ ideaId, /** @type {boolean} */ posted) =>
+    setIdeas((current) =>
+      current
+        ? {
+            ...current,
+            data: {
+              ...current.data,
+              post_ideas: current.data.post_ideas.map((/** @type {any} */ idea) =>
+                idea.id === ideaId ? { ...idea, posted } : idea,
+              ),
+            },
+          }
+        : current,
+    );
+
   const designRequest = () => ({
     brand_id: brandId,
     ...ideas.body,
@@ -407,6 +423,7 @@ export default function StudioPage({ visible, onOpenRepositories }) {
           brand={brands.find((/** @type {any} */ b) => b.id === brandId)}
           repo={repo}
           request={designRequest()}
+          onPosted={markPosted}
         />
       ) : null}
 

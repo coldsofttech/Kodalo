@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AiConnections from './Connections.jsx';
 import { createBackend, mockApi, typeInto } from '../../../testing.js';
@@ -119,5 +119,25 @@ describe('AiConnections', () => {
 
     await userEvent.type(screen.getByLabelText('Claude Code model name'), 'mine');
     expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500');
+  });
+
+  it('fills the empty settings of a saved model with its starting values', async () => {
+    const calls = mockApi(createBackend([]).handler);
+    render(<AiConnections />);
+
+    await choose('Claude Code');
+    await userEvent.click(screen.getByLabelText('Save Claude Code'));
+    await userEvent.type(await screen.findByLabelText('Claude Code model name'), 'mine');
+    typeInto(screen.getByLabelText('Claude Code max tokens'), '500');
+    await userEvent.click(screen.getByLabelText('Save Claude Code model'));
+    await screen.findByText('Model saved.');
+
+    await userEvent.type(screen.getByLabelText('Claude Code model name'), 'mine');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Claude Code temperature')).toHaveProperty('value', '0.7'),
+    );
+    expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500');
+    expect(screen.getByLabelText('Claude Code timeout')).toHaveProperty('value', '90');
+    expect(calls.some((call) => call.path.includes('/model-defaults?name=mine'))).toBe(true);
   });
 });
