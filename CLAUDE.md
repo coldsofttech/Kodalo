@@ -184,14 +184,9 @@ These apply to `installer/`, `scripts/build_installer.py`, `scripts/update_manif
     after the first release. PATH edits go through `path.ps1`, never NSIS string functions, which
     cut long values.
 
-29. **Linux packages**: `installer/linux/nfpm.yaml` builds the `.deb` and `.rpm` of the command line
-    only, installed under `/usr/lib/<name>/` with a `/usr/bin` symlink. Values arrive as `PKG_*`
-    environment variables from `scripts/build_installer.py`, which also sets file modes. Packages
-    never touch a user's home folder.
-
-30. **Releases and signing**: tool versions (NSIS, nfpm) are pinned in `installer/tools.toml` and
+29. **Releases and signing**: tool versions (NSIS) are pinned in `installer/tools.toml` and
     PyInstaller in `uv.lock`; nothing else is installed unpinned. Signing is off by default and
-    provider-neutral (`SIGN_COMMAND` with `{file}`). Homebrew, Scoop and winget updates are pull
+    provider-neutral (`SIGN_COMMAND` with `{file}`). Scoop and winget updates are pull
     requests behind repository variables, never direct pushes. Update `docs/packaging.md` and
     `docs/releasing.md` whenever installer files, `build.yml` or `release.yml` change.
 

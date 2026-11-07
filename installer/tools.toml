@@ -4,4 +4,3 @@
 
 [tools]
 nsis = "3.13"   # https://nsis.sourceforge.io/ ; Windows setup builder
-nfpm = "2.48.0" # https://github.com/goreleaser/nfpm/releases ; Linux deb and rpm builder

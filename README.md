@@ -13,7 +13,6 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![PyInstaller](https://img.shields.io/badge/PyInstaller-installers-blue)](https://pyinstaller.org/)
 [![NSIS](https://img.shields.io/badge/NSIS-Windows%20setup-blue)](https://nsis.sourceforge.io/)
-[![nfpm](https://img.shields.io/badge/nfpm-deb%20%26%20rpm-blue)](https://nfpm.goreleaser.com/)
 
 Kodalo turns your GitHub repositories into accurate, on-brand Instagram posts. It runs on your Windows desktop, keeps your products and content history on your own computer, and lets you choose your own AI provider. Nothing is posted without your approval.
 
@@ -45,8 +44,6 @@ pipx install Kodalo
 For the desktop window, use the Windows installer. The API and the window are not part of the Python package. Or use a ready-made installer from the [releases page](https://github.com/coldsofttech/Kodalo/releases), where each file has a checksum in `SHA256SUMS.txt`:
 
 - **Windows:** the setup program installs for you or for everyone, and can add the command to your PATH. winget and Scoop are available once the maintainer enables them.
-- **Linux:** a `.deb` (Debian, Ubuntu) or `.rpm` (Fedora) package.
-- **macOS:** Homebrew, once the maintainer enables it.
 
 See the [releasing guide](docs/releasing.md) for the install commands of each.
 

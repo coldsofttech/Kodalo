@@ -9,7 +9,7 @@ src/kodalo_api/       FastAPI app: routers, schemas, errors, settings (see api.m
 src/kodalo_ui/        Cornea Shell wiring and the `kodalo-ui` command (see ui.md)
 src/kodalo_ui/ui/     React + Vite frontend (JavaScript)
 tests/                 pytest tests, one folder per component: core/, cli/, api/, ui/ (each with integration/)
-installer/             PyInstaller specs, NSIS scripts, nfpm config, pinned tool versions (see packaging.md)
+installer/             PyInstaller specs, NSIS scripts, pinned tool versions (see packaging.md)
 scripts/               repository settings, OpenAPI export, installer build, release manifests
 docs/                  documentation, including the generated openapi.json and cli-reference.md
 pyproject.toml         metadata, dependencies and tool configuration

@@ -103,7 +103,7 @@ src/kodalo_cli/       Typer + Rich command line over the library
 src/kodalo_api/       FastAPI app over the library: routers, schemas, errors, settings
 src/kodalo_ui/        Cornea Shell wiring and the `kodalo-ui` command
 src/kodalo_ui/ui/     React + Vite frontend (JavaScript); `dist/` is built, not committed
-installer/               PyInstaller specs, NSIS scripts, nfpm config and pinned tool versions
+installer/               PyInstaller specs, NSIS scripts and pinned tool versions
 scripts/                 repository settings, OpenAPI export, installer build and manifest generation
 tests/<component>/     pytest unit tests with coverage (80% minimum), one folder each for core, cli, api and ui
 tests/<component>/integration/   tests marked `integration`: skipped by default and in pre-commit, run in CI
@@ -151,7 +151,7 @@ flowchart LR
 | `security.yml` | Pull request, push, weekly | Semgrep, uploaded as code scanning results. Not required. |
 | `dependency-review.yml` | Pull request | Blocks pull requests that add vulnerable dependencies. |
 | `audit.yml` | Weekly, manual, and pull requests that change a lock file | Runs `pip-audit` and `npm audit` on the locked dependencies to catch newly published vulnerabilities. |
-| `build.yml` | Pull request that touches the installers | Builds the Windows setups and Linux packages, installs each, runs it and uninstalls it. Not required. |
+| `build.yml` | Pull request that touches the installers | Builds the Windows setups, installs each, runs it and uninstalls it. Not required. |
 | `release.yml` | GitHub release published | Checks the tag matches the version, builds the wheel (core library and command line), publishes to PyPI, builds and optionally signs the installers, attaches them with checksums to the release, and opens Homebrew, Scoop and winget pull requests when switched on. |
 | `init.yml` | Manual | One-time: replaces the owner and repository name, renames the example packages and commands to your name, regenerates the lock file and generated docs, and opens a pull request. Skipped in the template itself. |
 
@@ -159,7 +159,7 @@ CodeQL runs through GitHub's default setup rather than a workflow file.
 
 ## Branch governance
 
-The `main` ruleset in `.github/rulesets/main.json` is applied by `scripts/apply_repo_settings.py`. It requires:
+The `main` ruleset in `.github/rulesets/main.json` is applied by hand (see [repo setup](repo-setup.md)). It requires:
 
 - a pull request with a code owner review and resolved conversations, squash merge only
 - the `ci` and `dependency-review` checks, with the branch up to date

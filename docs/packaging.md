@@ -4,23 +4,22 @@ How the installers are built. For publishing them, see [releasing](releasing.md)
 
 ## What is built
 
-| Product | Contents | Windows | Linux |
-| --- | --- | --- | --- |
-| CLI | `kodalo` | `kodalo-<version>-setup.exe`, and a portable `…-windows-x64.zip` | `.deb` and `.rpm` |
-| UI | `kodalo-ui` (window) and `kodalo` | `kodalo-ui-<version>-setup.exe` | none (the window needs Windows) |
+| Product | Contents | Windows |
+| --- | --- | --- |
+| CLI | `kodalo` | `kodalo-<version>-setup.exe`, and a portable `…-windows-x64.zip` |
+| UI | `kodalo-ui` (window) and `kodalo` | `kodalo-ui-<version>-setup.exe` |
 
-macOS gets no installer. Install the PyPI package, or use Homebrew once it is switched on.
+Only Windows gets an installer. Elsewhere, install the PyPI package.
 
 ## The pieces
 
 ```text
-installer/pyinstaller/       cli.spec, ui.spec, common.py   freeze the programs (both OSs; ui.spec is Windows only)
+installer/pyinstaller/       cli.spec, ui.spec, common.py   freeze the programs (Windows only)
 installer/projectinfo.py       names, version and title read from pyproject.toml and the code
 installer/windows/nsis/      cli.nsi, ui.nsi, common.nsh, path.ps1   Windows setup.exe files
-installer/linux/             nfpm.yaml   .deb and .rpm
-installer/tools.toml         pinned versions of NSIS and nfpm
+installer/tools.toml         pinned version of NSIS
 scripts/build_installer.py   runs the steps above
-scripts/update_manifests.py  release notes and the Homebrew and Scoop manifests
+scripts/update_manifests.py  release notes and the Scoop manifest
 ```
 
 Names, version, icon and description are never repeated: executable names are the `[project.scripts]` keys, the version is `__version__`, the title is `TITLE` in `kodalo_ui/app.py`, the icon is `kodalo_ui/ui/public/icon.png`, and the rest comes from `[project]`. Each of these is defined once and read by the installer files through `installer/projectinfo.py`, which takes the command and window names from `[project.scripts]` and `[tool.installer]` in `pyproject.toml`. Renaming the project (the Init workflow does it) therefore needs no edit in the installer files.
@@ -41,7 +40,6 @@ Results are in `dist/installer/`; the PyInstaller folders are in `build/installe
 | `uv sync --group installer` | PyInstaller, Pillow (turns the PNG icon into `.ico`) and the build backend |
 | Node (see `.nvmrc`) | the frontend, for the UI (`--build-frontend` runs `npm ci` and `npm run build`) |
 | NSIS (version in `installer/tools.toml`) | Windows setups; `makensis` on `PATH` or in `Program Files (x86)\NSIS` |
-| nfpm (version in `installer/tools.toml`) | Linux packages; set `NFPM` to run it another way, for example `NFPM="uvx nfpm"` |
 
 ## PyInstaller
 
@@ -76,10 +74,6 @@ uninstall.exe /S [/PURGE]
 
 Each product has a GUID in its `.nsi` file. It identifies the product for upgrades, so keep it for the life of the project. Init generates new ones for you; to make one by hand, use `python -c "import uuid; print(uuid.uuid4())"`.
 
-## Linux packages (nfpm)
-
-One package, the command line. `nfpm.yaml` installs the folder under `/usr/lib/<name>/`, links the command into `/usr/bin`, and ships the license in `/usr/share/doc/<name>/`. Packages are system-wide and need root; removing one deletes only its own files and never touches a user's home. `build_installer.py` sets file modes (folders 755, files 644, executables 755) before packaging.
-
 ## WebView2
 
 The window uses the Microsoft Edge WebView2 runtime, which is already part of Windows 10 and 11. The installers do not add it. On an older machine the runtime can be downloaded from [Microsoft](https://developer.microsoft.com/microsoft-edge/webview2/), and `cornea doctor` checks for it.
@@ -87,6 +81,6 @@ The window uses the Microsoft Edge WebView2 runtime, which is already part of Wi
 ## Checks
 
 - `tests/cli/integration/test_frozen_cli.py` and `tests/ui/integration/test_frozen_ui.py` start the built programs (the window without a window) and check they answer.
-- `build.yml` runs on pull requests that touch the installers. It builds on Windows and Linux, installs each package, runs the program and uninstalls it. It is not part of the required `ci` check.
+- `build.yml` runs on pull requests that touch the installers. It builds on Windows, installs each setup, runs the program and uninstalls it. It is not part of the required `ci` check.
 
 Windows may refuse to start a freshly built, unsigned program (Smart App Control or application control returns error 4551). The smoke tests skip in that case. Signing removes the problem (see [releasing](releasing.md)).

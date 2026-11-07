@@ -13,11 +13,11 @@ How a release reaches PyPI, GitHub and the package managers. The PyPI trusted-pu
 | Check | the tag must equal the version |
 | Build | wheel and sdist (core library and command line only) |
 | Publish | PyPI, through trusted publishing |
-| Installers | Windows setups and zip, Linux deb and rpm; signed when a signing command is set |
+| Installers | Windows setups and zip; signed when a signing command is set |
 | Release page | all files plus `SHA256SUMS.txt`; release notes from the `CHANGELOG.md` section, only if the release has no notes yet |
-| Package managers | Homebrew, Scoop and winget pull requests, each only when switched on |
+| Package managers | Scoop and winget pull requests, each only when switched on |
 
-To check a download: `sha256sum --check SHA256SUMS.txt` (Linux), or `Get-FileHash <file>` on Windows and compare with the list.
+To check a download: `Get-FileHash <file>` on Windows and compare with the list.
 
 ## Build time
 
@@ -26,13 +26,12 @@ Starting targets, to be revisited after the first real runs and recorded here:
 | Job | Target | `timeout-minutes` |
 | --- | --- | --- |
 | Windows installers | under 10 minutes | 20 on pull requests, 30 on releases |
-| Linux packages | under 5 minutes | 15 |
 
 A job that passes its timeout fails instead of hanging. uv and npm caches keep builds inside the targets.
 
 ## Signing
 
-Signing is off by default. Without it, Windows shows SmartScreen warnings and may block the unsigned programs; winget still accepts the manifest. Linux packages are not signed.
+Signing is off by default. Without it, Windows shows SmartScreen warnings and may block the unsigned programs; winget still accepts the manifest.
 
 To turn it on, set the repository variable `SIGN_COMMAND` to a command that signs one file, with `{file}` where the path goes. The build signs the executables first, then each `setup.exe`, so the files inside the installer are signed too. Any provider works, since the command is yours. Examples of what exists, without a recommendation:
 
@@ -44,21 +43,14 @@ Secrets the command needs (a token, a certificate password) are added as reposit
 
 ## Package managers
 
-Each channel is off until you set its variable. All three need one secret, `PACKAGE_MANAGER_TOKEN`: a personal access token that can create repositories and open pull requests in the tap and bucket, and that can fork `microsoft/winget-pkgs`. Updates are always pull requests; nothing is pushed to a default branch.
+Each channel is off until you set its variable. Both need one secret, `PACKAGE_MANAGER_TOKEN`: a personal access token that can create repositories and open pull requests in the bucket, and that can fork `microsoft/winget-pkgs`. Updates are always pull requests; nothing is pushed to a default branch.
 
 | Variable | Channel | Notes |
 | --- | --- | --- |
-| `PUBLISH_HOMEBREW=true` | Homebrew (macOS and Linux) | `HOMEBREW_TAP_REPO`, default `<owner>/homebrew-tap` |
 | `PUBLISH_SCOOP=true` | Scoop (Windows) | `SCOOP_BUCKET_REPO`, default `<owner>/scoop-bucket` |
 | `PUBLISH_WINGET=true` | winget (Windows) | `WINGET_IDENTIFIER`, for example `Publisher.Package`; `WINGET_INSTALLERS_REGEX` picks the setup (default: the command line's) |
 
 Set them under Settings > Secrets and variables > Actions.
-
-### Homebrew
-
-The workflow creates `<owner>/homebrew-tap` if it does not exist, then opens a pull request that adds or updates `Formula/<name>.rb`. The formula installs the PyPI source release in a virtualenv, with one resource per dependency taken from `uv.lock`. Merge the pull request to publish it.
-
-The first time, check the formula with `brew install --build-from-source <owner>/tap/<name>` and `brew test`. The dependencies are pure Python (Typer, Rich and what they need), so the formula should build without extra system packages.
 
 ### Scoop
 
@@ -81,15 +73,11 @@ What to tell your users, once the channels are on:
 | --- | --- | --- |
 | winget | `winget install <Identifier>` | `winget uninstall <Identifier>` |
 | Scoop | `scoop bucket add <name> https://github.com/<owner>/scoop-bucket`, then `scoop install <name>` | `scoop uninstall <name>` |
-| Homebrew | `brew install <owner>/tap/<name>` | `brew uninstall <name>` |
-| Debian, Ubuntu | `sudo apt install ./<name>_<version>_amd64.deb` | `sudo apt remove <name>` |
-| Fedora, RHEL | `sudo dnf install ./<name>-<version>-1.x86_64.rpm` | `sudo dnf remove <name>` |
 | Windows setup | run `<name>-<version>-setup.exe` from the release page | Settings > Apps |
 | PyPI (command line only) | `uv tool install <project>` or `pipx install <project>` | `uv tool uninstall <project>` |
 
 ## Before the first release
 
 - Replace the window icon (`src/<ui package>/ui/public/icon.png`) with yours. Init has already generated new product GUIDs in `installer/windows/nsis/cli.nsi` and `ui.nsi`; keep them from now on.
-- Pin the NSIS and nfpm versions you want in `installer/tools.toml`, and check the `choco` version exists.
-- Add an email to the author in `pyproject.toml`, which Debian expects in the maintainer field.
+- Pin the NSIS version you want in `installer/tools.toml`, and check the `choco` version exists.
 - Decide on signing, and on which channels to switch on.

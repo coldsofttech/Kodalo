@@ -1,19 +1,10 @@
 # Repository setup
 
-Template repositories copy files only, not settings. After creating a repo from this template, apply the settings below.
-
-## Automated
-
-```bash
-python scripts/apply_repo_settings.py            # current repo
-python scripts/apply_repo_settings.py owner/repo # a specific repo
-```
-
-This configures squash-only merging, delete branch on merge, the `skip-changelog` label, secret scanning with push protection, Dependabot alerts and security updates, CodeQL default setup, and the `main` ruleset from `.github/rulesets/main.json`. Requires the `gh` CLI with admin rights.
+Template repositories copy files only, not settings. After creating a repo from this template, apply the settings below by hand.
 
 ## Releases and package managers (optional)
 
-Nothing here is needed to start. When you want installers published, or Homebrew, Scoop and winget updated on each release, add the repository variables and the `PACKAGE_MANAGER_TOKEN` secret described in [releasing](releasing.md). They are off until set.
+Nothing here is needed to start. When you want installers published, or Scoop and winget updated on each release, add the repository variables and the `PACKAGE_MANAGER_TOKEN` secret described in [releasing](releasing.md). They are off until set.
 
 ## Protections
 
@@ -54,14 +45,12 @@ Some files only exist to start a repository. Once you have used them, remove the
 | File | When |
 | --- | --- |
 | `.github/workflows/init.yml` | After you have merged Init's pull request. It cannot delete itself, because a workflow's own token may not change workflow files. |
-| `scripts/init_template.py` | Nothing to do: Init's pull request already deletes it. |
-| `scripts/apply_repo_settings.py`, `.github/rulesets/main.json` | Optional, once the settings are applied. Keep them if you want to re-apply the settings or recreate the repository. |
 
 Do **not** delete these, although they look like template helpers. Workflows run them:
 
 | File | Used by |
 | --- | --- |
-| `scripts/update_manifests.py` | `release.yml`: the release notes from the changelog on every release, plus the Homebrew and Scoop files when those channels are on |
+| `scripts/update_manifests.py` | `release.yml`: the release notes from the changelog on every release, plus the Scoop file when that channel is on |
 | `scripts/build_installer.py`, `installer/` | `build.yml` and `release.yml` |
 | `scripts/export_openapi.py` | `ci.yml`, which checks `docs/openapi.json` is current |
 | `installer/projectinfo.py` | Every workflow that needs the project's names |
