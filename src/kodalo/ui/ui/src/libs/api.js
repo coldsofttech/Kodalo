@@ -266,6 +266,10 @@ export const disconnectInstagram = () => request(INSTAGRAM, { method: 'DELETE' }
 const TUNNEL = '/api/v1/settings/platforms/instagram/tunnel';
 export const getInstagramTunnel = () => request(TUNNEL);
 export const installInstagramTunnel = () => request(TUNNEL, { method: 'POST' });
+export const getLogSettings = () => request('/api/v1/settings/logs');
+/** @param {{ level?: string, retention_days?: number }} body */
+export const saveLogSettings = (body) =>
+  request('/api/v1/settings/logs', { method: 'PUT', json: body });
 /** @param {string} theme */
 export const saveTheme = (theme) =>
   request('/api/v1/settings/theme', { method: 'PUT', json: { theme } });

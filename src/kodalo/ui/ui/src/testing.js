@@ -702,6 +702,15 @@ export function createBackend(initial = []) {
         if (method === 'PUT') state.theme = body.theme;
         return { theme: state.theme ?? 'system' };
       }
+      if (parts[1] === 'logs') {
+        if (method === 'PUT') state.logs = { ...(state.logs ?? {}), ...body };
+        return {
+          level: 'INFO',
+          retention_days: 90,
+          folder: 'C:/Kodalo/logs',
+          ...(state.logs ?? {}),
+        };
+      }
       if (parts[1] === 'ai' && parts[2] === 'history') {
         return aiHistoryRoutes(state.aiHistory, method, parts.slice(3), body);
       }

@@ -51,6 +51,15 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | `settings github set <mode>` | Choose the mode. `--folder PATH` sets the folder (required the first time for `local_folder`). `--manifest-limit N` sets how many project files (`package.json`, `pyproject.toml` ...) are read from GitHub, 1 to 100 (default 10). `--document-limit N` sets how many documents (the README and the docs it links to) are read for `repositories add --readme`, 1 to 50 (default 10). `--document-max-kb N` sets how much of each document is read, 1 to 2000 KB (default 200). |
 | `settings github check` | Try the chosen way once. Exits with 1 when it does not work. |
 
+### `settings logs`
+
+Kodalo writes a plain-text log, one file per day (`kodalo-YYYY-MM-DD.log`), to the `logs` folder of the data folder. The command line, the API and the window share it. The level (`INFO` by default) and how many days files are kept (90 by default) are stored in the local database and apply straight away.
+
+| Command | What it does |
+| --- | --- |
+| `settings logs show` | Show the level, the retention and the log folder. `--json` for machine-readable output. |
+| `settings logs set` | `--level` is one of `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`. `--retention N` keeps log files for N days, 1 to 3650. |
+
 ### `settings platforms`
 
 | Command | What it does |

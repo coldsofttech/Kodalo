@@ -674,6 +674,30 @@ class ThemeUpdate(BaseModel):
     theme: ThemeName = Field(examples=["dark"])
 
 
+LogLevelName = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
+
+
+class LogsResponse(BaseModel):
+    """How much Kodalo logs and for how long it keeps the files."""
+
+    level: LogLevelName = Field(description="The lowest level that is logged.", examples=["INFO"])
+    retention_days: int = Field(
+        ge=1, le=3650, description="Days a log file is kept.", examples=[90]
+    )
+    folder: str = Field(
+        max_length=1024,
+        description="Folder the log files are written to.",
+        examples=["C:/Kodalo/logs"],
+    )
+
+
+class LogsUpdate(BaseModel):
+    """The log settings to change; anything left out stays as it is."""
+
+    level: LogLevelName | None = Field(default=None, examples=["DEBUG"])
+    retention_days: int | None = Field(default=None, ge=1, le=3650, examples=[30])
+
+
 class StudioSourceRequest(BaseModel):
     """The repository to start a post from."""
 

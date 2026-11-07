@@ -1,5 +1,7 @@
 """Command line interface built on Typer and Rich. It only parses input and shows output."""
 
+import logging
+import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -9,6 +11,7 @@ from kodalo.cli import brands, doctor, output, repositories, settings, studio
 from kodalo.cli.state import State
 from kodalo.core import __version__
 from kodalo.core.settings.ai import purge_expired_history
+from kodalo.core.settings.logs import start_logging
 from kodalo.core.storage import default_data_dir
 
 app = typer.Typer(
@@ -73,6 +76,8 @@ def main(
     output.configure(no_color=no_color, verbose=verbose)
     ctx.obj = State(verbose=verbose, quiet=quiet, data_dir=data_dir)
     purge_expired_history(data_dir or default_data_dir())
+    start_logging(data_dir or default_data_dir())
+    logging.getLogger("kodalo.cli").info("Command: %s", " ".join(sys.argv[1:]))
 
 
 def run() -> None:

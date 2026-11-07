@@ -16,6 +16,7 @@ from kodalo.api.deps import (
     get_ideas_assistant,
     get_instagram,
     get_instagram_poster,
+    get_log_settings,
     get_platforms,
     get_readme_assistant,
     get_readme_service,
@@ -46,6 +47,7 @@ from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import (
     GitHubConnectivity,
 )
+from kodalo.core.settings.logs import LogSettings
 from kodalo.core.settings.platforms import InstagramConnection, Platforms
 from kodalo.core.studio import StudioInvalidError
 from kodalo.core.studio.copy import CopyAssistant
@@ -55,6 +57,7 @@ from kodalo.core.studio.platforms.instagram.post import InstagramPoster
 
 GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
 ThemeSetting = Annotated[Appearance, Depends(get_appearance)]
+LogSetting = Annotated[LogSettings, Depends(get_log_settings)]
 PlatformSettings = Annotated[Platforms, Depends(get_platforms)]
 InstagramSetting = Annotated[InstagramConnection, Depends(get_instagram)]
 InstagramPost = Annotated[InstagramPoster, Depends(get_instagram_poster)]

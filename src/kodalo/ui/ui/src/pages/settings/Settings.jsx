@@ -5,12 +5,14 @@ import AiHistory, { AiHistorySettings } from './ai/History.jsx';
 import AiIdeaCount from './ai/IdeaCount.jsx';
 import AiTaskModels from './ai/TaskModels.jsx';
 import GitHub from './GitHub.jsx';
+import Logs from './Logs.jsx';
 import Platforms from './platforms/Platforms.jsx';
 
 const TABS = [
   ['github', 'GitHub'],
   ['ai', 'AI'],
   ['platforms', 'Platforms'],
+  ['logs', 'Logs'],
   ['appearance', 'Appearance'],
 ];
 
@@ -40,6 +42,7 @@ export default function SettingsPage() {
         ))}
       </div>
       {tab === 'appearance' ? <Appearance /> : null}
+      {tab === 'logs' ? <Logs /> : null}
       {tab === 'platforms' ? <Platforms /> : null}
       {tab === 'ai' ? (
         <section className="panel" role="tabpanel" id="panel-ai" aria-labelledby="tab-ai">

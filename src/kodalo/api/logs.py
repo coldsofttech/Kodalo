@@ -10,6 +10,8 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
+log = logging.getLogger("kodalo.api")
+
 REQUEST_ID_HEADER = "X-Request-ID"
 
 request_id_var: ContextVar[str] = ContextVar("request_id", default="-")
@@ -52,5 +54,6 @@ class RequestIdMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
         finally:
             request_id_var.reset(token)
+        log.info("%s %s -> %s", request.method, request.url.path, response.status_code)
         response.headers[REQUEST_ID_HEADER] = request_id
         return response

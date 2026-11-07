@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Kodalo now keeps daily log files in its data folder's `logs` folder. Settings > Logs (also `kodalo settings logs`) sets the log level (INFO by default) and how many days logs are kept (90 by default).
 - Studio shows a Posted badge on post ideas that were posted to Instagram. After an export it asks whether to mark the idea as posted.
 - Refreshing post ideas with AI now adds new ideas to the saved ones instead of replacing them, skipping repeats.
 - Settings > AI: choose how many post ideas Studio asks for (1 to 20, 5 by default).

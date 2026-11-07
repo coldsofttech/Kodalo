@@ -1582,3 +1582,57 @@ fluent-button.ai-button[disabled]::part(control) {
   gap: 0.5rem;
   margin-bottom: 1rem;
 }
+
+/* Home: welcome card, then the steps and shortcuts as tiles. */
+.home-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.home-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.home-tile {
+  padding: 0;
+}
+
+.home-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  width: 100%;
+  height: 100%;
+  padding: 1.1rem 1.25rem;
+  background: none;
+  border: 0;
+  border-radius: var(--radius-m);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home-link:hover {
+  background: var(--surface-1, rgba(127, 127, 127, 0.08));
+}
+
+.home-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.home-link .bi {
+  color: var(--accent);
+  font-size: 1.4rem;
+}
+
+.home-title {
+  font-weight: 600;
+}

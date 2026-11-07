@@ -18,6 +18,7 @@ from kodalo.core.repositories import (
 )
 from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import GitHubConnectivity
+from kodalo.core.settings.logs import LogSettings, configure_file_logging
 from kodalo.core.settings.platforms import InstagramConnection, Platforms
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 from kodalo.core.studio.copy import CopyAssistant
@@ -41,6 +42,7 @@ class Services:
     github: GitHubConnectivity
     repos: RepoService
     appearance: Appearance
+    logs: LogSettings
     ai: AiConnections
     analyzer: RepoAnalyzer
     readme: ReadmeService
@@ -70,6 +72,9 @@ def _build_services() -> Services:
         previews_dir=folder / "social_previews",
         icons_dir=folder / "repo_icons",
     )
+    log_settings = LogSettings(database)
+    with suppress(Exception):  # logging must never stop the services from starting
+        configure_file_logging(folder, log_settings.get())
     ai = AiConnections(database)
     with suppress(Exception):  # old history is removed when the services start
         ai.history.purge_expired()
@@ -85,6 +90,7 @@ def _build_services() -> Services:
         GitHubConnectivity(database),
         repos,
         Appearance(database),
+        log_settings,
         ai,
         RepoAnalyzer(repos, ai, folder / "parsers", folder / "frameworks", folder / "tooling"),
         readme,
@@ -156,6 +162,14 @@ def get_appearance() -> Appearance:
     """Return the appearance setting, opening the database on first use."""
     try:
         return _services().appearance
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_log_settings() -> LogSettings:
+    """Return the log settings, opening the database on first use."""
+    try:
+        return _services().logs
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 

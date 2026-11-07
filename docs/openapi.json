@@ -4439,6 +4439,96 @@
         "title": "LogoPayload",
         "type": "object"
       },
+      "LogsResponse": {
+        "description": "How much Kodalo logs and for how long it keeps the files.",
+        "properties": {
+          "folder": {
+            "description": "Folder the log files are written to.",
+            "examples": [
+              "C:/Kodalo/logs"
+            ],
+            "maxLength": 1024,
+            "title": "Folder",
+            "type": "string"
+          },
+          "level": {
+            "description": "The lowest level that is logged.",
+            "enum": [
+              "DEBUG",
+              "INFO",
+              "WARNING",
+              "ERROR",
+              "CRITICAL"
+            ],
+            "examples": [
+              "INFO"
+            ],
+            "title": "Level",
+            "type": "string"
+          },
+          "retention_days": {
+            "description": "Days a log file is kept.",
+            "examples": [
+              90
+            ],
+            "maximum": 3650.0,
+            "minimum": 1.0,
+            "title": "Retention Days",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "level",
+          "retention_days",
+          "folder"
+        ],
+        "title": "LogsResponse",
+        "type": "object"
+      },
+      "LogsUpdate": {
+        "description": "The log settings to change; anything left out stays as it is.",
+        "properties": {
+          "level": {
+            "anyOf": [
+              {
+                "enum": [
+                  "DEBUG",
+                  "INFO",
+                  "WARNING",
+                  "ERROR",
+                  "CRITICAL"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              "DEBUG"
+            ],
+            "title": "Level"
+          },
+          "retention_days": {
+            "anyOf": [
+              {
+                "maximum": 3650.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "examples": [
+              30
+            ],
+            "title": "Retention Days"
+          }
+        },
+        "title": "LogsUpdate",
+        "type": "object"
+      },
       "ManifestResponse": {
         "properties": {
           "dependencies": {
@@ -10042,6 +10132,67 @@
           }
         },
         "summary": "Check GitHub connectivity",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/logs": {
+      "get": {
+        "description": "Return the log level, how many days log files are kept and where they are written.",
+        "operationId": "get_logs_api_v1_settings_logs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the log settings",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Change the log level and/or retention. The change applies straight away.",
+        "operationId": "set_logs_api_v1_settings_logs_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogsUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Change the log settings",
         "tags": [
           "v1"
         ]
