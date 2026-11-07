@@ -9,15 +9,15 @@ import {
   planPaletteSuggestion,
   suggestPalette,
   updatePalette,
-} from '../../api.js';
-import { setIn } from '../../brand.js';
-import { useCatalog } from '../../catalog.js';
+} from '../../libs/api.js';
+import { setIn } from '../../libs/brand.js';
+import { useCatalog } from '../../libs/catalog.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import { Button, TextField } from '../../components/controls.jsx';
 import { ColorsPanel } from '../../components/editor.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
-import { fileNameFor, readJson, saveJson } from '../../download.js';
-import { get } from '../../lookup.js';
+import { fileNameFor, readJson, saveJson } from '../../libs/download.js';
+import { get } from '../../libs/lookup.js';
 
 const STRIP = ['background', 'primary', 'secondary', 'text', 'background_alt'];
 

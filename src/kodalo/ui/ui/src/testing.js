@@ -657,6 +657,30 @@ export function createBackend(initial = []) {
       return state.repos[0];
     }
     if (parts[0] === 'settings') {
+      if (parts[1] === 'platforms' && parts[2] === 'instagram' && parts[3] === 'connection') {
+        const none = {
+          connected: false,
+          username: '',
+          account_id: '',
+          account_type: '',
+          token_hint: '',
+          connected_at: '',
+        };
+        if (method === 'PUT') {
+          if (body.access_token === 'bad')
+            return [502, { detail: 'Instagram rejected the token.' }];
+          state.instagram = {
+            connected: true,
+            username: 'sweepito',
+            account_id: body.account_id,
+            account_type: '',
+            token_hint: body.access_token.slice(-4),
+            connected_at: '2026-11-07T10:00:00+00:00',
+          };
+        }
+        if (method === 'DELETE') state.instagram = none;
+        return state.instagram ?? none;
+      }
       if (parts[1] === 'platforms') {
         state.platforms ??= {};
         const current = state.platforms[parts[2]] ?? {

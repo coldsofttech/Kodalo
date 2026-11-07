@@ -13,13 +13,14 @@ import {
   listPalettes,
   setDefaultBrand,
   updateBrand,
-} from '../../api.js';
-import { sameData, setIn } from '../../brand.js';
+} from '../../libs/api.js';
+import { sameData, setIn } from '../../libs/brand.js';
 import { Button, TextField } from '../../components/controls.jsx';
 import { ColorsPanel, FontsPanel, LayoutPanel, LogoPanel } from '../../components/editor.jsx';
 import NewBrand from '../../components/NewBrand.jsx';
+import { useUnsavedGuard } from '../../libs/unsaved.js';
 import Preview from '../../components/preview.jsx';
-import { fileNameFor, readJson, saveJson } from '../../download.js';
+import { fileNameFor, readJson, saveJson } from '../../libs/download.js';
 
 const TABS = [
   ['colors', 'Colors'],
@@ -176,6 +177,7 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
 
   const selected = brands?.find((item) => item.id === selectedId) ?? null;
   const dirty = Boolean(selected && draft && !sameData(toDraft(selected), draft));
+  useUnsavedGuard(dirty);
 
   /** Run a call that changes things: show its error, or its notice when it works. */
   async function act(

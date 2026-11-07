@@ -205,6 +205,19 @@ export async function saveJsonFile(filename, text, fileType = 'JSON files (*.jso
 }
 
 /**
+ * Ask which folder to use with the system's folder dialog.
+ * @returns {Promise<string>} the folder, or an empty text when the dialog was cancelled
+ * @throws {ApiError} outside the window, where there is no dialog
+ */
+export async function chooseFolder() {
+  const chosen = await request('/api/bridge/choose_folder', { method: 'POST', json: {} });
+  if (!chosen?.available) {
+    throw new ApiError(chosen?.reason || 'Choosing a folder needs the Kodalo window.', 0);
+  }
+  return typeof chosen.result === 'string' ? chosen.result : '';
+}
+
+/**
  * Open a web address in the system's browser. Outside the window, where there is no bridge, the
  * browser opens it in a new tab.
  * @param {string} url
@@ -237,6 +250,22 @@ export const savePlatformSettings = (platform, body) =>
     method: 'PUT',
     json: body,
   });
+const INSTAGRAM = '/api/v1/settings/platforms/instagram/connection';
+export const getInstagramConnection = () => request(INSTAGRAM);
+/**
+ * @param {string} accessToken
+ * @param {string} accountId
+ */
+export const connectInstagram = (accessToken, accountId) =>
+  request(INSTAGRAM, {
+    method: 'PUT',
+    json: { access_token: accessToken, account_id: accountId },
+  });
+export const checkInstagramConnection = () => request(`${INSTAGRAM}/check`, { method: 'POST' });
+export const disconnectInstagram = () => request(INSTAGRAM, { method: 'DELETE' });
+const TUNNEL = '/api/v1/settings/platforms/instagram/tunnel';
+export const getInstagramTunnel = () => request(TUNNEL);
+export const installInstagramTunnel = () => request(TUNNEL, { method: 'POST' });
 /** @param {string} theme */
 export const saveTheme = (theme) =>
   request('/api/v1/settings/theme', { method: 'PUT', json: { theme } });
@@ -341,6 +370,21 @@ const designUrl = (/** @type {string} */ repoId) =>
  */
 export const getDesign = (repoId, body) =>
   request(`${designUrl(repoId)}?${new URLSearchParams(body)}`);
+/**
+ * Post the designed post to Instagram. It can take a minute or two.
+ * @param {string} repoId
+ * @param {Record<string, string>} body the post's request, and `mode` (`light` or `dark`)
+ */
+export const postToInstagram = (repoId, body) =>
+  request(`${designUrl(repoId)}/post`, { method: 'POST', json: body });
+/**
+ * Make the pictures and caption of the designed post in a new folder inside `body.folder`. It can
+ * take a minute.
+ * @param {string} repoId
+ * @param {Record<string, string>} body the post's request, `mode` and the chosen `folder`
+ */
+export const exportPost = (repoId, body) =>
+  request(`${designUrl(repoId)}/export`, { method: 'POST', json: body });
 /**
  * What asking the AI to design the post would send and cost; nothing is sent.
  * @param {string} repoId

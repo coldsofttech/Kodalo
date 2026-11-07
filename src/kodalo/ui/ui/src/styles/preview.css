@@ -501,3 +501,35 @@
   transform: scale(var(--scale, 0.2));
   transform-origin: top left;
 }
+
+.design-post {
+  display: grid;
+  gap: 0.5rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-m);
+  padding: 1.1rem 1.25rem;
+}
+
+.design-post p {
+  margin: 0;
+}
+
+/* The slides heading with the Post and Export icons at its right. */
+.post-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+/* Whatever follows the row (the details banner, Posted, Exported or an error) gets some air. */
+.post-title-row + .design-post,
+.post-title-row + .notice,
+.post-title-row + .alert {
+  margin-top: 0.75rem;
+}
+
+.post-title-row + .design-post {
+  margin-bottom: 1rem;
+}

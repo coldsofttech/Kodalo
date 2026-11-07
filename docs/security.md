@@ -13,6 +13,8 @@ Cornea's `SecurityMiddleware` guards every mounted route, so the API adds no tok
 
 AI provider API keys are kept in the system keychain (Windows Credential Manager) through `keyring`, never in the database, a file or a log. The database holds only a reference and the last four characters. The API accepts a key but never returns it, error messages never contain it or anything a provider sent back, and the command line takes it from a hidden prompt rather than an argument.
 
+The Instagram access token is handled the same way: it is kept in the system keychain under `platform/instagram/token`, the settings hold only the account's name and ID and the last four characters of the token, the API never returns it, errors never contain it, and the command line takes it from a hidden prompt. Kodalo never asks for an Instagram password. The token is sent only to `graph.facebook.com`, to check it and to post. The Instagram account ID is not a secret and is kept in the settings.
+
 `kodalo.ui` therefore mounts the routes without any token of its own. The API has no standalone mode: it is never started on its own, has no API key and no settings file, and must not be exposed any other way.
 
 The API itself still:
@@ -41,6 +43,14 @@ Every AI call is recorded locally (date, title, purpose, connection, model, toke
 ## Supply chain
 
 Dependabot covers Python, npm and Actions. `audit.yml` checks locked dependencies weekly, dependency review blocks vulnerable additions, and the lock files are committed.
+
+## Posting and the public address
+
+Instagram fetches the pictures of a post from a public web address, so posting opens one for a moment. Kodalo serves only the post's JPEGs from a random local port on the loopback address, at `/kodalo/instagram/<name>.jpg?token=<random token>`, and answers 404 to anything else or to a wrong token. A cloudflared quick tunnel makes that port reachable at a random `trycloudflare.com` address, and both are stopped as soon as the post is done or fails; the pictures are deleted too. The server logs nothing, since the address carries the token. Before posting, Kodalo waits until the new address answers. When this computer's own DNS cannot look the new name up, it asks Cloudflare's public DNS (`1.1.1.1`, over HTTPS) only whether the name exists, sending the random host name and nothing else, because Instagram looks it up from its own servers.
+
+cloudflared is a third-party program from Cloudflare. It is installed the first time you post: with winget when it is available, otherwise downloaded from Cloudflare's official GitHub release into Kodalo's data folder (no administrator rights) and refused unless its SHA-256 matches the digest GitHub lists for the file. Settings > Platforms > Instagram, the Post banner and About say so, and installing runs behind its own screen in the window or with `kodalo settings platforms instagram tunnel install`. Only Windows installs it for you; other systems are told how to. Slides are turned into pictures by Microsoft Edge, which comes with Windows, run headless on the local slide pages.
+
+Exporting a post (`POST /api/v1/studio/repositories/{id}/design/export`, `kodalo studio design export`) writes the pictures and `caption.txt` into a new folder inside a folder the person chose. It never overwrites an existing folder and refuses network (UNC) paths and folders that do not exist. Nothing is public and nothing is sent to Instagram.
 
 ## Logo files
 

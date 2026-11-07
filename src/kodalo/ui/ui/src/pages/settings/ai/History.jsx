@@ -6,9 +6,10 @@ import {
   listAiHistory,
   purgeAiHistory,
   saveAiHistorySettings,
-} from '../../../api.js';
+} from '../../../libs/api.js';
 import { Button, NumberField, Select, Switch } from '../../../components/controls.jsx';
-import { saveText } from '../../../download.js';
+import { saveText } from '../../../libs/download.js';
+import { useSavedValues } from '../../../libs/unsaved.js';
 
 /** @typedef {{ id: string, created_at: string, title: string, purpose: string, provider: string, model: string, status: string, error: string, input_tokens: number, output_tokens: number, has_text: boolean }} AiCall */
 /** @typedef {AiCall & { prompt_text: string | null, reply_text: string | null }} AiCallDetail */
@@ -193,16 +194,18 @@ export function AiHistorySettings() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const markSaved = useSavedValues({ store, days });
 
   useEffect(() => {
     getAiHistorySettings().then(
       (value) => {
         setStore(value.store_text);
         setDays(value.retention_days);
+        markSaved({ store: value.store_text, days: value.retention_days });
       },
       (failure) => setError(failure.message),
     );
-  }, []);
+  }, [markSaved]);
 
   async function save() {
     setBusy(true);
@@ -212,6 +215,7 @@ export function AiHistorySettings() {
       const value = await saveAiHistorySettings({ store_text: store, retention_days: days });
       setStore(value.store_text);
       setDays(value.retention_days);
+      markSaved({ store: value.store_text, days: value.retention_days });
       setSaved(true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Something went wrong.');

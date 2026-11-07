@@ -34,7 +34,7 @@ from kodalo.core.settings.ai import (
     Usage,
 )
 from kodalo.core.settings.github import ConnectionCheck, GitHubSettings
-from kodalo.core.settings.platforms import PlatformSettings
+from kodalo.core.settings.platforms import InstagramAccount, PlatformSettings
 from kodalo.core.studio import Source
 from kodalo.core.studio.copy import CopyPlan, PostCopy
 from kodalo.core.studio.design import Design, DesignPlan
@@ -1510,6 +1510,44 @@ class CopyRequest(BaseModel):
     )
 
 
+class PostRequest(CopyRequest):
+    """Which designed post to post, in which of the brand's colors."""
+
+    mode: Literal["light", "dark"] = Field(
+        default="light", description="The brand's colors the pictures are made in."
+    )
+
+
+class ExportRequest(PostRequest):
+    """Which designed post to export, in which colors, and into which folder."""
+
+    folder: str = Field(
+        min_length=1,
+        max_length=1024,
+        description="An existing folder on this computer. The post goes into a new folder inside.",
+        examples=["C:\\Users\\me\\Documents"],
+    )
+
+
+class ExportResultResponse(BaseModel):
+    """Where the exported post was written."""
+
+    folder: str = Field(max_length=1100, description="The new folder holding the files.")
+    pictures: list[str] = Field(
+        max_length=12, description="The picture files, one per slide, in order."
+    )
+    caption_file: str = Field(max_length=1100, description="The caption.txt file.")
+
+
+class PostResultResponse(BaseModel):
+    """The post that is now on Instagram."""
+
+    media_id: str = Field(max_length=64, description="Instagram's ID of the post.")
+    permalink: str = Field(
+        max_length=300, description="The post's address, when Instagram gave it."
+    )
+
+
 class SlideModel(BaseModel):
     """One slide of a carousel, or the text of a single image."""
 
@@ -1660,6 +1698,62 @@ class PlatformSettingsUpdate(BaseModel):
     use_icons: bool = False
     build_custom_images: bool = False
     use_ai_templates: bool = False
+
+
+class InstagramConnectRequest(BaseModel):
+    """The access token and account ID to connect Instagram with."""
+
+    access_token: str = Field(
+        min_length=1,
+        max_length=1024,
+        description="An access token, from the Meta developer dashboard.",
+        examples=["EAAxxxxxxxxxxxx"],
+    )
+    account_id: str = Field(
+        min_length=1,
+        max_length=40,
+        description="The Instagram account's ID, shown next to the token in the dashboard.",
+        examples=["17841400000000000"],
+    )
+
+
+class TunnelStatusResponse(BaseModel):
+    """Whether cloudflared, the tool posting needs, is installed."""
+
+    installed: bool = Field(description="Whether cloudflared is installed.")
+
+
+class InstagramAccountResponse(BaseModel):
+    """The connected Instagram account. The token is never returned, only its last characters."""
+
+    connected: bool = Field(description="Whether Instagram is connected.")
+    username: str = Field(max_length=100, description="The account's name.", examples=["sweepito"])
+    account_id: str = Field(max_length=40, description="The account's ID.", examples=["1784140"])
+    account_type: str = Field(
+        max_length=40, description="Business or Media_Creator.", examples=["BUSINESS"]
+    )
+    token_hint: str = Field(max_length=4, description="The last characters of the token.")
+    connected_at: str = Field(max_length=40, description="When it was connected (UTC).")
+
+    @classmethod
+    def from_core(cls, account: InstagramAccount | None) -> Self:
+        if account is None:
+            return cls(
+                connected=False,
+                username="",
+                account_id="",
+                account_type="",
+                token_hint="",
+                connected_at="",
+            )
+        return cls(
+            connected=True,
+            username=account.username,
+            account_id=account.account_id,
+            account_type=account.account_type,
+            token_hint=account.token_hint,
+            connected_at=account.connected_at,
+        )
 
 
 class DesignPlanResponse(CopyPlanResponse):

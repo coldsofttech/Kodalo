@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getPlatformSettings, savePlatformSettings } from '../../api.js';
-import { Button, NumberField, Select, Switch, TextField } from '../../components/controls.jsx';
+import { getPlatformSettings, savePlatformSettings } from '../../../libs/api.js';
+import { Button, NumberField, Select, Switch, TextField } from '../../../components/controls.jsx';
+import { useSavedValues } from '../../../libs/unsaved.js';
+import InstagramConnection from './InstagramConnection.jsx';
 
 const PLATFORM_CHOICES = [
   ['instagram', 'Instagram'],
@@ -23,6 +25,13 @@ const visualsOf = (settings) => ({
   use_ai_templates: settings.use_ai_templates,
 });
 
+/** The form's values as they are when they match `settings`. @param {any} settings */
+const savedOf = (settings) => ({
+  count: settings.hashtag_count,
+  tags: settings.default_hashtags.join(' '),
+  visuals: visualsOf(settings),
+});
+
 /** How many hashtags a post gets on a platform, and the ones every post carries. */
 export default function Platforms() {
   const [platform, setPlatform] = useState('instagram');
@@ -32,6 +41,7 @@ export default function Platforms() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const markSaved = useSavedValues({ count, tags, visuals });
 
   useEffect(() => {
     let alive = true;
@@ -41,13 +51,14 @@ export default function Platforms() {
         setCount(settings.hashtag_count);
         setTags(settings.default_hashtags.join(' '));
         setVisuals(visualsOf(settings));
+        markSaved(savedOf(settings));
       },
       (failure) => alive && setError(failure.message),
     );
     return () => {
       alive = false;
     };
-  }, [platform]);
+  }, [platform, markSaved]);
 
   async function save() {
     setBusy(true);
@@ -62,6 +73,7 @@ export default function Platforms() {
       setCount(result.hashtag_count);
       setTags(result.default_hashtags.join(' '));
       setVisuals(visualsOf(result));
+      markSaved(savedOf(result));
       setSaved(true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Something went wrong.');
@@ -79,6 +91,7 @@ export default function Platforms() {
           </option>
         ))}
       </Select>
+      {platform === 'instagram' ? <InstagramConnection /> : null}
       <NumberField
         label="Hashtags per post"
         value={count}

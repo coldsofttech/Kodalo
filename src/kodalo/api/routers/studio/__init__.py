@@ -3,6 +3,7 @@
 from fastapi import APIRouter
 
 from kodalo.api.routers.studio import copy, design, ideas, repositories, source
+from kodalo.api.routers.studio.platforms.instagram import post as instagram_post
 
 router = APIRouter(tags=["v1"])
 router.include_router(source.router)
@@ -10,3 +11,4 @@ router.include_router(repositories.router)
 router.include_router(ideas.router)
 router.include_router(copy.router)
 router.include_router(design.router)
+router.include_router(instagram_post.router)

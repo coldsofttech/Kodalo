@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { checkGithub, getGithubSettings, saveGithubSettings } from '../../api.js';
+import { checkGithub, getGithubSettings, saveGithubSettings } from '../../libs/api.js';
 import { Button, NumberField, Select, TextField } from '../../components/controls.jsx';
+import { useSavedValues } from '../../libs/unsaved.js';
 
 const MODES = [
   ['gh_cli', 'GitHub CLI (gh)'],
@@ -27,6 +28,13 @@ export default function GitHub() {
     /** @type {{ ok: boolean, detail: string } | null} */ (null),
   );
   const [busy, setBusy] = useState(false);
+  const markSaved = useSavedValues({
+    mode,
+    folder,
+    manifestLimit,
+    documentLimit,
+    documentMaxKb,
+  });
 
   useEffect(() => {
     let alive = true;
@@ -38,13 +46,20 @@ export default function GitHub() {
         setManifestLimit(settings.manifest_limit);
         setDocumentLimit(settings.document_limit);
         setDocumentMaxKb(settings.document_max_kb);
+        markSaved({
+          mode: settings.mode,
+          folder: settings.local_folder,
+          manifestLimit: settings.manifest_limit,
+          documentLimit: settings.document_limit,
+          documentMaxKb: settings.document_max_kb,
+        });
       },
       (failure) => alive && setError(failure.message),
     );
     return () => {
       alive = false;
     };
-  }, []);
+  }, [markSaved]);
 
   /** @param {() => Promise<void>} action */
   async function run(action) {
@@ -71,6 +86,7 @@ export default function GitHub() {
         document_limit: documentLimit,
         document_max_kb: documentMaxKb,
       });
+      markSaved({ mode, folder, manifestLimit, documentLimit, documentMaxKb });
       setSaved(block);
     });
 

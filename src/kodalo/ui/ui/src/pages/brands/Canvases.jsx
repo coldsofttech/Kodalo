@@ -8,11 +8,11 @@ import {
   listCanvases,
   listSocialPlatforms,
   updateCanvas,
-} from '../../api.js';
-import { useCatalog } from '../../catalog.js';
+} from '../../libs/api.js';
+import { useCatalog } from '../../libs/catalog.js';
 import { Button, NumberField, Select, TextField } from '../../components/controls.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
-import { fileNameFor, readJson, saveJson } from '../../download.js';
+import { fileNameFor, readJson, saveJson } from '../../libs/download.js';
 
 const EMPTY = { name: '', width: 1080, height: 1350, platform_id: 'instagram' };
 

@@ -1,5 +1,6 @@
 """How each slide of a written post is laid out, and its slide pages and drawings."""
 
+from contextlib import suppress
 from typing import Annotated, Literal
 
 from fastapi import APIRouter, HTTPException, Query, Response, status
@@ -11,17 +12,19 @@ from kodalo.api.routers.common import (
     NOT_FOUND,
     BrandsSvc,
     DesignAi,
+    InstagramPost,
     RepoPath,
     Repos,
     ai_errors,
     studio_errors,
 )
-from kodalo.api.routers.studio.common import post_choice, post_choice_and_canvas
-from kodalo.api.schemas import CopyRequest, DesignPlanResponse, DesignResponse
-from kodalo.core.brands.brand import Brand, BrandError, BrandService
-from kodalo.core.repositories import RepoNotFoundError, RepoService
-from kodalo.core.studio.design import PageAssets, load_image
-from kodalo.core.studio.slide_html import MAX_IMAGE_BYTES
+from kodalo.api.routers.studio.common import page_assets, post_choice, post_choice_and_canvas
+from kodalo.api.schemas import (
+    CopyRequest,
+    DesignPlanResponse,
+    DesignResponse,
+)
+from kodalo.core.repositories import RepoNotFoundError
 
 router = APIRouter(tags=["v1"])
 
@@ -66,14 +69,24 @@ def plan_design(
     responses=COMMON | NOT_FOUND | INVALID | AI_UNREACHABLE,
 )
 def make_design(
-    repo_id: RepoPath, body: CopyRequest, assistant: DesignAi, brands: BrandsSvc
+    repo_id: RepoPath,
+    body: CopyRequest,
+    assistant: DesignAi,
+    brands: BrandsSvc,
+    repos: Repos,
+    poster: InstagramPost,
 ) -> DesignResponse:
     """Ask the default AI model once how to lay out each slide of the saved copy: template,
     alignment, picture, icon and drawing, from what Settings > Platforms allows. The text is never
-    the AI's. The plan is saved for this post, replacing the one saved before."""
+    the AI's. The plan is saved for this post, replacing the one saved before, and the page of
+    every slide is stored in the data folder."""
     with studio_errors(), ai_errors():
         choice, canvas = post_choice_and_canvas(repo_id, body, brands)
-        return DesignResponse.from_core(assistant.generate(choice, canvas))
+        design = assistant.generate(choice, canvas)
+        brand = brands.get(body.brand_id)
+        with suppress(Exception):  # the pages are written again when the post is posted
+            poster.store_pages(choice, brand, page_assets(repos, brands, repo_id, brand))
+        return DesignResponse.from_core(design)
 
 
 # A slide page embeds everything it shows, so it may load nothing at all.
@@ -82,37 +95,9 @@ SLIDE_CSP = (
 )
 
 
-def _logo_file(brands: BrandService, name: str | None) -> tuple[str, bytes] | None:
-    """The brand's logo file for a page, or ``None`` when there is none or it cannot be read."""
-    if not name:
-        return None
-    try:
-        data = brands.logos.read(name)
-    except BrandError:
-        return None
-    if len(data) > MAX_IMAGE_BYTES:
-        return None
-    return ("image/png" if name.endswith(".png") else "image/svg+xml", data)
-
-
-def _page_assets(
-    repos: RepoService, brands: BrandService, repo_id: str, brand: Brand
-) -> PageAssets:
-    """Read the pictures and the logo a slide page embeds."""
-    preview = repos.social_preview(repo_id)
-    icon = repos.icon(repo_id)
-    logo = brand.data.logo
-    return PageAssets(
-        load_image(*preview) if preview else None,
-        load_image(*icon) if icon else None,
-        _logo_file(brands, logo.file),
-        _logo_file(brands, logo.dark_file),
-    )
-
-
 @router.get(
     "/studio/repositories/{repo_id}/design/slide",
-    summary="Get one AI-written slide as a page",
+    summary="Get one slide as a page",
     responses={
         **COMMON,
         **NOT_FOUND,
@@ -129,17 +114,18 @@ def get_design_slide(
     repos: Repos,
     mode: Annotated[Literal["light", "dark"], Query(description="The brand's colors.")] = "light",
 ) -> Response:
-    """Return the page of a slide the AI wrote as HTML and CSS: cleaned, with the brand's colors
-    for the mode, the pictures and icons filled in, and a policy that lets it load nothing and run
-    nothing. It is meant to be shown in a sandboxed frame."""
+    """Return the page of a slide, whether the AI wrote it as HTML and CSS or a fixed template
+    lays it out: with the brand's colors for the mode, the pictures and icons filled in, and a
+    policy that lets it load nothing and run nothing. It is meant to be shown in a sandboxed
+    frame, and the same page is what gets posted."""
     with studio_errors():
         choice = post_choice(repo_id, body, brands)
         brand = brands.get(body.brand_id)
         page = assistant.slide_page(
-            choice, slide, brand, mode, _page_assets(repos, brands, repo_id, brand)
+            choice, slide, brand, mode, page_assets(repos, brands, repo_id, brand)
         )
     if page is None:
-        raise HTTPException(status.HTTP_404_NOT_FOUND, "That slide has no AI-written layout.")
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "That slide has no saved design.")
     return Response(
         page,
         media_type="text/html",

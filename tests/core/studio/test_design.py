@@ -529,12 +529,22 @@ def test_a_design_saved_before_shared_styles_shows_the_fixed_templates() -> None
     assert design.style == ""
 
 
-def test_a_fixed_template_slide_has_no_page(database: Database, tmp_path: Path) -> None:
+def test_a_fixed_template_slide_is_a_page_with_the_copy(database: Database, tmp_path: Path) -> None:
     brand = _brand(database, tmp_path)
-    assistant = _assistant(database, FakeAi(_reply(_slide(), _slide(), _slide())), FakeRepos())
+    assistant = _assistant(
+        database,
+        FakeAi(_reply(_slide(template="hook", align="center"), _slide(), _slide())),
+        FakeRepos(),
+    )
     assistant.generate(CHOICE, CANVAS)
 
-    assert assistant.slide_page(CHOICE, 0, brand, "light", ds.PageAssets()) is None
+    page = assistant.slide_page(CHOICE, 0, brand, "light", ds.PageAssets())
+
+    assert page is not None
+    assert "fx-slide fx-center fx-primary fx-t-hook" in page
+    assert 'class="kodalo-headline fx-title"' in page
+    assert "<script" not in page
+    assert assistant.slide_page(CHOICE, 7, brand, "light", ds.PageAssets()) is None
 
 
 def test_a_warning_says_when_none_of_the_allowed_pictures_was_used(

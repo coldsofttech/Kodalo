@@ -1551,6 +1551,7 @@ $ kodalo settings platforms [OPTIONS] COMMAND [ARGS]...
 
 * `show`: Show a platform&#x27;s hashtag settings.
 * `set`: Change a platform&#x27;s settings.
+* `instagram`: Connect Kodalo to Instagram with an access...
 
 #### `kodalo settings platforms show`
 
@@ -1564,7 +1565,7 @@ $ kodalo settings platforms show [OPTIONS] {platform}
 
 **Arguments**:
 
-* `platform`: One of: instagram.  [required]
+* `platform`: One of: instagram, custom.  [required]
 
 **Options**:
 
@@ -1583,7 +1584,7 @@ $ kodalo settings platforms set [OPTIONS] {platform}
 
 **Arguments**:
 
-* `platform`: One of: instagram.  [required]
+* `platform`: One of: instagram, custom.  [required]
 
 **Options**:
 
@@ -1594,6 +1595,137 @@ $ kodalo settings platforms set [OPTIONS] {platform}
 * `--use-icons / --no-icons`: The designer may use icons.
 * `--build-custom-images / --no-custom-images`: The designer may build custom images as needed.
 * `--use-ai-templates / --no-ai-templates`: The AI writes the HTML and CSS of each slide instead of the fixed templates.
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+#### `kodalo settings platforms instagram`
+
+Connect Kodalo to Instagram with an access token.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `status`: Show the connected Instagram account.
+* `connect`: Connect Instagram.
+* `check`: Ask Instagram whether the saved token...
+* `disconnect`: Remove the token from the keychain and...
+* `tunnel`: Check or install cloudflared, the tool...
+
+##### `kodalo settings platforms instagram status`
+
+Show the connected Instagram account. Does not contact Instagram.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram status [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings platforms instagram connect`
+
+Connect Instagram. The access token is asked for at a hidden prompt, or piped in, and
+never taken as an argument. It is checked with Meta and kept in the system keychain.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram connect [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings platforms instagram check`
+
+Ask Instagram whether the saved token still works.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram check [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+##### `kodalo settings platforms instagram disconnect`
+
+Remove the token from the keychain and forget the account.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram disconnect [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+##### `kodalo settings platforms instagram tunnel`
+
+Check or install cloudflared, the tool posting to Instagram needs.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram tunnel [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `status`: Show whether cloudflared, which posting...
+* `install`: Install cloudflared (a third-party tool...
+
+###### `kodalo settings platforms instagram tunnel status`
+
+Show whether cloudflared, which posting needs, is installed. Installs nothing.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram tunnel status [OPTIONS]
+```
+
+**Options**:
+
+* `--json`: Output as JSON.
+* `--help`: Show this message and exit.
+
+###### `kodalo settings platforms instagram tunnel install`
+
+Install cloudflared (a third-party tool from Cloudflare) when it is missing.
+
+**Usage**:
+
+```console
+$ kodalo settings platforms instagram tunnel install [OPTIONS]
+```
+
+**Options**:
+
 * `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 
@@ -1847,7 +1979,8 @@ $ kodalo studio design [OPTIONS] COMMAND [ARGS]...
 * `plan`: Say what the AI would be sent to design...
 * `make`: Ask the default AI model how to lay out...
 * `show`: Show the saved design.
-* `slide`: Export one AI-written slide as a...
+* `slide`: Export one slide as a self-contained HTML...
+* `export`: Make a picture of every slide and write...
 * `svg`: Export the drawing the AI made for one...
 
 #### `kodalo studio design plan`
@@ -1929,7 +2062,7 @@ $ kodalo studio design show [OPTIONS] {repo_id}
 
 #### `kodalo studio design slide`
 
-Export one AI-written slide as a self-contained HTML page (to stdout without --output).
+Export one slide as a self-contained HTML page (to stdout without --output).
 
 **Usage**:
 
@@ -1952,6 +2085,34 @@ $ kodalo studio design slide [OPTIONS] {repo_id}
 * `--name <str>`: Feature post: the name of the focus.
 * `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
 * `-o, --output <file>`: Write to a file.
+* `--help`: Show this message and exit.
+
+#### `kodalo studio design export`
+
+Make a picture of every slide and write them, with a caption.txt, into a new folder inside
+--folder, to post by hand. Nothing is sent to Instagram. Needs Microsoft Edge.
+
+**Usage**:
+
+```console
+$ kodalo studio design export [OPTIONS] {repo_id}
+```
+
+**Arguments**:
+
+* `repo_id`: Id of an added repository (see repositories list).  [required]
+
+**Options**:
+
+* `-b, --brand <str>`: The brand (name or id) the post is for.  [required]
+* `--idea <str>`: The post idea, e.g. idea-1.  [required]
+* `--folder <directory>`: An existing folder. The post goes into a new one.  [required]
+* `--mode <light|dark>`: The brand&#x27;s colors to use.  [default: light]
+* `-t, --type <tool|feature>`: The kind of post: about the whole tool or one feature.  [default: tool]
+* `--kind <|features|use_cases|capabilities>`: Feature post: which list the focus is in.
+* `--name <str>`: Feature post: the name of the focus.
+* `--hook <str>`: The hook to open with; the idea&#x27;s own when left out.
+* `--json`: Output as JSON.
 * `--help`: Show this message and exit.
 
 #### `kodalo studio design svg`

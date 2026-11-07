@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, Select } from '../../components/controls.jsx';
-import { ideaText } from '../../ideas.js';
+import { ideaText } from '../../libs/ideas.js';
 
 const FORMATS = { single_image: 'Single image', carousel: 'Carousel' };
 const FORMAT_ICONS = { single_image: 'bi-image', carousel: 'bi-collection' };

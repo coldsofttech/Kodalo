@@ -3,7 +3,7 @@ import Appearance from './Appearance.jsx';
 import AiConnections from './ai/Connections.jsx';
 import AiHistory, { AiHistorySettings } from './ai/History.jsx';
 import GitHub from './GitHub.jsx';
-import Platforms from './Platforms.jsx';
+import Platforms from './platforms/Platforms.jsx';
 
 const TABS = [
   ['github', 'GitHub'],

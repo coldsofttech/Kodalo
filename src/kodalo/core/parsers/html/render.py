@@ -22,9 +22,9 @@ from functools import cache
 from html.parser import HTMLParser
 from importlib import resources
 
-from kodalo.core.studio.svg import _ATTRIBUTES as _SVG_ATTRIBUTES
-from kodalo.core.studio.svg import _ELEMENTS as _SVG_ELEMENTS
-from kodalo.core.studio.svg import _safe_value
+from kodalo.core.parsers.svg.sanitize import _ATTRIBUTES as _SVG_ATTRIBUTES
+from kodalo.core.parsers.svg.sanitize import _ELEMENTS as _SVG_ELEMENTS
+from kodalo.core.parsers.svg.sanitize import _safe_value
 
 MAX_HTML_BYTES = 12_000
 MAX_CSS_BYTES = 12_000

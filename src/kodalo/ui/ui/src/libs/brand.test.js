@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { HEX, logoFor, previewVariables, sameData, setIn } from './brand.js';
-import { LAYOUTS, SAMPLE_DATA } from './testing.js';
+import { LAYOUTS, SAMPLE_DATA } from '../testing.js';
 
 describe('setIn', () => {
   it('replaces a nested value without changing the original', () => {

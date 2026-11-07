@@ -11,14 +11,17 @@ from kodalo.cli import output
 from kodalo.cli.state import get_state
 from kodalo.core.ai import AiConnections
 from kodalo.core.brands.brand import Brand, BrandError, BrandService
+from kodalo.core.parsers.html.render import MAX_IMAGE_BYTES
+from kodalo.core.parsers.image.render import RenderError
 from kodalo.core.repositories import ReadmeService, RepoError, RepoService
 from kodalo.core.settings.ai import AiConnectionError, AiInvalidError, AiSecretError
-from kodalo.core.settings.platforms import PLATFORMS, Platforms
+from kodalo.core.settings.platforms import PLATFORMS, InstagramConnection, Platforms
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 from kodalo.core.studio import StudioInvalidError
 from kodalo.core.studio.copy import Choice, CopyAssistant
-from kodalo.core.studio.design import DesignAssistant
+from kodalo.core.studio.design import DesignAssistant, PageAssets, load_image
 from kodalo.core.studio.ideas import IdeasAssistant
+from kodalo.core.studio.platforms.instagram.post import InstagramPoster
 
 JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 YesOption = Annotated[
@@ -54,6 +57,7 @@ class Services:
     ideas: IdeasAssistant
     copy: CopyAssistant
     design: DesignAssistant
+    poster: InstagramPoster
 
 
 @contextmanager
@@ -76,18 +80,21 @@ def open_services(ctx: typer.Context) -> Generator[Services]:
         ideas = IdeasAssistant(readme, ai, database)
         platforms = Platforms(database)
         copy = CopyAssistant(readme, repos, ideas, ai, platforms, database)
+        design = DesignAssistant(copy, repos, platforms, ai, database)
         yield Services(
             repos,
             BrandService(database, data_dir),
             ideas,
             copy,
-            DesignAssistant(copy, repos, platforms, ai, database),
+            design,
+            InstagramPoster(design, copy, InstagramConnection(database), data_dir),
         )
     except (
         StorageError,
         StudioInvalidError,
         RepoError,
         BrandError,
+        RenderError,
         AiConnectionError,
         AiInvalidError,
         AiSecretError,
@@ -136,3 +143,29 @@ def approve(items: tuple[str, ...], label: str, tokens: tuple[int, int], yes: bo
 def warn(lines: tuple[str, ...]) -> None:
     for line in lines:
         output.err_console.print(f"[yellow]{line}[/yellow]")
+
+
+def logo_file(services: Services, name: str | None) -> tuple[str, bytes] | None:
+    """The brand's logo file for a page, or ``None`` when there is none or it cannot be read."""
+    if not name:
+        return None
+    try:
+        data = services.brands.logos.read(name)
+    except BrandError:
+        return None
+    if len(data) > MAX_IMAGE_BYTES:
+        return None
+    return ("image/png" if name.endswith(".png") else "image/svg+xml", data)
+
+
+def page_assets(services: Services, repo_id: str, brand: Brand) -> PageAssets:
+    """Read the pictures and the logo a slide page embeds."""
+    preview = services.repos.social_preview(repo_id)
+    icon = services.repos.icon(repo_id)
+    logo = brand.data.logo
+    return PageAssets(
+        load_image(*preview) if preview else None,
+        load_image(*icon) if icon else None,
+        logo_file(services, logo.file),
+        logo_file(services, logo.dark_file),
+    )

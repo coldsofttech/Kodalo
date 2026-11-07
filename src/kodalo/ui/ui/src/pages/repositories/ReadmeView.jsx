@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { getReadme, planReadmeAnalysis, runReadmeAnalysis } from '../../api.js';
+import { getReadme, planReadmeAnalysis, runReadmeAnalysis } from '../../libs/api.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import { Button } from '../../components/controls.jsx';
 import Section from '../../components/Section.jsx';

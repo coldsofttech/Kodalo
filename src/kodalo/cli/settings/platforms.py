@@ -14,11 +14,16 @@ from kodalo.core.settings.platforms import (
     MAX_HASHTAGS,
     PLATFORMS,
     VISUALS,
+    InstagramAccount,
+    InstagramConnection,
+    PlatformConnectionError,
     PlatformInvalidError,
     Platforms,
+    PlatformSecretError,
     PlatformSettings,
 )
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
+from kodalo.core.tunnel import TunnelError, TunnelManager
 
 app = typer.Typer(
     help="Choose how many hashtags a post gets, and the ones every post carries.",
@@ -26,6 +31,22 @@ app = typer.Typer(
     rich_markup_mode="rich",
     pretty_exceptions_enable=False,
 )
+
+instagram_app = typer.Typer(
+    help="Connect Kodalo to Instagram with an access token.",
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+    pretty_exceptions_enable=False,
+)
+app.add_typer(instagram_app, name="instagram")
+
+tunnel_app = typer.Typer(
+    help="Check or install cloudflared, the tool posting to Instagram needs.",
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+    pretty_exceptions_enable=False,
+)
+instagram_app.add_typer(tunnel_app, name="tunnel")
 
 JsonOption = Annotated[bool, typer.Option("--json", help="Output as JSON.")]
 PlatformArgument = Annotated[str, typer.Argument(help=f"One of: {', '.join(PLATFORMS)}.")]
@@ -149,3 +170,104 @@ def set_command(
             ),
             as_json,
         )
+
+
+@contextmanager
+def _instagram(ctx: typer.Context) -> Generator[InstagramConnection]:
+    """Open the database for one Instagram command, turning expected failures into exit code 1."""
+    data_dir = get_state(ctx).data_dir or default_data_dir()
+    database: Database | None = None
+    try:
+        database = Database.open(database_path(data_dir))
+        yield InstagramConnection(database)
+    except (PlatformInvalidError, PlatformConnectionError, PlatformSecretError, StorageError) as e:
+        output.error(str(e))
+        raise typer.Exit(code=1) from e
+    finally:
+        if database is not None:
+            database.close()
+
+
+def _show_account(account: InstagramAccount | None, as_json: bool) -> None:
+    if as_json:
+        output.console.print_json(
+            data={
+                "connected": account is not None,
+                "username": account.username if account else "",
+                "account_id": account.account_id if account else "",
+                "account_type": account.account_type if account else "",
+                "token_hint": account.token_hint if account else "",
+                "connected_at": account.connected_at if account else "",
+            }
+        )
+        return
+    if account is None:
+        output.console.print("Instagram is not connected.")
+        return
+    table = Table(show_header=False)
+    table.add_row("Account", account.username)
+    table.add_row("Account ID", account.account_id)
+    table.add_row("Account type", account.account_type or "-")
+    table.add_row("Token", f"...{account.token_hint}")
+    table.add_row("Connected", account.connected_at)
+    output.console.print(table)
+
+
+@instagram_app.command("status")
+def instagram_status_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
+    """Show the connected Instagram account. Does not contact Instagram."""
+    with _instagram(ctx) as instagram:
+        _show_account(instagram.get(), as_json)
+
+
+@instagram_app.command("connect")
+def instagram_connect_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
+    """Connect Instagram. The access token is asked for at a hidden prompt, or piped in, and
+    never taken as an argument. It is checked with Meta and kept in the system keychain."""
+    account_id = typer.prompt("Instagram account ID")
+    token = typer.prompt("Access token", hide_input=True)
+    with _instagram(ctx) as instagram:
+        _show_account(instagram.connect(token, account_id), as_json)
+
+
+@instagram_app.command("check")
+def instagram_check_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
+    """Ask Instagram whether the saved token still works."""
+    with _instagram(ctx) as instagram:
+        _show_account(instagram.check(), as_json)
+
+
+@tunnel_app.command("status")
+def instagram_tunnel_status_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
+    """Show whether cloudflared, which posting needs, is installed. Installs nothing."""
+    manager = TunnelManager(get_state(ctx).data_dir or default_data_dir())
+    installed = manager.is_installed()
+    if as_json:
+        output.console.print_json(data={"installed": installed})
+        return
+    output.console.print(
+        "cloudflared is installed." if installed else "cloudflared is not installed."
+    )
+
+
+@tunnel_app.command("install")
+def instagram_tunnel_install_command(ctx: typer.Context, as_json: JsonOption = False) -> None:
+    """Install cloudflared (a third-party tool from Cloudflare) when it is missing."""
+    manager = TunnelManager(get_state(ctx).data_dir or default_data_dir())
+    try:
+        manager.ensure_installed()
+    except TunnelError as error:
+        output.error(str(error))
+        raise typer.Exit(code=1) from error
+    if as_json:
+        output.console.print_json(data={"installed": True})
+        return
+    output.console.print("cloudflared is installed.")
+
+
+@instagram_app.command("disconnect")
+def instagram_disconnect_command(ctx: typer.Context) -> None:
+    """Remove the token from the keychain and forget the account."""
+    with _instagram(ctx) as instagram:
+        instagram.disconnect()
+        output.console.print("Instagram is disconnected.")

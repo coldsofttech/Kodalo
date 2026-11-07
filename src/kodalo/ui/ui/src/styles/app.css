@@ -1557,3 +1557,19 @@ fluent-button.ai-button[disabled]::part(control) {
   align-items: center;
   gap: 0.6rem;
 }
+
+.guide summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.guide ol {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.instagram-connection {
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}

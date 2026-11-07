@@ -1,10 +1,10 @@
 // The four editor panels: Colors, Fonts, Logo and Layout. Each edits a draft of the brand data and
 // reports changes up; nothing here talks to Python except the contrast check and logo upload.
 import { useEffect, useRef, useState } from 'react';
-import { checkContrast, logoUrl, removeLogo, uploadLogo } from '../api.js';
-import { COLOR_ROWS, FONT_ROWS, HEX, LOGO_POSITIONS } from '../brand.js';
+import { checkContrast, logoUrl, removeLogo, uploadLogo } from '../libs/api.js';
+import { COLOR_ROWS, FONT_ROWS, HEX, LOGO_POSITIONS } from '../libs/brand.js';
 import { Button, NumberField, Select, TextField } from './controls.jsx';
-import { get } from '../lookup.js';
+import { get } from '../libs/lookup.js';
 
 /** @param {{ value: string, onChange: (value: string) => void, label: string }} props */
 function HexField({ value, onChange, label }) {

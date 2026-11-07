@@ -3,9 +3,9 @@
 // through the CSSOM (style.setProperty), which Cornea's content security policy allows, unlike an
 // inline style attribute in the markup.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { logoUrl } from '../api.js';
-import { logoFor, previewVariables } from '../brand.js';
-import { get } from '../lookup.js';
+import { logoUrl } from '../libs/api.js';
+import { logoFor, previewVariables } from '../libs/brand.js';
+import { get } from '../libs/lookup.js';
 
 const SLIDES = ['cover', 'content', 'code', 'quote', 'cta'];
 const CAPTIONS = {

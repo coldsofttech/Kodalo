@@ -6,7 +6,7 @@ import LayoutsPage from './Layouts.jsx';
 import { createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
 
 const saveJson = vi.fn();
-vi.mock('../../download.js', async (importOriginal) => ({
+vi.mock('../../libs/download.js', async (importOriginal) => ({
   ...(await importOriginal()),
   saveJson: (...args) => saveJson(...args),
 }));

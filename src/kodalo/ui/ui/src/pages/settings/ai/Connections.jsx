@@ -8,8 +8,9 @@ import {
   saveAiModel,
   setDefaultAiConnection,
   testAiConnection,
-} from '../../../api.js';
+} from '../../../libs/api.js';
 import { Button, ComboBox, Select, TextField } from '../../../components/controls.jsx';
+import { useUnsavedGuard } from '../../../libs/unsaved.js';
 
 /** @typedef {{ name: string, source: string, is_default: boolean, max_tokens: number | null, temperature: number | null, timeout_s: number | null }} AiModel */
 /** @typedef {{ provider: string, label: string, kind: string, saved: boolean, enabled: boolean, is_default: boolean, base_url: string, default_base_url: string, has_key: boolean, key_hint: string, status: string, status_detail: string, default_model: string | null, models: AiModel[] }} AiConnection */
@@ -88,6 +89,7 @@ function ProviderCard({ connection, others, onReload }) {
   const [baseUrl, setBaseUrl] = useState(connection.base_url);
   const [form, setForm] = useState(EMPTY_FORM);
   const [busy, setBusy] = useState(false);
+  useUnsavedGuard(Boolean(key) || (needsKey && baseUrl !== connection.base_url));
   const [message, setMessage] = useState(
     /** @type {{ ok: boolean, text: string } | null} */ (null),
   );

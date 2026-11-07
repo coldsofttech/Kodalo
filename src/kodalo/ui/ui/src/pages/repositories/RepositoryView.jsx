@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { iconUrl, openExternal, planAnalysis, runAnalysis } from '../../api.js';
+import { iconUrl, openExternal, planAnalysis, runAnalysis } from '../../libs/api.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import Section from '../../components/Section.jsx';
 import { Button } from '../../components/controls.jsx';
-import { languageColor } from '../../languageColors.js';
-import { localTime } from '../../time.js';
+import { languageColor } from '../../libs/languageColors.js';
+import { localTime } from '../../libs/time.js';
 
 /** @param {string | null | undefined} value */
 const orDash = (value) => (value ? value : '-');

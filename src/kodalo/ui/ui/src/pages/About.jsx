@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { appInfo, getDoctor } from '../api.js';
+import { appInfo, getDoctor } from '../libs/api.js';
 import { Button } from '../components/controls.jsx';
 
 /** @param {{ ok: boolean, required: boolean }} check */
@@ -49,6 +49,11 @@ export default function AboutPage() {
       <p>
         If something does not look right, check the installation. It reads your setup and your local
         data, and changes nothing.
+      </p>
+      <h2>Third-party software</h2>
+      <p>
+        Kodalo will install <strong>Cloudflared</strong>, a third-party tool that is required for
+        posting directly to Instagram.
       </p>
       <Button appearance="accent" disabled={busy} onClick={check}>
         Check installation

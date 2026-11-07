@@ -17,17 +17,16 @@ from kodalo.cli.studio.common import (
     NameOption,
     PostTypeOption,
     RepoArgument,
-    Services,
     YesOption,
     approve,
     choose,
     open_services,
+    page_assets,
     warn,
 )
-from kodalo.core.brands.brand import Brand, BrandError
+from kodalo.cli.studio.platforms.instagram import export as instagram_export
 from kodalo.core.repositories import RepoNotFoundError
-from kodalo.core.studio.design import Design, PageAssets, load_image
-from kodalo.core.studio.slide_html import MAX_IMAGE_BYTES
+from kodalo.core.studio.design import Design
 
 app = typer.Typer(
     help="Plan, make and show the design of a written post, and export its slides.",
@@ -35,6 +34,8 @@ app = typer.Typer(
     rich_markup_mode="rich",
     pretty_exceptions_enable=False,
 )
+# Platform commands (``export``) are added to this group without a name of their own.
+app.add_typer(instagram_export.app)
 
 SlideOption = Annotated[int, typer.Option("--slide", min=0, max=11, help="The slide, from 0.")]
 OutputOption = Annotated[
@@ -67,32 +68,6 @@ def _write(text: str, destination: Path | None) -> None:
         return
     destination.write_text(text, "utf-8")
     output.err_console.print(f"Wrote {destination}.")
-
-
-def _logo_file(services: Services, name: str | None) -> tuple[str, bytes] | None:
-    """The brand's logo file for a page, or ``None`` when there is none or it cannot be read."""
-    if not name:
-        return None
-    try:
-        data = services.brands.logos.read(name)
-    except BrandError:
-        return None
-    if len(data) > MAX_IMAGE_BYTES:
-        return None
-    return ("image/png" if name.endswith(".png") else "image/svg+xml", data)
-
-
-def _page_assets(services: Services, repo_id: str, brand: Brand) -> PageAssets:
-    """Read the pictures and the logo a slide page embeds."""
-    preview = services.repos.social_preview(repo_id)
-    icon = services.repos.icon(repo_id)
-    logo = brand.data.logo
-    return PageAssets(
-        load_image(*preview) if preview else None,
-        load_image(*icon) if icon else None,
-        _logo_file(services, logo.file),
-        _logo_file(services, logo.dark_file),
-    )
 
 
 @app.command("plan")
@@ -185,14 +160,14 @@ def slide_command(
     hook: HookOption = "",
     destination: OutputOption = None,
 ) -> None:
-    """Export one AI-written slide as a self-contained HTML page (to stdout without --output)."""
+    """Export one slide as a self-contained HTML page (to stdout without --output)."""
     with open_services(ctx) as services:
         choice, chosen = choose(services, repo_id, brand, post_type, kind, name, idea, hook)
         page = services.design.slide_page(
-            choice, slide, chosen, mode, _page_assets(services, repo_id, chosen)
+            choice, slide, chosen, mode, page_assets(services, repo_id, chosen)
         )
         if page is None:
-            raise RepoNotFoundError("That slide has no AI-written layout.")
+            raise RepoNotFoundError("That slide has no saved design.")
     _write(page, destination)
 
 

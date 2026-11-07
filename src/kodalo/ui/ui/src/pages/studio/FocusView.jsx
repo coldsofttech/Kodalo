@@ -1,5 +1,5 @@
 import { Select } from '../../components/controls.jsx';
-import { get } from '../../lookup.js';
+import { get } from '../../libs/lookup.js';
 
 export const POST_TYPES = [
   {

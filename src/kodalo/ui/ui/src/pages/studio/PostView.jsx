@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Button, TextArea, TextField } from '../../components/controls.jsx';
+import { useUnsavedGuard } from '../../libs/unsaved.js';
 
 /** @param {any} copy */
 function draftOf(copy) {
@@ -29,6 +30,7 @@ export default function PostView({ copy, busy, onSave }) {
     setEditing(null);
   }
   const dirty = JSON.stringify(draft) !== JSON.stringify(draftOf(copy));
+  useUnsavedGuard(dirty);
   const single = copy.format === 'single_image';
 
   /** @param {object} patch */

@@ -14,6 +14,8 @@ from kodalo.api.deps import (
     get_design_assistant,
     get_github_connectivity,
     get_ideas_assistant,
+    get_instagram,
+    get_instagram_poster,
     get_platforms,
     get_readme_assistant,
     get_readme_service,
@@ -44,15 +46,18 @@ from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import (
     GitHubConnectivity,
 )
-from kodalo.core.settings.platforms import Platforms
+from kodalo.core.settings.platforms import InstagramConnection, Platforms
 from kodalo.core.studio import StudioInvalidError
 from kodalo.core.studio.copy import CopyAssistant
 from kodalo.core.studio.design import DesignAssistant
 from kodalo.core.studio.ideas import IdeasAssistant
+from kodalo.core.studio.platforms.instagram.post import InstagramPoster
 
 GitHub = Annotated[GitHubConnectivity, Depends(get_github_connectivity)]
 ThemeSetting = Annotated[Appearance, Depends(get_appearance)]
 PlatformSettings = Annotated[Platforms, Depends(get_platforms)]
+InstagramSetting = Annotated[InstagramConnection, Depends(get_instagram)]
+InstagramPost = Annotated[InstagramPoster, Depends(get_instagram_poster)]
 AiSetting = Annotated[AiConnections, Depends(get_ai_connections)]
 AiProviderPath = Annotated[AiProvider, Path(description="The AI provider.")]
 AiModelName = Annotated[str, Path(min_length=1, max_length=128, description="The model name.")]

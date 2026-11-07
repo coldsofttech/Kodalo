@@ -8,12 +8,12 @@ import {
   listCanvases,
   listLayouts,
   updateLayout,
-} from '../../api.js';
-import { useCatalog } from '../../catalog.js';
+} from '../../libs/api.js';
+import { useCatalog } from '../../libs/catalog.js';
 import { Button, NumberField, Select, Switch, TextField } from '../../components/controls.jsx';
 import ImportButton from '../../components/ImportButton.jsx';
-import { fileNameFor, readJson, saveJson } from '../../download.js';
-import { get } from '../../lookup.js';
+import { fileNameFor, readJson, saveJson } from '../../libs/download.js';
+import { get } from '../../libs/lookup.js';
 
 const SETTINGS = [
   'canvas_id',

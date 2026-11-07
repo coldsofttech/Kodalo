@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { socialPreviewUrl } from '../api.js';
+import { socialPreviewUrl } from '../libs/api.js';
 
 /**
  * A repository's social preview image at the size of the window, in a modal dialog like the full

@@ -57,6 +57,12 @@ Choose how Kodalo reaches GitHub: `local_folder` (repositories already on this c
 | --- | --- |
 | `settings platforms show <platform>` | Show how many hashtags a post for that platform gets (`hashtags per post`) and the default hashtags every post carries. `<platform>` is `instagram`. `--json` for machine-readable output. |
 | `settings platforms set <platform>` | `--hashtags N` sets the number of hashtags on each post, the default ones included, 0 to 30 (default 5). `--default-hashtags "#a #b"` sets the hashtags every post carries before the ones the AI writes; an empty value removes them. `--use-social-preview/--no-social-preview`, `--use-repo-icon/--no-repo-icon`, `--use-icons/--no-icons` and `--build-custom-images/--no-custom-images` choose which visuals the designer may use, and `--use-ai-templates/--no-ai-templates` lets the AI write the HTML and CSS of each slide instead of the fixed templates (all off until chosen). What is left out stays as it is. Exits with 1 when the number is out of range or there are more default hashtags than hashtags. |
+| `settings platforms instagram connect` | Connect Instagram. Asks for the Instagram account ID, then the access token at a hidden prompt (or reads both from a pipe), checks them with Meta and keeps the token in the system keychain. `--json` for machine-readable output. Exits with 1 when the token or account ID is malformed, refused or the keychain is unavailable. |
+| `settings platforms instagram status` | Show the connected account (name, ID, type, last four characters of the token, when it was connected). Does not contact Instagram. `--json` for machine-readable output. |
+| `settings platforms instagram check` | Ask Instagram whether the saved token still works. Exits with 1 when not connected or the token no longer works. `--json` for machine-readable output. |
+| `settings platforms instagram tunnel status` | Show whether cloudflared, the third-party tool posting needs, is installed. Installs nothing. `--json` for machine-readable output. |
+| `settings platforms instagram tunnel install` | Install cloudflared when it is missing (winget, else a checked download). Exits with 1 when it cannot be installed. `--json` for machine-readable output. |
+| `settings platforms instagram disconnect` | Remove the token from the keychain and forget the account. |
 
 ### `settings ai`
 
@@ -106,7 +112,8 @@ Make a post from an added repository, step by step: ideas, then copy, then desig
 | `studio design plan <id>` | Say what the AI would be sent to design the saved copy. Nothing is sent. |
 | `studio design make <id>` | Ask the AI how to lay out each slide. Replaces the design saved before. |
 | `studio design show <id>` | Show the saved design. |
-| `studio design slide <id> --slide N` | Export one AI-written slide as a self-contained HTML page; `--mode light\|dark`, `--output` writes a file instead of stdout. |
+| `studio design export <id> --folder PATH` | Make a picture of every slide and write them, with a `caption.txt`, into a new subfolder of an existing `--folder`, to post by hand; `--mode light\|dark`, `--json`. Sends nothing to Instagram. Needs Microsoft Edge. Exits with 1 when the folder does not exist or nothing was designed. |
+| `studio design slide <id> --slide N` | Export one slide (a fixed template's or the AI's layout) as a self-contained HTML page; `--mode light\|dark`, `--output` writes a file instead of stdout. |
 | `studio design svg <id> --slide N` | Export the drawing the AI made for one slide as SVG; `--output` writes a file. |
 
 ### `brand`

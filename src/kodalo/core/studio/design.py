@@ -3,13 +3,13 @@
 The model never writes text: the copy is already saved, and the slides always show it. It only
 chooses, for each slide, a template, its alignment, where a picture sits, an icon and an image,
 from what the platform settings allow. With AI-powered templates on it instead writes one shared
-stylesheet and a slot layout for each slide (see ``slide_html``), and decides where the repo name
-shows and whether progress marks are drawn. Everything it returns is checked here: a template or
-option outside the fixed lists, an icon that is not a Bootstrap Icon, an image that is not
-allowed or not available, or a drawing that does not pass the SVG cleaner, is replaced by the
-plain default and noted as a warning. When the repository has no icon file and the designer may
-use one, the social preview is attached to the same request so the model can say where the logo
-is in it.
+stylesheet and a slot layout for each slide (see ``kodalo.core.parsers.html.render``), and
+decides where the repo name shows and whether progress marks are drawn. Everything it returns is
+checked here: a template or option outside the fixed lists, an icon that is not a Bootstrap Icon,
+an image that is not allowed or not available, or a drawing that does not pass the SVG cleaner, is
+replaced by the plain default and noted as a warning. When the repository has no icon file and the
+designer may use one, the social preview is attached to the same request so the model can say where
+the logo is in it.
 """
 
 import json
@@ -24,15 +24,8 @@ from sqlalchemy.orm import Session
 
 from kodalo.core.ai import AiConnections
 from kodalo.core.brands.brand import Brand
-from kodalo.core.repositories.ai.parsers import _reply_json, estimate_tokens
-from kodalo.core.repositories.errors import RepoNotFoundError
-from kodalo.core.repositories.service import RepoService
-from kodalo.core.settings.ai import AiInvalidError
-from kodalo.core.settings.platforms import Platforms, PlatformSettings
-from kodalo.core.storage import Database
-from kodalo.core.storage.models import StudioDesign
-from kodalo.core.studio.copy import Choice, CopyAssistant, PostCopy
-from kodalo.core.studio.slide_html import (
+from kodalo.core.parsers.html.fixed_page import fixed_layout, fixed_style
+from kodalo.core.parsers.html.render import (
     MAX_IMAGE_BYTES,
     PROGRESS_STYLES,
     REPO_NAME_PLACES,
@@ -46,7 +39,15 @@ from kodalo.core.studio.slide_html import (
     with_picture,
     with_slots,
 )
-from kodalo.core.studio.svg import sanitize_svg
+from kodalo.core.parsers.svg.sanitize import sanitize_svg
+from kodalo.core.repositories.ai.parsers import _reply_json, estimate_tokens
+from kodalo.core.repositories.errors import RepoNotFoundError
+from kodalo.core.repositories.service import RepoService
+from kodalo.core.settings.ai import AiInvalidError
+from kodalo.core.settings.platforms import Platforms, PlatformSettings
+from kodalo.core.storage import Database
+from kodalo.core.storage.models import StudioDesign
+from kodalo.core.studio.copy import Choice, CopyAssistant, PostCopy
 
 MAX_OUTPUT_TOKENS = 8000
 MAX_HTML_OUTPUT_TOKENS = 16000
@@ -461,15 +462,16 @@ class DesignAssistant:
         mode: str,
         assets: PageAssets,
     ) -> str | None:
-        """The page of one AI-written slide in the brand's colors for ``mode`` (``light`` or
-        ``dark``), with every picture and the logo embedded, or ``None`` when the slide has no AI
-        layout. When the brand has no logo, the repo name stands in its place."""
+        """The page of one slide in the brand's colors for ``mode`` (``light`` or ``dark``), with
+        every picture and the logo embedded: the AI's layout when it wrote one, else the fixed
+        template's. ``None`` when the post has no saved design or no such slide. When the brand has
+        no logo, the repo name stands in its place."""
         design = self.saved(choice)
         post = self._copy.saved(choice)
         if design is None or post is None or not 0 <= index < len(design.slides):
             return None
         slide = design.slides[index]
-        if not slide.html or not design.style or index >= len(post.slides):
+        if index >= len(post.slides):
             return None
         pick = "dark" if mode == "dark" else "light"
         colors = {
@@ -513,9 +515,22 @@ class DesignAssistant:
             index,
             total,
         )
+        written = bool(slide.html and design.style)
+        density = {"compact": 18, "regular": 30, "spacious": 46}.get(brand.layout.density, 30)
         return build_page(
-            slide.html,
-            design.style,
+            slide.html if written else fixed_layout(slide, index),
+            design.style
+            if written
+            else fixed_style(
+                slide,
+                margins=(
+                    brand.layout.margin_top,
+                    brand.layout.margin_side,
+                    brand.layout.margin_bottom,
+                ),
+                radius=brand.layout.corner_radius,
+                gap=density,
+            ),
             SlideText(copy.headline, copy.body, copy.alt_text, slide.emphasis),
             tokens=brand_tokens(colors, fonts),
             canvas=(brand.canvas.width, brand.canvas.height),

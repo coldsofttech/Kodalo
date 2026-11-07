@@ -18,11 +18,12 @@ from kodalo.core.repositories import (
 )
 from kodalo.core.settings.appearance import Appearance
 from kodalo.core.settings.github import GitHubConnectivity
-from kodalo.core.settings.platforms import Platforms
+from kodalo.core.settings.platforms import InstagramConnection, Platforms
 from kodalo.core.storage import Database, StorageError, database_path, default_data_dir
 from kodalo.core.studio.copy import CopyAssistant
 from kodalo.core.studio.design import DesignAssistant
 from kodalo.core.studio.ideas import IdeasAssistant
+from kodalo.core.studio.platforms.instagram.post import InstagramPoster
 
 # The data folder is always the per-user default. Tests point it somewhere else with configure().
 _data_dir: Path | None = None
@@ -48,6 +49,8 @@ class Services:
     copy: CopyAssistant
     platforms: Platforms
     design: DesignAssistant
+    instagram: InstagramConnection
+    poster: InstagramPoster
 
 
 def data_dir() -> Path:
@@ -74,6 +77,8 @@ def _build_services() -> Services:
     ideas = IdeasAssistant(readme, ai, database)
     platforms = Platforms(database)
     copy = CopyAssistant(readme, repos, ideas, ai, platforms, database)
+    design = DesignAssistant(copy, repos, platforms, ai, database)
+    instagram = InstagramConnection(database)
     return Services(
         database,
         BrandService(database, folder),
@@ -87,7 +92,9 @@ def _build_services() -> Services:
         ideas,
         copy,
         platforms,
-        DesignAssistant(copy, repos, platforms, ai, database),
+        design,
+        instagram,
+        InstagramPoster(design, copy, instagram, folder),
     )
 
 
@@ -125,6 +132,22 @@ def get_platforms() -> Platforms:
     """Return the platform settings, opening the database on first use."""
     try:
         return _services().platforms
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_instagram_poster() -> InstagramPoster:
+    """Return the Instagram poster, opening the database on first use."""
+    try:
+        return _services().poster
+    except StorageError as error:
+        raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
+
+
+def get_instagram() -> InstagramConnection:
+    """Return the Instagram connection, opening the database on first use."""
+    try:
+        return _services().instagram
     except StorageError as error:
         raise HTTPException(status.HTTP_503_SERVICE_UNAVAILABLE, str(error)) from error
 

@@ -14,14 +14,14 @@ import {
   planDesign,
   planIdeas,
   saveCopy,
-} from '../../api.js';
+} from '../../libs/api.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import { Button, Select } from '../../components/controls.jsx';
 import DesignView from './DesignView.jsx';
 import FocusView from './FocusView.jsx';
 import IdeasView from './IdeasView.jsx';
 import PostView from './PostView.jsx';
-import { get } from '../../lookup.js';
+import { get } from '../../libs/lookup.js';
 
 /** @param {{ visible: boolean, onOpenRepositories: () => void }} props */
 export default function StudioPage({ visible, onOpenRepositories }) {

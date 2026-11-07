@@ -2615,6 +2615,123 @@
         "title": "EvidenceResponse",
         "type": "object"
       },
+      "ExportRequest": {
+        "description": "Which designed post to export, in which colors, and into which folder.",
+        "properties": {
+          "brand_id": {
+            "description": "The brand the post is for.",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "folder": {
+            "description": "An existing folder on this computer. The post goes into a new folder inside.",
+            "examples": [
+              "C:\\Users\\me\\Documents"
+            ],
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Folder",
+            "type": "string"
+          },
+          "hook_id": {
+            "default": "",
+            "description": "The hook to open with; empty for the idea's own.",
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "idea_id": {
+            "examples": [
+              "idea-1"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mode": {
+            "default": "light",
+            "description": "The brand's colors the pictures are made in.",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post of the ideas.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brand_id",
+          "post_type",
+          "idea_id",
+          "folder"
+        ],
+        "title": "ExportRequest",
+        "type": "object"
+      },
+      "ExportResultResponse": {
+        "description": "Where the exported post was written.",
+        "properties": {
+          "caption_file": {
+            "description": "The caption.txt file.",
+            "maxLength": 1100,
+            "title": "Caption File",
+            "type": "string"
+          },
+          "folder": {
+            "description": "The new folder holding the files.",
+            "maxLength": 1100,
+            "title": "Folder",
+            "type": "string"
+          },
+          "pictures": {
+            "description": "The picture files, one per slide, in order.",
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 12,
+            "title": "Pictures",
+            "type": "array"
+          }
+        },
+        "required": [
+          "folder",
+          "pictures",
+          "caption_file"
+        ],
+        "title": "ExportResultResponse",
+        "type": "object"
+      },
       "FeatureResponse": {
         "properties": {
           "claims": {
@@ -3221,6 +3338,96 @@
           "output_tokens"
         ],
         "title": "IdeasResponse",
+        "type": "object"
+      },
+      "InstagramAccountResponse": {
+        "description": "The connected Instagram account. The token is never returned, only its last characters.",
+        "properties": {
+          "account_id": {
+            "description": "The account's ID.",
+            "examples": [
+              "1784140"
+            ],
+            "maxLength": 40,
+            "title": "Account Id",
+            "type": "string"
+          },
+          "account_type": {
+            "description": "Business or Media_Creator.",
+            "examples": [
+              "BUSINESS"
+            ],
+            "maxLength": 40,
+            "title": "Account Type",
+            "type": "string"
+          },
+          "connected": {
+            "description": "Whether Instagram is connected.",
+            "title": "Connected",
+            "type": "boolean"
+          },
+          "connected_at": {
+            "description": "When it was connected (UTC).",
+            "maxLength": 40,
+            "title": "Connected At",
+            "type": "string"
+          },
+          "token_hint": {
+            "description": "The last characters of the token.",
+            "maxLength": 4,
+            "title": "Token Hint",
+            "type": "string"
+          },
+          "username": {
+            "description": "The account's name.",
+            "examples": [
+              "sweepito"
+            ],
+            "maxLength": 100,
+            "title": "Username",
+            "type": "string"
+          }
+        },
+        "required": [
+          "connected",
+          "username",
+          "account_id",
+          "account_type",
+          "token_hint",
+          "connected_at"
+        ],
+        "title": "InstagramAccountResponse",
+        "type": "object"
+      },
+      "InstagramConnectRequest": {
+        "description": "The access token and account ID to connect Instagram with.",
+        "properties": {
+          "access_token": {
+            "description": "An access token, from the Meta developer dashboard.",
+            "examples": [
+              "EAAxxxxxxxxxxxx"
+            ],
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Access Token",
+            "type": "string"
+          },
+          "account_id": {
+            "description": "The Instagram account's ID, shown next to the token in the dashboard.",
+            "examples": [
+              "17841400000000000"
+            ],
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Account Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "access_token",
+          "account_id"
+        ],
+        "title": "InstagramConnectRequest",
         "type": "object"
       },
       "InstallationResponse": {
@@ -4809,6 +5016,102 @@
         "title": "PostIdeaResponse",
         "type": "object"
       },
+      "PostRequest": {
+        "description": "Which designed post to post, in which of the brand's colors.",
+        "properties": {
+          "brand_id": {
+            "description": "The brand the post is for.",
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Brand Id",
+            "type": "string"
+          },
+          "hook_id": {
+            "default": "",
+            "description": "The hook to open with; empty for the idea's own.",
+            "maxLength": 64,
+            "title": "Hook Id",
+            "type": "string"
+          },
+          "idea_id": {
+            "examples": [
+              "idea-1"
+            ],
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Idea Id",
+            "type": "string"
+          },
+          "kind": {
+            "default": "",
+            "description": "Which list the focus is in; empty for a tool post.",
+            "enum": [
+              "",
+              "features",
+              "use_cases",
+              "capabilities"
+            ],
+            "title": "Kind",
+            "type": "string"
+          },
+          "mode": {
+            "default": "light",
+            "description": "The brand's colors the pictures are made in.",
+            "enum": [
+              "light",
+              "dark"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "name": {
+            "default": "",
+            "description": "The focus's name.",
+            "maxLength": 128,
+            "title": "Name",
+            "type": "string"
+          },
+          "post_type": {
+            "description": "The kind of post of the ideas.",
+            "enum": [
+              "tool",
+              "feature"
+            ],
+            "title": "Post Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "brand_id",
+          "post_type",
+          "idea_id"
+        ],
+        "title": "PostRequest",
+        "type": "object"
+      },
+      "PostResultResponse": {
+        "description": "The post that is now on Instagram.",
+        "properties": {
+          "media_id": {
+            "description": "Instagram's ID of the post.",
+            "maxLength": 64,
+            "title": "Media Id",
+            "type": "string"
+          },
+          "permalink": {
+            "description": "The post's address, when Instagram gave it.",
+            "maxLength": 300,
+            "title": "Permalink",
+            "type": "string"
+          }
+        },
+        "required": [
+          "media_id",
+          "permalink"
+        ],
+        "title": "PostResultResponse",
+        "type": "object"
+      },
       "ReadmePlanResponse": {
         "description": "What asking the AI to read the documents would send and cost. Nothing has been sent yet.",
         "properties": {
@@ -5870,6 +6173,21 @@
           "theme"
         ],
         "title": "ThemeUpdate",
+        "type": "object"
+      },
+      "TunnelStatusResponse": {
+        "description": "Whether cloudflared, the tool posting needs, is installed.",
+        "properties": {
+          "installed": {
+            "description": "Whether cloudflared is installed.",
+            "title": "Installed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "installed"
+        ],
+        "title": "TunnelStatusResponse",
         "type": "object"
       },
       "UseCaseResponse": {
@@ -9321,6 +9639,175 @@
         ]
       }
     },
+    "/api/v1/settings/platforms/instagram/connection": {
+      "delete": {
+        "description": "Remove the token from the keychain and forget the account.",
+        "operationId": "disconnect_instagram_api_v1_settings_platforms_instagram_connection_delete",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstagramAccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Disconnect Instagram",
+        "tags": [
+          "v1"
+        ]
+      },
+      "get": {
+        "description": "Return the connected Instagram account, or that none is connected. Never the token.",
+        "operationId": "get_instagram_api_v1_settings_platforms_instagram_connection_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstagramAccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Get the Instagram connection",
+        "tags": [
+          "v1"
+        ]
+      },
+      "put": {
+        "description": "Check the access token with Instagram and keep it in the system keychain. Nothing is kept\nwhen Instagram refuses it (502) or the keychain is unavailable (503).",
+        "operationId": "connect_instagram_api_v1_settings_platforms_instagram_connection_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstagramConnectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstagramAccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Connect Instagram",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/platforms/instagram/connection/check": {
+      "post": {
+        "description": "Ask Instagram whether the saved token still works.",
+        "operationId": "check_instagram_api_v1_settings_platforms_instagram_connection_check_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstagramAccountResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "Instagram is not connected."
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Check the Instagram connection",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/settings/platforms/instagram/tunnel": {
+      "get": {
+        "description": "Say whether cloudflared, which gives the pictures a temporary public address for posting,\nis installed. Nothing is installed by this call.",
+        "operationId": "get_tunnel_api_v1_settings_platforms_instagram_tunnel_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TunnelStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Check whether cloudflared is installed",
+        "tags": [
+          "v1"
+        ]
+      },
+      "post": {
+        "description": "Install cloudflared when it is missing (a third-party tool from Cloudflare). It can take a\nminute. Fails with 502 when it cannot be downloaded or installed.",
+        "operationId": "install_tunnel_api_v1_settings_platforms_instagram_tunnel_post",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TunnelStatusResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "502": {
+            "description": "The provider could not be reached."
+          },
+          "503": {
+            "description": "The local data cannot be opened."
+          }
+        },
+        "summary": "Install cloudflared",
+        "tags": [
+          "v1"
+        ]
+      }
+    },
     "/api/v1/settings/platforms/{platform}": {
       "get": {
         "description": "Return how many hashtags a post for this platform gets and the ones every post carries.",
@@ -10192,7 +10679,7 @@
         ]
       },
       "post": {
-        "description": "Ask the default AI model once how to lay out each slide of the saved copy: template,\nalignment, picture, icon and drawing, from what Settings > Platforms allows. The text is never\nthe AI's. The plan is saved for this post, replacing the one saved before.",
+        "description": "Ask the default AI model once how to lay out each slide of the saved copy: template,\nalignment, picture, icon and drawing, from what Settings > Platforms allows. The text is never\nthe AI's. The plan is saved for this post, replacing the one saved before, and the page of\nevery slide is stored in the data folder.",
         "operationId": "make_design_api_v1_studio_repositories__repo_id__design_post",
         "parameters": [
           {
@@ -10243,6 +10730,63 @@
           }
         },
         "summary": "Design the post with the AI",
+        "tags": [
+          "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
+    "/api/v1/studio/repositories/{repo_id}/design/export": {
+      "post": {
+        "description": "Make a picture of each slide and write them, with a caption.txt holding the caption,\nhashtags and alt text, into a new folder inside the chosen one, so the post can be posted by\nhand. Only for brands whose canvas is an Instagram one. Nothing is sent to Instagram.",
+        "operationId": "export_post_api_v1_studio_repositories__repo_id__design_export_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportResultResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "503": {
+            "description": "Microsoft Edge is not available."
+          }
+        },
+        "summary": "Export the designed post to a folder",
         "tags": [
           "v1",
           "v1",
@@ -10310,9 +10854,69 @@
         ]
       }
     },
+    "/api/v1/studio/repositories/{repo_id}/design/post": {
+      "post": {
+        "description": "Make a picture of each slide, give the pictures a temporary public address with\ncloudflared (installing it first when it is missing), and post them with the caption, hashtags\nand alt text: one slide is a single image, more a carousel. Only for brands whose canvas is an\nInstagram one. It can take a minute or two.",
+        "operationId": "post_to_instagram_api_v1_studio_repositories__repo_id__design_post_post",
+        "parameters": [
+          {
+            "description": "Stored repository id.",
+            "in": "path",
+            "name": "repo_id",
+            "required": true,
+            "schema": {
+              "description": "Stored repository id.",
+              "maxLength": 64,
+              "title": "Repo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PostResultResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "404": {
+            "description": "No brand profile has that id."
+          },
+          "422": {
+            "description": "The brand data or file is not valid."
+          },
+          "502": {
+            "description": "Instagram refused the post or could not be reached, or the public address for the pictures could not be set up."
+          },
+          "503": {
+            "description": "The keychain or Microsoft Edge is not available."
+          }
+        },
+        "summary": "Post the designed post to Instagram",
+        "tags": [
+          "v1",
+          "v1",
+          "v1"
+        ]
+      }
+    },
     "/api/v1/studio/repositories/{repo_id}/design/slide": {
       "get": {
-        "description": "Return the page of a slide the AI wrote as HTML and CSS: cleaned, with the brand's colors\nfor the mode, the pictures and icons filled in, and a policy that lets it load nothing and run\nnothing. It is meant to be shown in a sandboxed frame.",
+        "description": "Return the page of a slide, whether the AI wrote it as HTML and CSS or a fixed template\nlays it out: with the brand's colors for the mode, the pictures and icons filled in, and a\npolicy that lets it load nothing and run nothing. It is meant to be shown in a sandboxed\nframe, and the same page is what gets posted.",
         "operationId": "get_design_slide_api_v1_studio_repositories__repo_id__design_slide_get",
         "parameters": [
           {
@@ -10463,7 +11067,7 @@
             "description": "The local data cannot be opened."
           }
         },
-        "summary": "Get one AI-written slide as a page",
+        "summary": "Get one slide as a page",
         "tags": [
           "v1",
           "v1",

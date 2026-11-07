@@ -7,9 +7,9 @@ import {
   readReadme,
   listRepositories,
   removeRepository,
-} from '../../api.js';
+} from '../../libs/api.js';
 import { Button, Switch, TextField } from '../../components/controls.jsx';
-import { localTime } from '../../time.js';
+import { localTime } from '../../libs/time.js';
 import AiOverlay from '../../components/AiOverlay.jsx';
 import SocialPreviewDialog from '../../components/SocialPreviewDialog.jsx';
 import ReadmeView from './ReadmeView.jsx';

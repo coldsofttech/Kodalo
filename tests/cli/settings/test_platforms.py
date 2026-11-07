@@ -1,6 +1,7 @@
 import json
 from pathlib import Path
 
+import pytest
 from typer.testing import CliRunner, Result
 
 from kodalo.cli.cli import app
@@ -72,3 +73,83 @@ def test_invalid_values_exit_1(tmp_path: Path) -> None:
         ).exit_code
         == 1
     )
+
+
+def test_instagram_connect_status_and_disconnect(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "kodalo.core.settings.platforms.instagram._fetch_profile",
+        lambda token, account_id: {"id": account_id, "username": "sweepito"},
+    )
+
+    none = json.loads(invoke(tmp_path, "instagram", "status", "--json").output)
+    connected = runner.invoke(
+        app,
+        ["--data-dir", str(tmp_path), "settings", "platforms", "instagram", "connect", "--json"],
+        input="1784140\nIGAA-secret-1234\n",
+    )
+    status = json.loads(invoke(tmp_path, "instagram", "status", "--json").output)
+    disconnected = invoke(tmp_path, "instagram", "disconnect")
+
+    assert none["connected"] is False
+    assert connected.exit_code == 0
+    assert "IGAA-secret" not in connected.output
+    assert (status["username"], status["account_id"], status["token_hint"]) == (
+        "sweepito",
+        "1784140",
+        "1234",
+    )
+    assert disconnected.exit_code == 0
+    assert (
+        json.loads(invoke(tmp_path, "instagram", "status", "--json").output)["connected"] is False
+    )
+
+
+def test_instagram_connect_refuses_a_malformed_account_id(tmp_path: Path) -> None:
+    result = runner.invoke(
+        app,
+        ["--data-dir", str(tmp_path), "settings", "platforms", "instagram", "connect"],
+        input="sweepito\nIGAA-secret-1234\n",
+    )
+
+    assert result.exit_code == 1
+
+
+def test_cloudflared_status_and_install(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    found: list[Path | None] = [None]
+    monkeypatch.setattr("kodalo.core.tunnel.manager.find_cloudflared", lambda data_dir: found[0])
+
+    def install(data_dir: Path) -> Path:
+        installed = Path("cloudflared.exe")
+        found[0] = installed
+        return installed
+
+    monkeypatch.setattr("kodalo.core.tunnel.manager.ensure_cloudflared", install)
+
+    before = json.loads(invoke(tmp_path, "instagram", "tunnel", "status", "--json").output)
+    installed = invoke(tmp_path, "instagram", "tunnel", "install", "--json")
+    after = invoke(tmp_path, "instagram", "tunnel", "status")
+
+    assert before == {"installed": False}
+    assert (installed.exit_code, json.loads(installed.output)) == (0, {"installed": True})
+    assert "is installed" in after.output
+
+
+def test_a_failed_cloudflared_install_exits_1(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from kodalo.core.tunnel import TunnelError
+
+    def fail(data_dir: Path) -> Path:
+        raise TunnelError("Could not download cloudflared.")
+
+    monkeypatch.setattr("kodalo.core.tunnel.manager.ensure_cloudflared", fail)
+
+    assert invoke(tmp_path, "instagram", "tunnel", "install").exit_code == 1
+
+
+def test_instagram_check_when_not_connected_exits_with_an_error(tmp_path: Path) -> None:
+    result = invoke(tmp_path, "instagram", "check")
+
+    assert result.exit_code == 1

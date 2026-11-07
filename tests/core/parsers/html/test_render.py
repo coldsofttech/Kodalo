@@ -4,7 +4,7 @@ from typing import Any
 
 import pytest
 
-from kodalo.core.studio.slide_html import (
+from kodalo.core.parsers.html.render import (
     Chrome,
     SlideText,
     brand_tokens,

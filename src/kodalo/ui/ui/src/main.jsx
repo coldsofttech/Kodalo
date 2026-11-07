@@ -1,8 +1,8 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import './fluent.js';
+import './libs/fluent.js';
 import App from './App.jsx';
-import { loadTheme } from './theme.js';
+import { loadTheme } from './libs/theme.js';
 import './styles/fonts.css';
 import './styles/app.css';
 import './styles/preview.css';

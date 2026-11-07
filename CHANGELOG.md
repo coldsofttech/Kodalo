@@ -6,6 +6,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Studio has Post and Export icon buttons beside the Slides heading. Post publishes to Instagram, installing the third-party tool Cloudflared if needed; Export saves the slides as pictures and the caption as a text file to post by hand.
+- Instagram now connects with an access token and your Instagram account ID.
+- Settings > Platforms > Instagram: connect your Instagram account by pasting an access token. It is checked with Instagram and kept in your system keychain, never in the database (also `kodalo settings platforms instagram`).
 - Posts can now be written and designed for custom canvases, with their own hashtag and visual settings under Settings > Platforms.
 - `kodalo studio` commands to make post ideas, write the copy and design the slides from the command line, and to export slides as HTML or SVG.
 - Studio designs the post: after the copy, Next lays out each slide (template, picture, icon) with the AI and shows the slides full screen with the caption and hashtags below. It uses the social preview, the repo icon and Bootstrap icons as Settings > Platforms allows. With the AI-powered templates switch on, the AI writes one shared style and a layout for each slide, while the app places your text, the brand logo (or the repo name), the footer and progress marks so every slide is consistent.
@@ -54,6 +57,8 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Changed
 
+- Opening a page always starts it fresh with current data. If the page you are leaving has unsaved changes, you are asked whether to discard them.
+- Every slide in the Studio design step is now shown the same way, whether a fixed template or the AI's layout, so what you see is what gets posted.
 - The `kodalo studio` commands to check, read, list and show a repository moved to `kodalo repositories` (`check`, `add`, `list`, `show`).
 - Refreshing a repository's README after the AI has analyzed it keeps the AI's text and only adds new details.
 - Using Claude Code as the AI connection now sends only Kodalo's own question, so a call uses about 1,700 tokens instead of about 37,000.

@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ColorsPanel, FontsPanel, LayoutPanel, LogoPanel } from './editor.jsx';
-import { COLOR_ROWS } from '../brand.js';
+import { COLOR_ROWS } from '../libs/brand.js';
 import {
   CANVASES,
   FONTS,

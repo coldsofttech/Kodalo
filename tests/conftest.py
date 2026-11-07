@@ -34,6 +34,7 @@ def _memory_keychain(monkeypatch: pytest.MonkeyPatch) -> Iterator[None]:
     """Keep every test away from the real system keychain."""
     MemorySecrets.values.clear()
     monkeypatch.setattr("kodalo.core.ai.service.KeychainSecrets", MemorySecrets)
+    monkeypatch.setattr("kodalo.core.settings.platforms.instagram.KeychainSecrets", MemorySecrets)
     yield
     MemorySecrets.values.clear()
 

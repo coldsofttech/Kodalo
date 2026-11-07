@@ -100,11 +100,11 @@ def test_a_drawing_is_written_as_svg(
     assert (missing[0], "no drawing" in missing[1]) == (1, True)
 
 
-def test_a_slide_without_an_ai_layout_is_an_error(studio: Studio) -> None:
+def test_a_slide_without_a_saved_design_is_an_error(studio: Studio) -> None:
     code, out = studio.post("design", "slide")
 
     assert code == 1
-    assert "no AI-written layout" in out
+    assert "no saved design" in out
 
 
 def test_the_slide_number_and_mode_are_limited(studio: Studio) -> None:

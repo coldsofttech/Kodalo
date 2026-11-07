@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { getTheme, saveTheme } from '../../api.js';
+import { getTheme, saveTheme } from '../../libs/api.js';
 import { Button, Select } from '../../components/controls.jsx';
-import { setTheme as applyTheme } from '../../theme.js';
+import { setTheme as applyTheme } from '../../libs/theme.js';
+import { useSavedValues } from '../../libs/unsaved.js';
 
 const THEME_CHOICES = [
   ['system', 'System (default)'],
@@ -15,17 +16,22 @@ export default function Appearance() {
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const markSaved = useSavedValues({ theme });
 
   useEffect(() => {
     let alive = true;
     getTheme().then(
-      (appearance) => alive && setTheme(appearance.theme),
+      (appearance) => {
+        if (!alive) return;
+        setTheme(appearance.theme);
+        markSaved({ theme: appearance.theme });
+      },
       (failure) => alive && setError(failure.message),
     );
     return () => {
       alive = false;
     };
-  }, []);
+  }, [markSaved]);
 
   async function save() {
     setBusy(true);
@@ -34,6 +40,7 @@ export default function Appearance() {
     try {
       const result = await saveTheme(theme);
       applyTheme(result.theme);
+      markSaved({ theme: result.theme });
       setSaved(true);
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : 'Something went wrong.');

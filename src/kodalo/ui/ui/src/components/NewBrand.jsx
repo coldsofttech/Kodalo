@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Button, TextField } from './controls.jsx';
-import { get } from '../lookup.js';
+import { get } from '../libs/lookup.js';
 
 /** @param {{ palette: any }} props */
 function Swatches({ palette }) {

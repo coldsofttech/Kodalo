@@ -35,7 +35,7 @@ describe('App', () => {
     expect(calls.length).toBeGreaterThan(0);
   });
 
-  it('keeps unsaved edits on the brands page when you visit About', async () => {
+  it('asks before leaving a page with unsaved edits, and keeps them if you stay', async () => {
     const backend = createBackend([makeBrand('b1', 'Main', true)]);
     mockApi(backend.handler);
     render(<App />);
@@ -43,18 +43,60 @@ describe('App', () => {
 
     typeInto(await screen.findByLabelText('Brand name'), 'Edited');
     await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
+
+    const ask = screen.getByRole('alertdialog', { name: 'Unsaved changes' });
+    expect(ask).toHaveTextContent('open About');
+    expect(screen.queryByRole('heading', { name: 'About Kodalo' })).not.toBeInTheDocument();
+    await userEvent.click(within(ask).getByText('Keep editing'));
+
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited');
+  });
+
+  it('discards the edits when you choose to, and the page starts fresh when you return', async () => {
+    const backend = createBackend([makeBrand('b1', 'Main', true)]);
+    mockApi(backend.handler);
+    render(<App />);
+    const nav = await openBrandsPage('Brands');
+
+    typeInto(await screen.findByLabelText('Brand name'), 'Edited');
+    await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
+    await userEvent.click(screen.getByText('Discard changes'));
+
     expect(screen.getByRole('heading', { name: 'About Kodalo' })).toBeVisible();
     expect(within(nav).getByRole('button', { name: 'About' })).toHaveAttribute(
       'aria-current',
       'page',
     );
-
     await userEvent.click(
       within(within(nav).getByRole('list', { name: 'Brands sections' })).getByRole('button', {
         name: 'Brands',
       }),
     );
-    expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited');
+    expect(await screen.findByLabelText('Brand name')).toHaveProperty('value', 'Main');
+  });
+
+  it('reloads a page from the server every time it is opened when nothing is unsaved', async () => {
+    const backend = createBackend([makeBrand('b1', 'Main', true)]);
+    const calls = mockApi(backend.handler);
+    render(<App />);
+    const nav = await openBrandsPage('Brands');
+    await screen.findByLabelText('Brand name');
+    const loads = () =>
+      calls.filter((call) => call.method === 'GET' && call.path.endsWith('/brands')).length;
+    const first = loads();
+
+    await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    expect(screen.queryByLabelText('Brand name')).not.toBeInTheDocument();
+    await userEvent.click(
+      within(within(nav).getByRole('list', { name: 'Brands sections' })).getByRole('button', {
+        name: 'Brands',
+      }),
+    );
+    await screen.findByLabelText('Brand name');
+
+    expect(loads()).toBeGreaterThan(first);
   });
 
   it.each(['Canvases', 'Palettes', 'Layouts'])(
@@ -99,6 +141,13 @@ describe('About page', () => {
 
     expect(await screen.findByText('Version 1.2.3')).toBeInTheDocument();
     expect(screen.getByText(/on-brand Instagram posts/)).toBeInTheDocument();
+  });
+
+  it('tells the user which third-party software posting installs', async () => {
+    await openAbout();
+
+    expect(await screen.findByRole('heading', { name: 'Third-party software' })).toBeVisible();
+    expect(screen.getByText('Cloudflared')).toBeVisible();
   });
 
   it('runs the installation checks on request', async () => {
