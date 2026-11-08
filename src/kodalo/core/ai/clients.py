@@ -5,6 +5,7 @@ Error messages never carry the key or anything the provider sent back.
 
 import base64
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -21,6 +22,8 @@ from kodalo.core.settings.ai.providers import CLAUDE_CODE_MODELS
 _TIMEOUT = 15
 _MAX_BYTES = 4_000_000
 _ANTHROPIC_VERSION = "2023-06-01"
+# A model name for the ``claude`` command. It cannot start with a dash, so it is never an option.
+_CLAUDE_CODE_MODEL = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:\[\]-]{0,127}$")
 
 
 @dataclass(frozen=True)
@@ -276,8 +279,12 @@ def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
             command += ["--strict-mcp-config", "--setting-sources", ""]
             command += ["--disable-slash-commands", "--no-session-persistence"]
             if request.model:
+                if not _CLAUDE_CODE_MODEL.fullmatch(request.model):
+                    raise AiConnectionError("The model name is not one Claude Code accepts.")
                 command += ["--model", request.model]
-            result = subprocess.run(  # noqa: S603
+            # The program is found on PATH, every option is fixed and the model name is checked
+            # above; the prompt goes in on stdin, never on the command line.
+            result = subprocess.run(  # noqa: S603  # nosemgrep: subprocess-injection
                 command,
                 input=prompt,
                 capture_output=True,
