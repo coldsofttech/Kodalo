@@ -1,3 +1,4 @@
+import urllib.error
 from collections.abc import Iterator
 from typing import Any
 from unittest.mock import patch
@@ -33,12 +34,21 @@ class UnexpectedServerError(Failure):
 
 
 @pytest.fixture(autouse=True)
-def no_downloads() -> Iterator[None]:
-    """Installing cloudflared would download and install a program on the machine running the
-    test, so the install always fails the way it does without a network."""
-    with patch(
-        "kodalo.core.tunnel.manager.ensure_cloudflared",
-        side_effect=TunnelError("cloudflared is not installed."),
+def no_outside_world() -> Iterator[None]:
+    """Keep the generated requests away from the machine and the network running the test.
+
+    Installing cloudflared would download and install a program, and a missing or signed-out ``gh``,
+    ``git`` or ``claude``, or a provider that does not answer, would make each of the hundreds of
+    generated requests wait for a timeout. Every outside call fails at once, as it does with no
+    program installed and no network, which the routes answer with their declared 502 or 503."""
+    unreachable = urllib.error.URLError("No network in the contract test.")
+    with (
+        patch(
+            "kodalo.core.tunnel.manager.ensure_cloudflared",
+            side_effect=TunnelError("cloudflared is not installed."),
+        ),
+        patch("shutil.which", return_value=None),
+        patch("urllib.request.urlopen", side_effect=unreachable),
     ):
         yield
 
