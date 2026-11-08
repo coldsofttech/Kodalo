@@ -140,7 +140,7 @@ describe('About page', () => {
     await openAbout();
 
     expect(await screen.findByText('Version 1.2.3')).toBeInTheDocument();
-    expect(screen.getByText(/on-brand Instagram posts/)).toBeInTheDocument();
+    expect(screen.getByText(/AI-powered social media content studio/)).toBeInTheDocument();
   });
 
   it('tells the user which third-party software posting installs', async () => {

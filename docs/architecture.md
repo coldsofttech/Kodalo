@@ -1,6 +1,6 @@
 # Architecture
 
-How Kodalo is put together: the product design first, then the repository, checks and release flow. For day-to-day commands, see [development](development.md). For one-time repository settings, see [repository setup](repo-setup.md).
+How Kodalo is put together: the product design first, then the repository, checks and release flow. For day-to-day commands, see [development](development.md). For one-time repository settings, see [repository settings](development.md#repository-settings).
 
 ## Product design
 
@@ -39,23 +39,24 @@ The stage contracts were prototyped as six Claude skills in `.claude/skills/`; t
 
 ### Modules
 
-| Module | Role |
-| --- | --- |
-| Repository adapter | GitHub access, file discovery and scanning, with size caps and rate-limit handling |
-| Catalog | Products, tools, features, evidence and origin (repository, inferred, user-added); rescans keep user edits |
-| Settings | Layered values: built-in defaults, global, product, run. A product group is `inherit`, `override` or `own` |
-| Brand profiles | Named, reusable colors, fonts, logo and layout, with contrast checks |
-| AI providers | One adapter interface: structured generation against a schema, capability report, connection test, token usage and typed errors |
-| Stage runner | Prompts, schema validation, caching by input hash, retries, resume and dry-run estimates |
-| Content registry | Every draft, approval and publication, with exact and near-duplicate detection |
-| Renderer | HTML to PNG with text-fit measurement (renderer choice is still open) |
-| Credential store | Windows secure credential storage; secrets never reach the database, exports or logs |
+All of this lives in `kodalo.core` (`src/kodalo/core/`); the command line, API and window only call it.
 
-All of this lives in `kodalo_package`; the command line, API and window only call it.
+| Package | Role |
+| --- | --- |
+| `repositories` | Reading a repository through the GitHub CLI, a local folder or a web fetch: file discovery, manifest readers, README and linked docs, social preview and icon images |
+| `configs` | Parser, framework and tooling configs that tell the readers what to look for: shipped ones plus the ones the AI writes after an analysis |
+| `parsers` | Helpers for HTML, image and SVG content, including cleaning SVG drawings to plain shapes |
+| `brands` | Brand profiles and their shared pieces: palettes, layouts and canvases, with contrast checks, export and import |
+| `ai` | One client interface per provider, the service that runs a task, the six AI jobs, per-model defaults and the prompts (`prompts/repo`, `palette`, `marketing`, `platforms`) |
+| `studio` | The post workflow: source check, ideas, copy and design, with Instagram as the first platform (`platforms/instagram`) |
+| `settings` | GitHub access, AI connections and history, platform settings, logs and the window theme |
+| `storage` | SQLite database, Alembic migrations, data-folder paths and the bundled catalogues |
+| `tunnel` | cloudflared install and the temporary public address Instagram needs to fetch pictures |
+| `doctor` | The installation diagnosis shown by `kodalo doctor` and the About page |
 
 ### Providers
 
-The first release supports the Gemini API, the Claude Code CLI and OpenAI-compatible APIs. Ollama and LM Studio follow later. Connections are configured once, globally, and products choose among them. Credentials are never held at product level. The app never switches silently to a provider that could cost money, and a local-only mode limits stages to local connections.
+Four connections are supported: `claude_api`, `claude_code` (the Claude Code CLI), `chatgpt_api` and `gemini_api`. Connections are configured once, globally, and each AI job (`palette`, `repo_metadata`, `repo_features`, `studio_ideas`, `studio_copy`, `studio_design`) can use the default model or one chosen for it. API keys go to the system keychain (`keyring`), never to the database, exports or logs; the history of calls (`ai_calls`) keeps token counts and, only when switched on, the text. Kodalo sends nothing to a provider unless the user runs the action, and every request has a plan route that shows what would be sent first.
 
 ### Data
 
@@ -69,101 +70,110 @@ The code is in `kodalo.core.storage`: SQLAlchemy models, hand-written Alembic mi
 
 ### Content status
 
-Content moves through `draft`, `ready_for_review`, `approved`, `rejected`, `needs_changes`, `publishing`, `published` and `publish_failed`. Approval is bound to the exact copy and asset version and is invalidated by any change. The first release exports images and captions for manual posting; publishing through the Instagram API is a later, separate adapter.
+Content moves through `draft`, `ready_for_review`, `approved`, `rejected`, `needs_changes`, `publishing`, `published` and `publish_failed`. Approval is bound to the exact copy and asset version and is invalidated by any change. A designed post can be exported to a folder (one JPEG per slide and a caption file) for manual posting, or posted to Instagram through the Instagram API with an explicit action.
 
 ## Repository and checks
 
-A change moves through three layers of checks before it reaches `main`, and a release moves through one more before it reaches PyPI.
+A change moves through three layers of checks before it reaches `main`, and a release moves through one more before the installers reach users.
 
 ```mermaid
 flowchart LR
     A[Commit] -->|pre-commit hooks| B[Push branch]
     B --> C[Pull request]
     C --> D{CI and security checks}
-    D -->|pass + review| E[Squash merge to main]
+    D -->|pass| E[Squash merge to main]
     E --> F[GitHub release]
     F --> G[Release workflow]
-    G --> H[PyPI]
+    G --> H[Windows setups on the release]
 ```
 
 ## Layers
 
 | Layer | What runs | Where |
 | --- | --- | --- |
-| Local | gitleaks, file hygiene, markdownlint, Ruff, `uv lock` check, mypy, Sweepito scan and cleanup | pre-commit hooks |
-| Pull request | `ci` (lint, UI checks, unit and integration tests on Python 3.11 to 3.15 on Ubuntu plus 3.11 on Windows and macOS, Windows UI test, build), dependency review, CodeQL | GitHub Actions |
-| Repository | Branch ruleset, secret scanning with push protection, Dependabot alerts and updates | GitHub settings |
-| Release | Version check, wheel and sdist (core library and command line), trusted publish to PyPI, installers and package-manager updates | `release.yml` |
+| Local | gitleaks, file hygiene, markdownlint, actionlint, Ruff, `uv lock` check, mypy, ESLint, Prettier, Vitest, pytest and the Sweepito scan and cleanup | pre-commit hooks |
+| Pull request | `ci` (lint, UI checks on Node versions, unit tests on Python 3.11 to 3.15 on Windows with 80% coverage, integration tests, Windows UI test), dependency review, Semgrep, installer build when installer files change, API compatibility when `docs/openapi.json` changes | GitHub Actions |
+| Repository | Branch ruleset, secret scanning with push protection, Dependabot alerts and updates, weekly `pip-audit` and `npm audit` | GitHub settings and `audit.yml` |
+| Release | Build and smoke-test both setups, checksums, release notes from `CHANGELOG.md` | `release.yml` |
 
 ## Source layout
 
 ```text
-src/kodalo_package/   typed library: all the logic, never prints or exits
-src/kodalo_cli/       Typer + Rich command line over the library
-src/kodalo_api/       FastAPI app over the library: routers, schemas, errors, settings
-src/kodalo_ui/        Cornea Shell wiring and the `kodalo-ui` command
-src/kodalo_ui/ui/     React + Vite frontend (JavaScript); `dist/` is built, not committed
-installer/               PyInstaller specs, NSIS scripts and pinned tool versions
-scripts/                 repository settings, OpenAPI export, installer build and manifest generation
-tests/<component>/     pytest unit tests with coverage (80% minimum), one folder each for core, cli, api and ui
-tests/<component>/integration/   tests marked `integration`: skipped by default and in pre-commit, run in CI
-pyproject.toml         metadata, dev dependencies and tool configuration
+src/kodalo/core/       typed library: all the logic, never prints or exits
+src/kodalo/cli/        Typer + Rich command line over the library (brands, repositories, settings, studio)
+src/kodalo/api/        FastAPI app over the library: routers, schemas, errors, security, logs
+src/kodalo/ui/         Cornea Shell wiring and the `kodalo-ui` command
+src/kodalo/ui/ui/      React + Vite frontend (JavaScript); `dist/` is built, not committed
+installer/             PyInstaller specs (`cli.spec`, `ui.spec`), NSIS scripts and pinned tool versions
+scripts/               OpenAPI export, installer build and release-notes generation
+tests/<component>/     pytest tests with coverage (80% minimum): core, cli, api and ui
+tests/<component>/integration/   tests marked `integration`: skipped by default, run in CI
+docs/                  this documentation, `openapi.json` and the generated CLI reference
+pyproject.toml         metadata, dependency groups (`api`, `ui`, `dev`, `installer`) and tool configuration
 uv.lock                locked dependency set, checked by CI with --locked
 ```
 
-The version lives in one place, `__version__` in the package, and Hatchling reads it at build time. The release workflow compares it with the release tag.
+One package, `kodalo`, holds all four layers. The version lives in one place, `__version__` in `kodalo/__init__.py`, and Hatchling reads it at build time. The wheel and sdist contain `kodalo.core` and `kodalo.cli` only; `kodalo.api` and `kodalo.ui` are excluded and ship in the Windows installers.
 
 ## Library and CLI layers
 
 ```mermaid
 flowchart LR
-    U[User] --> C[kodalo_cli]
-    C -->|calls| L[kodalo_package]
+    U[User] --> C[kodalo.cli]
+    C -->|calls| L[kodalo.core]
     C --> O[Rich consoles]
 ```
 
-- `kodalo_cli` parses arguments with Typer, calls `kodalo_package`, and writes all output through the shared Rich consoles: data to stdout, messages and errors to stderr.
-- `kodalo_package` holds the logic. It raises exceptions instead of printing or exiting, so other front ends can reuse it.
-- The console script `kodalo` and `python -m kodalo_cli` both enter through `kodalo_cli.cli:app`. Both packages ship in one wheel and share the version in `kodalo_package.__version__`.
+- `kodalo.cli` parses arguments with Typer, calls `kodalo.core`, and writes all output through the shared Rich consoles: data to stdout, messages and errors to stderr.
+- `kodalo.core` holds the logic. It raises exceptions instead of printing or exiting, so every front end reuses it.
+- The console script `kodalo` enters through `kodalo.cli.cli:run`, and `python -m kodalo.cli` does the same.
 
 ## UI and API layers
 
 ```mermaid
 flowchart LR
-    W[Window: React] -->|fetch| S[Cornea Shell]
-    S -->|mounts| A[kodalo_api]
-    S -->|actions| U[kodalo_ui]
-    B[Browser, other client] -->|HTTP| A
-    A -->|calls| L[kodalo_package]
+    W[Window: React] -->|fetch /api/v1| S[Cornea Shell]
+    W -->|/api/bridge| S
+    S -->|mounts| A[kodalo.api]
+    S -->|native actions| U[kodalo.ui]
+    A -->|calls| L[kodalo.core]
     U -->|calls| L
 ```
 
-- `kodalo_api` validates input, calls `kodalo_package` and shapes responses. It runs on its own on any system, or is mounted inside Cornea.
-- `kodalo_ui` only wires Cornea to the API and the library, and holds the `kodalo-ui` entry point. It is the one place there that shows output and sets exit codes.
-- `kodalo_package` and `kodalo_api` never import `kodalo_ui`, and `kodalo_package` never imports `kodalo_api`. The Windows-only dependency (`cornea-shell`) is imported lazily.
+- `kodalo.api` validates input, calls `kodalo.core` and shapes responses. It is not a standalone server: the window mounts its routes under Cornea, which authenticates every request with a session cookie. See [API](api.md).
+- `kodalo.ui` wires Cornea to the API and the library, registers the native actions (`app_info`, `write_json_file`) and holds the `kodalo-ui` entry point. It is the one place there that shows output and sets exit codes.
+- The React frontend reaches Python only through `fetch` and the Cornea bridge, both in `src/libs/api.js`. See [UI](ui.md).
+- `kodalo.core` never imports `kodalo.api` or `kodalo.ui`, and `kodalo.api` never imports `kodalo.ui`. The Windows-only dependency (`cornea-shell`) is imported lazily.
+
+## Installers
+
+Releases are installers, not a Python package. `scripts/build_installer.py` builds two products with PyInstaller one-folder builds and NSIS:
+
+| Product | Spec | Contents |
+| --- | --- | --- |
+| Command line | `installer/pyinstaller/cli.spec` | `kodalo.core` and `kodalo.cli`; the setup can add it to PATH |
+| Window | `installer/pyinstaller/ui.spec` | Adds `kodalo.api`, `kodalo.ui`, the built frontend and Cornea; Windows only |
+
+Shared setup behavior lives in `installer/windows/nsis/common.nsh`. Names and the version come from `pyproject.toml` through `installer/projectinfo.py`, and the NSIS version is pinned in `installer/tools.toml`. See [packaging](packaging.md).
 
 ## Workflows
 
 | Workflow | Trigger | Purpose |
 | --- | --- | --- |
-| `ci.yml` | Pull request, push to `main` | Runs `lint`, `ui`, `test`, `integration`, `ui-windows` and `build`. A final `ci` job gates on all of them and is the only check the ruleset requires. |
+| `ci.yml` | Pull request, push to `main` | Runs `lint`, `ui`, `test`, `integration` and `ui-windows`. A final `ci` job gates on all of them and is a required check. |
+| `dependency-review.yml` | Pull request | Blocks pull requests that add vulnerable dependencies. Required check. |
 | `api-compat.yml` | Pull request that changes `docs/openapi.json` | Reports breaking API changes with oasdiff. Not required. |
 | `security.yml` | Pull request, push, weekly | Semgrep, uploaded as code scanning results. Not required. |
-| `dependency-review.yml` | Pull request | Blocks pull requests that add vulnerable dependencies. |
-| `audit.yml` | Weekly, manual, and pull requests that change a lock file | Runs `pip-audit` and `npm audit` on the locked dependencies to catch newly published vulnerabilities. |
+| `audit.yml` | Weekly, manual, and pull requests that change a lock file | Runs `pip-audit` and `npm audit` on the locked dependencies. |
 | `build.yml` | Pull request that touches the installers | Builds the Windows setups, installs each, runs it and uninstalls it. Not required. |
-| `release.yml` | GitHub release published | Checks the tag matches the version, builds the wheel (core library and command line), publishes to PyPI, builds and optionally signs the installers, attaches them with checksums to the release, and opens Homebrew, Scoop and winget pull requests when switched on. |
-| `init.yml` | Manual | One-time: replaces the owner and repository name, renames the example packages and commands to your name, regenerates the lock file and generated docs, and opens a pull request. Skipped in the template itself. |
-
-CodeQL runs through GitHub's default setup rather than a workflow file.
+| `release.yml` | GitHub release published | Builds and smoke-tests the command line and window setups, attaches them with `SHA256SUMS.txt` to the release, and fills in the release notes from `CHANGELOG.md` when the release has none. |
 
 ## Branch governance
 
-The `main` ruleset in `.github/rulesets/main.json` is applied by hand (see [repo setup](repo-setup.md)). It requires:
+The `main` ruleset in `.github/rulesets/main.json` is applied by hand (see [repository settings](development.md#repository-settings)). It requires:
 
 - a pull request with a code owner review and resolved conversations, squash merge only
 - the `ci` and `dependency-review` checks, with the branch up to date
-- CodeQL results
 - no deletion and no force push
 
 Repository admins can bypass through a pull request so a solo maintainer is not locked out.
@@ -172,4 +182,4 @@ Repository admins can bypass through a pull request so a solo maintainer is not 
 
 1. Bump `__version__` and update `CHANGELOG.md` in a pull request.
 2. After merge, publish a GitHub release tagged `v<version>`.
-3. `release.yml` builds the sdist and wheel (the core library and the command line only; the API and the window ship in the installers) in one job, then a second job in the `pypi` environment publishes them using OpenID Connect. No API token is stored, and only the publish job gets the `id-token` permission.
+3. `release.yml` builds both setups on Windows (with `--smoke`, which runs the built programs), then a second job downloads them, writes the checksums, attaches everything to the release and fills in the notes. Only the second job can write to the release.

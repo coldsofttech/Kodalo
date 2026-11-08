@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 
 from kodalo.api.main import create_app
 
-PALETTES = "/api/v1/palettes"
+PALETTES = "/api/v1/brands/palettes"
 
 
 @pytest.fixture

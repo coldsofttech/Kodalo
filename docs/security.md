@@ -1,57 +1,45 @@
 # Security
 
-How the UI window and its API protect requests. To report a vulnerability, see [SECURITY.md](../SECURITY.md).
+How Kodalo protects requests, secrets and your data. To report a vulnerability, see [SECURITY.md](../SECURITY.md).
 
-## Under the UI window
+## The window and its API
 
-Cornea's `SecurityMiddleware` guards every mounted route, so the API adds no token of its own:
+The API is never started on its own: it only runs inside the window, under Cornea Shell, with no API key and no settings file. Cornea's `SecurityMiddleware` guards every route, so the API adds no token of its own:
 
 - the `Host` must be on the allow-list (the bound `127.0.0.1:<port>` only)
 - state-changing requests (POST, PUT, PATCH, DELETE) must carry a matching `Origin`
 - a one-time start-up token is exchanged for an `HttpOnly`, `SameSite=Strict` session cookie
 - responses carry a strict content security policy and other protective headers
 
-AI provider API keys are kept in the system keychain (Windows Credential Manager) through `keyring`, never in the database, a file or a log. The database holds only a reference and the last four characters. The API accepts a key but never returns it, error messages never contain it or anything a provider sent back, and the command line takes it from a hidden prompt rather than an argument.
+The API also limits request bodies to 1 MiB (logo uploads to 2 MB, `413` above that), serves no interactive docs, and never shows the details of a `500`: they go to the log with the request ID.
 
-The Instagram access token is handled the same way: it is kept in the system keychain under `platform/instagram/token`, the settings hold only the account's name and ID and the last four characters of the token, the API never returns it, errors never contain it, and the command line takes it from a hidden prompt. Kodalo never asks for an Instagram password. The token is sent only to `graph.facebook.com`, to check it and to post. The Instagram account ID is not a secret and is kept in the settings.
+## Secrets
 
-`kodalo.ui` therefore mounts the routes without any token of its own. The API has no standalone mode: it is never started on its own, has no API key and no settings file, and must not be exposed any other way.
+AI provider API keys and the Instagram access token are kept in the system keychain (Windows Credential Manager) through `keyring`, never in the database, a file or a log. The database holds only a reference and the last four characters. The API and CLI accept a secret but never return it; the CLI reads it from a hidden prompt, not an argument; errors never contain it or anything a provider sent back. Kodalo never asks for an Instagram password, and the token goes only to `graph.facebook.com`.
 
-The API itself still:
+## What is sent to AI
 
-- limits request bodies to 1 MiB (logo uploads to 2 MB) and answers `413` above that
-- serves no interactive docs
-- never shows details of a `500`; they go to the log with the request ID
-- sends its own protective headers when it is not hosted under Cornea (tests), and Cornea's own when it is
+Nothing is sent until you approve the shown token estimate (`--yes` skips the question).
 
-## AI parser step
+- **Repository analysis** (`Refresh with AI`): the first 1.5 KB of up to five top-level project files no parser covers, plus package names no config covers (at most 80), up to 40 top-level file names and up to 40 configuration-looking names. Lines containing `token`, `secret`, `password`, `api key`, `authorization` or `credential` are removed first, and files named like secrets are never sent.
+- **README analysis, ideas, copy and design:** the saved analysis and documents for the chosen post, with secret-looking lines removed.
+- **Answers** must be JSON. Parser, framework and tooling configs are data only, never code; each is checked against its schema and against what was sent before it is saved.
+- **Claude Code** runs as a plain text model: from an empty temporary folder (no project instructions), with no tools, MCP servers, plugins, skills or saved session.
 
-`Refresh with AI` (and `repositories add --refresh-with-ai`) sends the first 1.5 KB of up to five top-level project files that no parser config covers to the default AI provider. Lines containing `token`, `secret`, `password`, `api key`, `authorization` or `credential` are removed first, files named like secrets are never sent, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each config is checked against the config schema (data only, never code) and tried on the real file before it is saved to the `parsers` folder. Provider errors never include the key or the provider's reply.
+Every call is recorded locally (date, purpose, connection, model, tokens, status). The prompt and answer text is kept only when `Keep the text of prompts and answers` is on, which is off by default. Entries older than the retention period (90 days by default) are removed at start-up, and `Purge history` removes everything. History never leaves the local database.
 
-## Claude Code as a provider
+## Posting to Instagram
 
-Kodalo runs `claude -p` as a plain text model: from an empty temporary folder (so no project instructions are read), with no tools, MCP servers, plugins, skills or saved session, and with Kodalo's own instructions in place of Claude Code's. This keeps your repositories and settings out of the call and keeps its tokens close to what Kodalo sends (a call went from about 37,000 to about 1,700 tokens). `--bare` is not used because it needs an API key instead of your sign-in.
+Instagram fetches a post's pictures from a public address, so posting opens one briefly. Kodalo serves only that post's JPEGs from a random loopback port at `/kodalo/instagram/<name>.jpg?token=<random>` and answers `404` to anything else. A cloudflared quick tunnel makes the port reachable at a random `trycloudflare.com` address; both stop, and the pictures are deleted, as soon as the post finishes or fails. The server logs nothing, since the address carries the token. If this computer's DNS cannot resolve the new name, Kodalo asks Cloudflare's public DNS (`1.1.1.1`, over HTTPS) whether the name exists, sending only the random host name.
 
-## AI history
+cloudflared is a third-party program, installed the first time you post: with winget when available, otherwise downloaded from Cloudflare's official GitHub release into Kodalo's data folder (no administrator rights) and refused unless its SHA-256 matches the digest GitHub lists. Slides become pictures through Microsoft Edge, run headless on local slide pages.
 
-Every AI call is recorded locally (date, title, purpose, connection, model, tokens and status). The text of the prompt and the answer is kept only when `Keep the text of prompts and answers` is on, which is off by default; the text is what was sent to the provider, so it holds package and file names and the start of project files with secret-looking lines removed, never keys. Entries older than the retention period (90 days by default) are removed when the command line, the window or the API starts, and `Purge history` removes everything. History is stored in the local database, never sent anywhere.
+Exporting a post writes the pictures and `caption.txt` into a new folder inside a folder you chose. It never overwrites an existing folder, and it refuses network (UNC) paths. Nothing is public and nothing is sent to Instagram.
 
-## AI framework step
+## Logo files
 
-`Refresh with AI` (and `repositories add --refresh-with-ai`), in the same single request as the project files above, sends only package names that no framework or tooling config covers (at most 80), the names of up to 40 top-level files and folders and up to 40 top-level names that look like configuration files to the default AI provider; file contents are never sent, names that look like secrets are left out, and nothing is sent until the user approves the shown token estimate. The answer must be JSON; each entry is checked against the framework config schema (data only, never code) and must match something that was sent before it is saved to the `frameworks` folder (or the `tooling` folder for tools).
+Logos are untrusted user files. Only PNG and SVG are accepted, up to 2 MB, stored under random names inside the data folder; a name or path from a request never reaches the file system. SVG files are refused when they contain scripts, event handlers, `foreignObject`, `use`, entities, a DOCTYPE, links pointing outside the file, or styles that load anything. A served logo carries `nosniff` and a policy with `default-src 'none'` and `sandbox`, so it shows as an image but never runs.
 
 ## Supply chain
 
 Dependabot covers Python, npm and Actions. `audit.yml` checks locked dependencies weekly, dependency review blocks vulnerable additions, and the lock files are committed.
-
-## Posting and the public address
-
-Instagram fetches the pictures of a post from a public web address, so posting opens one for a moment. Kodalo serves only the post's JPEGs from a random local port on the loopback address, at `/kodalo/instagram/<name>.jpg?token=<random token>`, and answers 404 to anything else or to a wrong token. A cloudflared quick tunnel makes that port reachable at a random `trycloudflare.com` address, and both are stopped as soon as the post is done or fails; the pictures are deleted too. The server logs nothing, since the address carries the token. Before posting, Kodalo waits until the new address answers. When this computer's own DNS cannot look the new name up, it asks Cloudflare's public DNS (`1.1.1.1`, over HTTPS) only whether the name exists, sending the random host name and nothing else, because Instagram looks it up from its own servers.
-
-cloudflared is a third-party program from Cloudflare. It is installed the first time you post: with winget when it is available, otherwise downloaded from Cloudflare's official GitHub release into Kodalo's data folder (no administrator rights) and refused unless its SHA-256 matches the digest GitHub lists for the file. Settings > Platforms > Instagram, the Post banner and About say so, and installing runs behind its own screen in the window or with `kodalo settings platforms instagram tunnel install`. Only Windows installs it for you; other systems are told how to. Slides are turned into pictures by Microsoft Edge, which comes with Windows, run headless on the local slide pages.
-
-Exporting a post (`POST /api/v1/studio/repositories/{id}/design/export`, `kodalo studio design export`) writes the pictures and `caption.txt` into a new folder inside a folder the person chose. It never overwrites an existing folder and refuses network (UNC) paths and folders that do not exist. Nothing is public and nothing is sent to Instagram.
-
-## Logo files
-
-Brand logos are user-supplied files, so they are treated as untrusted. Only PNG and SVG are accepted, up to 2 MB, and every file is stored under a random name inside the data folder; a name or path from a request never reaches the file system. SVG files are refused when they contain scripts, event handlers, `foreignObject`, `use`, entities or a DOCTYPE, links that point outside the file, or styles that load anything from outside it. When a logo is served, the response carries `X-Content-Type-Options: nosniff` and a content security policy with `default-src 'none'` and `sandbox`, so it can be shown as an image but never run.

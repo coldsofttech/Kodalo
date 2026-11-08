@@ -24,7 +24,7 @@ def test_request_id_is_reused_or_created(client: TestClient) -> None:
 
 
 def test_security_headers(client: TestClient) -> None:
-    response = client.get("/api/v1/palettes")
+    response = client.get("/api/v1/brands/palettes")
 
     assert response.headers["X-Content-Type-Options"] == "nosniff"
     assert response.headers["Cache-Control"] == "no-store"

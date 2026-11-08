@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from kodalo.api.main import create_app
 
-CANVASES = "/api/v1/canvases"
+CANVASES = "/api/v1/brands/canvases"
 
 
 @pytest.fixture
@@ -54,7 +54,7 @@ def test_error_statuses(client: TestClient) -> None:
 def test_layout_uses_a_canvas_and_blocks_its_deletion(client: TestClient) -> None:
     canvas = add(client)
     layout = client.post(
-        "/api/v1/layouts",
+        "/api/v1/brands/layouts",
         json={"name": "Feed layout", "settings": {"canvas_id": canvas["id"]}},
     ).json()
     brand = client.post("/api/v1/brands", json={"name": "Main"}).json()

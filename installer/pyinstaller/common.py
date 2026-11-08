@@ -83,9 +83,7 @@ class Collected:
         # Not collect_all(): it also copies every .py file as data, a second copy of code that is
         # already frozen into the executable.
         self.datas.extend(
-            item
-            for item in collect_data_files(name)
-            if not str(item[1]).endswith(".dist-info")
+            item for item in collect_data_files(name) if not str(item[1]).endswith(".dist-info")
         )
         self.binaries.extend(collect_dynamic_libs(name))
         self.hiddenimports.extend(collect_submodules(name))

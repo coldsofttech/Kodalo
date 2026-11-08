@@ -279,9 +279,9 @@ export default function BrandsPage({ catalogRevision = 0, onCatalogChange }) {
       <section className="welcome card" aria-labelledby="welcome-title">
         <h1 id="welcome-title">Welcome to Kodalo</h1>
         <p>
-          Kodalo turns your GitHub projects into on-brand Instagram posts. Everything stays on this
-          computer. Start by choosing the look your posts should have. You can change every detail
-          afterwards.
+          Kodalo is an AI-powered social media content studio for your GitHub projects. Everything
+          stays on this computer. Start by choosing the look your posts should have. You can change
+          every detail afterwards.
         </p>
         {error ? (
           <p role="alert" className="alert">

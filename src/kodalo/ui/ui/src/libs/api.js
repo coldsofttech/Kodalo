@@ -144,7 +144,7 @@ export const logoUrl = (
   /** @type {string} */ version,
 ) => `${BRANDS}/${id}/logo?variant=${variant}&v=${encodeURIComponent(version)}`;
 
-const PALETTES = '/api/v1/palettes';
+const PALETTES = '/api/v1/brands/palettes';
 
 export const listPalettes = () => request(PALETTES);
 /** @param {{ name: string, colors: object }} body */
@@ -170,7 +170,7 @@ export const importPalette = (body, name) =>
     json: body,
   });
 
-const LAYOUTS = '/api/v1/layouts';
+const LAYOUTS = '/api/v1/brands/layouts';
 
 export const listLayouts = () => request(LAYOUTS);
 /** @param {{ name: string, settings?: object }} body */
@@ -193,7 +193,7 @@ export const importLayout = (body, name) =>
   });
 export const listFonts = () => request('/api/v1/brands/fonts');
 
-const CANVASES = '/api/v1/canvases';
+const CANVASES = '/api/v1/brands/canvases';
 
 export const listCanvases = () => request(CANVASES);
 /** The social platforms a canvas can be made for, with the sizes each recommends. */

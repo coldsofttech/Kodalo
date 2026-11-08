@@ -123,7 +123,7 @@ def test_api_router_is_mounted_under_cornea_prefix() -> None:
     app = FastAPI()
     app.include_router(ui_app.api_router(), prefix="/api")
 
-    response = TestClient(app).get("/api/v1/palettes")
+    response = TestClient(app).get("/api/v1/brands/palettes")
 
     assert response.json()[0]["name"] == "Graphite"
 

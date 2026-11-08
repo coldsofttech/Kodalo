@@ -3,7 +3,7 @@
 Only the top-level files that no config covers are looked at, and only the first few lines of each
 (with secret-looking lines removed) are sent. The configs in the answer must be in the parser config
 format; every one is checked and tried on the real file before it is saved to the user's parsers
-folder. The AI call itself is in ``analyzer``. See ``docs/manifest-parsers.md``.
+folder. The AI call itself is in ``analyzer``. See ``docs/repository-analysis.md``.
 """
 
 import fnmatch

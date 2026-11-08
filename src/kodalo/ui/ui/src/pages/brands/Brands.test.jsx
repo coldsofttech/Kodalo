@@ -245,7 +245,7 @@ describe('BrandsPage: editing', () => {
     typeInto(await field('Palette name'), 'Ocean');
     await userEvent.click(screen.getByLabelText('Save palette'));
     expect(await screen.findByText('Saved the palette "Ocean".')).toBeInTheDocument();
-    expect(sent('POST', '/api/v1/palettes')[0].body.name).toBe('Ocean');
+    expect(sent('POST', '/api/v1/brands/palettes')[0].body.name).toBe('Ocean');
     expect(backend.state.palettes.map((p) => p.name)).toContain('Ocean');
   });
 

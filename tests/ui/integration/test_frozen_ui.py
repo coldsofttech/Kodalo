@@ -55,7 +55,7 @@ def test_serves_the_page_the_api_and_the_native_action(address: str) -> None:
         assert page.status_code == 200
         assert '<div id="root">' in page.text
 
-        palettes = client.get(f"{base}/api/v1/palettes")
+        palettes = client.get(f"{base}/api/v1/brands/palettes")
         assert "system-midnight" in {palette["id"] for palette in palettes.json()}
 
         info = client.post(f"{base}/api/bridge/app_info", json={}, headers={"Origin": base})
@@ -65,4 +65,4 @@ def test_serves_the_page_the_api_and_the_native_action(address: str) -> None:
 def test_refuses_requests_without_the_session(address: str) -> None:
     base = address.split("/?", 1)[0]
 
-    assert httpx.get(f"{base}/api/v1/palettes").status_code in (401, 403)
+    assert httpx.get(f"{base}/api/v1/brands/palettes").status_code in (401, 403)

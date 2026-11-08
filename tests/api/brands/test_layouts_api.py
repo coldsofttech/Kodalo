@@ -3,7 +3,7 @@ from fastapi.testclient import TestClient
 
 from kodalo.api.main import create_app
 
-LAYOUTS = "/api/v1/layouts"
+LAYOUTS = "/api/v1/brands/layouts"
 
 
 @pytest.fixture

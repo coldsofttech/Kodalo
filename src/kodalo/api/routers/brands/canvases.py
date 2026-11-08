@@ -30,7 +30,7 @@ from kodalo.core.brands.brand import (
 router = APIRouter(tags=["v1"])
 
 
-@router.get("/canvases", summary="List canvases", responses=COMMON)
+@router.get("/brands/canvases", summary="List canvases", responses=COMMON)
 def list_canvases(service: Service) -> list[CanvasResponse]:
     """Return the built-in canvases first, then the user's, each sorted by name."""
     return [CanvasResponse.from_core(c) for c in service.canvases.list_canvases()]
@@ -43,7 +43,7 @@ def list_social_platforms(service: Service) -> list[SocialPlatformResponse]:
 
 
 @router.post(
-    "/canvases",
+    "/brands/canvases",
     status_code=status.HTTP_201_CREATED,
     summary="Create a canvas",
     responses=COMMON | CANVAS_CHANGE_ERRORS | CANVAS_ERRORS,
@@ -57,7 +57,7 @@ def create_canvas(body: CanvasCreate, service: Service) -> CanvasResponse:
 
 
 @router.post(
-    "/canvases/import",
+    "/brands/canvases/import",
     status_code=status.HTTP_201_CREATED,
     summary="Import a canvas",
     responses=COMMON | CANVAS_CHANGE_ERRORS,
@@ -70,7 +70,7 @@ def import_canvas(body: CanvasExport, service: Service, name: IMPORT_NAME = None
 
 
 @router.get(
-    "/canvases/{canvas_id}/export",
+    "/brands/canvases/{canvas_id}/export",
     summary="Export a canvas",
     responses=COMMON | CANVAS_ERRORS,
 )
@@ -80,14 +80,18 @@ def export_canvas(canvas_id: CanvasPath, service: Service) -> CanvasExport:
         return CanvasExport.model_validate(service.canvases.export_canvas(canvas_id))
 
 
-@router.get("/canvases/{canvas_id}", summary="Get a canvas", responses=COMMON | CANVAS_ERRORS)
+@router.get(
+    "/brands/canvases/{canvas_id}",
+    summary="Get a canvas",
+    responses=COMMON | CANVAS_ERRORS,
+)
 def get_canvas(canvas_id: CanvasPath, service: Service) -> CanvasResponse:
     with canvas_mapped():
         return CanvasResponse.from_core(service.canvases.get(canvas_id))
 
 
 @router.patch(
-    "/canvases/{canvas_id}",
+    "/brands/canvases/{canvas_id}",
     summary="Change a canvas",
     responses=COMMON | CANVAS_CHANGE_ERRORS | CANVAS_ERRORS,
 )
@@ -105,7 +109,7 @@ def update_canvas(canvas_id: CanvasPath, body: CanvasUpdate, service: Service) -
 
 
 @router.post(
-    "/canvases/{canvas_id}/duplicate",
+    "/brands/canvases/{canvas_id}/duplicate",
     status_code=status.HTTP_201_CREATED,
     summary="Copy a canvas",
     responses=COMMON | CANVAS_CHANGE_ERRORS | CANVAS_ERRORS,
@@ -119,7 +123,7 @@ def duplicate_canvas(
 
 
 @router.delete(
-    "/canvases/{canvas_id}",
+    "/brands/canvases/{canvas_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a canvas",
     responses=COMMON | CANVAS_CHANGE_ERRORS | CANVAS_ERRORS,

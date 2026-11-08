@@ -6,7 +6,7 @@ name: Release
 #   github-release     SHA-256 checksums and the installers on the release, notes from CHANGELOG.md
 #
 # Nothing is published to PyPI or a package manager. Optional repository variable (Settings >
-# Secrets and variables > Actions > Variables); see docs/releasing.md:
+# Secrets and variables > Actions > Variables); see docs/packaging.md:
 #
 #   SIGN_COMMAND   signs one file, {file} marks where its path goes
 on:

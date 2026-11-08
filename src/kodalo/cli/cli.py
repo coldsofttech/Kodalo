@@ -16,7 +16,7 @@ from kodalo.core.storage import default_data_dir
 
 app = typer.Typer(
     name="kodalo",
-    help="Example command line tool built on [bold]kodalo.core[/bold].",
+    help="AI-powered social media content studio for your GitHub projects.",
     no_args_is_help=True,
     rich_markup_mode="rich",
     # run() reports errors briefly; Typer's own traceback would show local variables.

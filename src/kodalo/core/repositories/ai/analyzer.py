@@ -4,7 +4,7 @@ One request holds the start of the project files no parser config covers, and th
 names no framework or tooling config covers. The one answer is split into the three kinds of config;
 each is checked by its own part (``parsers``, ``frameworks``) before it is saved. Frameworks
 may also match the packages that a newly saved parser reads from its file, so one run is enough.
-See ``docs/manifest-parsers.md`` and ``docs/framework-detection.md``.
+See ``docs/repository-analysis.md``.
 """
 
 from dataclasses import dataclass, replace

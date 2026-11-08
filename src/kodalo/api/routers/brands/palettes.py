@@ -41,14 +41,14 @@ def _palette_response(service: BrandService, palette: Palette) -> PaletteRespons
     return PaletteResponse.from_core(palette, service.starter(palette.id))
 
 
-@router.get("/palettes", summary="List palettes", responses=COMMON)
+@router.get("/brands/palettes", summary="List palettes", responses=COMMON)
 def list_palettes(service: Service) -> list[PaletteResponse]:
     """Return the built-in palettes first, then the user's, each with brand data to start from."""
     return [_palette_response(service, p) for p in service.palettes.list_palettes()]
 
 
 @router.post(
-    "/palettes/suggest/plan",
+    "/brands/palettes/suggest/plan",
     summary="Plan the AI palette suggestion",
     responses={**COMMON, **AI_UNREACHABLE},
 )
@@ -60,7 +60,7 @@ def plan_palette_suggestion(service: Service, ai: AiSetting) -> PaletteSuggestio
 
 
 @router.post(
-    "/palettes/suggest",
+    "/brands/palettes/suggest",
     summary="Suggest a palette with AI",
     responses={**COMMON, **INVALID, **AI_UNREACHABLE},
 )
@@ -73,7 +73,7 @@ def suggest_palette(service: Service, ai: AiSetting) -> PaletteSuggestion:
 
 
 @router.post(
-    "/palettes",
+    "/brands/palettes",
     status_code=status.HTTP_201_CREATED,
     summary="Create a palette",
     responses=COMMON | PALETTE_CHANGE_ERRORS | PALETTE_ERRORS,
@@ -85,7 +85,7 @@ def create_palette(body: PaletteCreate, service: Service) -> PaletteResponse:
 
 
 @router.post(
-    "/palettes/import",
+    "/brands/palettes/import",
     status_code=status.HTTP_201_CREATED,
     summary="Import a palette",
     responses=COMMON | PALETTE_CHANGE_ERRORS,
@@ -99,14 +99,18 @@ def import_palette(
         return _palette_response(service, palette)
 
 
-@router.get("/palettes/{palette_id}", summary="Get a palette", responses=COMMON | PALETTE_ERRORS)
+@router.get(
+    "/brands/palettes/{palette_id}",
+    summary="Get a palette",
+    responses=COMMON | PALETTE_ERRORS,
+)
 def get_palette_by_id(palette_id: PalettePath, service: Service) -> PaletteResponse:
     with palette_mapped():
         return _palette_response(service, service.palettes.get(palette_id))
 
 
 @router.patch(
-    "/palettes/{palette_id}",
+    "/brands/palettes/{palette_id}",
     summary="Change a palette",
     responses=COMMON | PALETTE_CHANGE_ERRORS | PALETTE_ERRORS,
 )
@@ -120,7 +124,7 @@ def update_palette(
 
 
 @router.post(
-    "/palettes/{palette_id}/duplicate",
+    "/brands/palettes/{palette_id}/duplicate",
     status_code=status.HTTP_201_CREATED,
     summary="Copy a palette",
     responses=COMMON | PALETTE_CHANGE_ERRORS | PALETTE_ERRORS,
@@ -135,7 +139,7 @@ def duplicate_palette(
 
 
 @router.get(
-    "/palettes/{palette_id}/export",
+    "/brands/palettes/{palette_id}/export",
     summary="Export a palette",
     responses=COMMON | PALETTE_ERRORS,
 )
@@ -146,7 +150,7 @@ def export_palette(palette_id: PalettePath, service: Service) -> PaletteExport:
 
 
 @router.delete(
-    "/palettes/{palette_id}",
+    "/brands/palettes/{palette_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a palette",
     responses=COMMON | PALETTE_CHANGE_ERRORS | PALETTE_ERRORS,

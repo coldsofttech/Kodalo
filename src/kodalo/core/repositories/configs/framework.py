@@ -4,7 +4,7 @@ A config file holds a list of frameworks (or tools, which use the same shape and
 categories). Each one says which dependency names, file names or paths mean "this is used". The
 bundled files live in ``core/configs/frameworks/`` and ``core/configs/toolings/``; a folder of
 the user's own files adds to them, and an entry with the same ``id`` replaces the bundled one.
-Configs hold only data, never code. See ``docs/framework-detection.md``.
+Configs hold only data, never code. See ``docs/repository-analysis.md``.
 """
 
 import fnmatch

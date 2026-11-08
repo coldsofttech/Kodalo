@@ -3,7 +3,7 @@
 Each config covers one kind of file. The bundled ones live in ``core/configs/parsers/``; a folder
 of the user's own configs adds to them, and a config with the same ``id`` replaces the bundled
 one. A config holds only data (file names, a format and where the values are), never code, so
-a config written by hand or by a tool cannot run anything. See ``docs/manifest-parsers.md``.
+a config written by hand or by a tool cannot run anything. See ``docs/repository-analysis.md``.
 """
 
 import fnmatch

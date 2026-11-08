@@ -23,7 +23,7 @@ def test_page_api_and_native_action_work_through_cornea() -> None:
         assert page.status_code == 200
         assert '<div id="root">' in page.text
 
-        palettes = client.get(f"{shell.base_url}/api/v1/palettes")
+        palettes = client.get(f"{shell.base_url}/api/v1/brands/palettes")
         assert palettes.json()[0]["key"] == "midnight"
 
         info = client.post(

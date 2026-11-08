@@ -1,1 +1,1 @@
-"""Kodalo turns GitHub repositories into accurate, on-brand Instagram content."""
+"""Kodalo is an AI-powered social media content studio for your GitHub projects."""

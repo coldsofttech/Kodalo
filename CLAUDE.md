@@ -184,10 +184,10 @@ These apply to `installer/`, `scripts/build_installer.py`, `scripts/update_manif
     after the first release. PATH edits go through `path.ps1`, never NSIS string functions, which
     cut long values.
 
-29. **Releases and signing**: tool versions (NSIS) are pinned in `installer/tools.toml` and
-    PyInstaller in `uv.lock`; nothing else is installed unpinned. Signing is off by default and
-    provider-neutral (`SIGN_COMMAND` with `{file}`). Scoop and winget updates are pull
-    requests behind repository variables, never direct pushes. Update `docs/packaging.md` and
-    `docs/releasing.md` whenever installer files, `build.yml` or `release.yml` change.
+29. **Releases**: tool versions (NSIS) are pinned in `installer/tools.toml` and PyInstaller in
+    `uv.lock`; nothing else is installed unpinned. A release is a GitHub release that
+    `release.yml` turns into the Windows installers and a `SHA256SUMS.txt` on that release;
+    nothing is published to PyPI or a package manager, and the installers are not signed. Update
+    `docs/packaging.md` whenever installer files, `build.yml` or `release.yml` change.
 
 <!-- markdownlint-enable MD029 -->

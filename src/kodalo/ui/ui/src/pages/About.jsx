@@ -44,9 +44,10 @@ export default function AboutPage() {
       <h1 id="about-title">About Kodalo</h1>
       {info ? <p className="hint">Version {info.version}</p> : null}
       <p>
-        Kodalo turns your GitHub repositories into accurate, on-brand Instagram posts. It runs on
-        this computer, keeps your brands and content here, and lets you choose your own AI provider.
-        Nothing is posted without your approval.
+        Kodalo is an AI-powered social media content studio for your GitHub projects. It turns your
+        repositories into accurate, on-brand posts. It runs on this computer, keeps your brands and
+        content here, and lets you choose your own AI provider. Nothing is posted without your
+        approval.
       </p>
       <p>
         If something does not look right, check the installation. It reads your setup and your local

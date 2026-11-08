@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "Kodalo"
 dynamic = ["version"]
-description = "Local-first Windows app that turns GitHub repositories into accurate, on-brand Instagram content."
+description = "AI-powered social media content studio for your GitHub projects."
 keywords = ["cli", "api", "ui"]
 readme = "README.md"
 requires-python = ">=3.11"

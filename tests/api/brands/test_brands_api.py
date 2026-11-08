@@ -213,12 +213,13 @@ def test_contrast(client: TestClient) -> None:
 
 
 def test_reference_data(client: TestClient) -> None:
-    palettes = client.get("/api/v1/palettes").json()
+    palettes = client.get("/api/v1/brands/palettes").json()
     assert [p["name"] for p in palettes] == ["Graphite", "Midnight", "Paper"]
     assert palettes[0]["data"]["fonts"]["body"]["family"] == "Inter"
     fonts = client.get("/api/v1/brands/fonts").json()
     assert fonts[0] == {"family": "Inter", "category": "sans", "source": "bundled"}
-    canvases = {c["id"]: (c["width"], c["height"]) for c in client.get("/api/v1/canvases").json()}
+    canvas_list = client.get("/api/v1/brands/canvases").json()
+    canvases = {c["id"]: (c["width"], c["height"]) for c in canvas_list}
     assert canvases["system-instagram_portrait"] == (1080, 1350)
 
 

@@ -6,7 +6,7 @@ the purpose, the ways to install, the capabilities, the features and the use cas
 evidence is kept: an installation method or capability is saved only when its quote is found in the
 file it names, and a feature or use case only when it rests on a saved capability. A part the
 model left empty, or whose items all failed the check, keeps what was found before. See
-``docs/readme-analysis.md``.
+``docs/repository-analysis.md``.
 """
 
 import re

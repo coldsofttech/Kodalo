@@ -3,7 +3,7 @@
 Only dependency names that no framework config covers, and the names of a few top-level files, are
 sent: never file contents. The entries in the answer must be in the framework config format; every
 one is checked and must match something that was sent before it is saved to the user's frameworks
-or tooling folder. The AI call itself is in ``analyzer``. See ``docs/framework-detection.md``.
+or tooling folder. The AI call itself is in ``analyzer``. See ``docs/repository-analysis.md``.
 """
 
 import fnmatch

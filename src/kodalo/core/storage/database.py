@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from alembic.script import ScriptDirectory
 
 
-
 # Alembic is imported inside the functions that use it: it is slow to load and only needed
 # when a database is opened, so importing this module stays cheap.
 def _config() -> "Config":

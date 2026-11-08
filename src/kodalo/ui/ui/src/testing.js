@@ -721,9 +721,12 @@ export function createBackend(initial = []) {
       if (method === 'PUT') state.github = { local_folder: '', ...state.github, ...body };
       return state.github;
     }
-    if (parts[0] === 'palettes') return paletteRoutes(method, parts, body, url);
-    if (parts[0] === 'layouts') return layoutRoutes(method, parts, body, url);
-    if (parts[0] === 'canvases') return canvasRoutes(method, parts, body, url);
+    if (parts[0] === 'brands') {
+      const rest = parts.slice(1);
+      if (rest[0] === 'palettes') return paletteRoutes(method, rest, body, url);
+      if (rest[0] === 'layouts') return layoutRoutes(method, rest, body, url);
+      if (rest[0] === 'canvases') return canvasRoutes(method, rest, body, url);
+    }
     if (parts[0] === 'social-platforms') return PLATFORMS;
     if (parts[0] === 'brands' && parts[1] === 'fonts') return FONTS;
     if (parts[0] === 'doctor') return state.doctor;

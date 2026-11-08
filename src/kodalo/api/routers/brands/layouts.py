@@ -27,14 +27,14 @@ from kodalo.core.brands.layout import (
 router = APIRouter(tags=["v1"])
 
 
-@router.get("/layouts", summary="List layouts", responses=COMMON)
+@router.get("/brands/layouts", summary="List layouts", responses=COMMON)
 def list_layouts(service: Service) -> list[LayoutResponse]:
     """Return the built-in layouts first, then the user's, each sorted by name."""
     return [LayoutResponse.from_core(lay) for lay in service.layouts.list_layouts()]
 
 
 @router.post(
-    "/layouts",
+    "/brands/layouts",
     status_code=status.HTTP_201_CREATED,
     summary="Create a layout",
     responses=COMMON | LAYOUT_CHANGE_ERRORS | LAYOUT_ERRORS,
@@ -46,7 +46,7 @@ def create_layout(body: LayoutCreate, service: Service) -> LayoutResponse:
 
 
 @router.post(
-    "/layouts/import",
+    "/brands/layouts/import",
     status_code=status.HTTP_201_CREATED,
     summary="Import a layout",
     responses=COMMON | LAYOUT_CHANGE_ERRORS,
@@ -58,14 +58,14 @@ def import_layout(body: LayoutExport, service: Service, name: IMPORT_NAME = None
         return LayoutResponse.from_core(layout)
 
 
-@router.get("/layouts/{layout_id}", summary="Get a layout", responses=COMMON | LAYOUT_ERRORS)
+@router.get("/brands/layouts/{layout_id}", summary="Get a layout", responses=COMMON | LAYOUT_ERRORS)
 def get_layout(layout_id: LayoutPath, service: Service) -> LayoutResponse:
     with layout_mapped():
         return LayoutResponse.from_core(service.layouts.get(layout_id))
 
 
 @router.patch(
-    "/layouts/{layout_id}",
+    "/brands/layouts/{layout_id}",
     summary="Change a layout",
     responses=COMMON | LAYOUT_CHANGE_ERRORS | LAYOUT_ERRORS,
 )
@@ -83,7 +83,7 @@ def update_layout(layout_id: LayoutPath, body: LayoutUpdate, service: Service) -
 
 
 @router.post(
-    "/layouts/{layout_id}/duplicate",
+    "/brands/layouts/{layout_id}/duplicate",
     status_code=status.HTTP_201_CREATED,
     summary="Copy a layout",
     responses=COMMON | LAYOUT_CHANGE_ERRORS | LAYOUT_ERRORS,
@@ -97,7 +97,7 @@ def duplicate_layout(
 
 
 @router.get(
-    "/layouts/{layout_id}/export",
+    "/brands/layouts/{layout_id}/export",
     summary="Export a layout",
     responses=COMMON | LAYOUT_ERRORS,
 )
@@ -108,7 +108,7 @@ def export_layout(layout_id: LayoutPath, service: Service) -> LayoutExport:
 
 
 @router.delete(
-    "/layouts/{layout_id}",
+    "/brands/layouts/{layout_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     summary="Delete a layout",
     responses=COMMON | LAYOUT_CHANGE_ERRORS | LAYOUT_ERRORS,

@@ -14,5 +14,5 @@
 - [ ] No secrets or personal data are included
 - [ ] API changes: `docs/openapi.json` is regenerated and `docs/api.md` is updated
 - [ ] UI changes: `npm run lint`, `npm test` and `npm run build` pass in `src/kodalo_ui/ui`
-- [ ] Installer changes: `docs/packaging.md` and `docs/releasing.md` are updated, and the setup installs and uninstalls cleanly
+- [ ] Installer changes: `docs/packaging.md` is updated, and the setup installs and uninstalls cleanly
 - [ ] The change works on Windows (the only supported platform)
