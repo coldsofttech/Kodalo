@@ -32,6 +32,7 @@ Names, version, icon and description are never repeated: executable names are th
 
 ```bash
 uv sync --group installer
+uv run python scripts/build_installer.py --sync     # same, installing the needed uv groups first (skips `uv sync`)
 uv run python scripts/build_installer.py            # everything this OS can build
 uv run python scripts/build_installer.py cli        # only the command line
 uv run python scripts/build_installer.py ui --build-frontend --smoke

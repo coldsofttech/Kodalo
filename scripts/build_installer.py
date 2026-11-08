@@ -202,11 +202,22 @@ def smoke(products: list[str]) -> None:
          *tests])  # fmt: skip
 
 
+def sync(products: list[str]) -> None:
+    """Install the dependency groups the chosen products need, keeping what is already there."""
+    uv = shutil.which("uv")
+    if uv is None:
+        raise SystemExit("--sync needs uv on PATH.")
+    groups = ["installer", *(["ui", "api"] if "ui" in products else [])]
+    run([uv, "sync", "--inexact", *(arg for g in groups for arg in ("--group", g))])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     # No choices= here: argparse rejects the empty list that nargs="*" yields when none is given.
     parser.add_argument("products", nargs="*", metavar="{cli,ui}", help="default: all")
     parser.add_argument("--build-frontend", action="store_true", help="run npm ci && npm run build")
+    parser.add_argument("--sync", action="store_true",
+                        help="uv sync the installer, ui and api groups first")  # fmt: skip
     parser.add_argument("--smoke", action="store_true", help="run the smoke tests on the builds")
     parser.add_argument("--jobs", type=int, default=os.cpu_count() or 1,
                         help="builds to run at once (1 = one after the other)")  # fmt: skip
@@ -219,6 +230,8 @@ def main() -> None:
         parser.error(f"invalid product: {', '.join(unknown)} (choose from 'cli', 'ui')")
     products = args.products or ["cli", "ui"]
 
+    if args.sync:
+        sync(products)
     built: list[Path] = []
     if "ui" in products and args.build_frontend:
         build_frontend()

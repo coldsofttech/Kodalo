@@ -2,74 +2,31 @@
 
 All notable changes to this project are documented here. The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.1.0] - 2026-11-08
 
 ### Added
 
-- The Windows setups now use the Kodalo icon and artwork, show the license, and name ColdSoft Technologies as publisher. The command line and the window install separately, into `ColdSoft Technologies\Kodalo\CLI` and `\UI`, and are smaller.
-- Kodalo now shows a Windows notification when a task finishes or fails, such as adding or analyzing a repository, generating Studio ideas, copy or posts, and checking connections.
-- The Kodalo logo now appears in the window and taskbar icon, the sidebar and the About page, matching light and dark themes.
-- Kodalo now opens its window straight away on a loading screen with the Kodalo logo and a tag line, and starts and closes faster.
-- Instagram post captions now include the repository URL, which you can edit, between the call to action and the hashtags.
-- Kodalo now keeps daily log files in its data folder's `logs` folder. Settings > Logs (also `kodalo settings logs`) sets the log level (INFO by default) and how many days logs are kept (90 by default).
-- Studio shows a Posted badge on post ideas that were posted to Instagram. After an export it asks whether to mark the idea as posted.
-- Refreshing post ideas with AI now adds new ideas to the saved ones instead of replacing them, skipping repeats.
-- Settings > AI: choose how many post ideas Studio asks for (1 to 20, 5 by default).
-- Settings > AI > Models per job: choose which model of your AI connection suggests palettes, reads repository details and features, and comes up with, writes and designs Studio posts.
-- Studio has Post and Export icon buttons beside the Slides heading. Post publishes to Instagram, installing the third-party tool Cloudflared if needed; Export saves the slides as pictures and the caption as a text file to post by hand.
-- Instagram now connects with an access token and your Instagram account ID.
-- Settings > Platforms > Instagram: connect your Instagram account by pasting an access token. It is checked with Instagram and kept in your system keychain, never in the database (also `kodalo settings platforms instagram`).
-- Posts can now be written and designed for custom canvases, with their own hashtag and visual settings under Settings > Platforms.
-- `kodalo studio` commands to make post ideas, write the copy and design the slides from the command line, and to export slides as HTML or SVG.
-- Studio designs the post: after the copy, Next lays out each slide (template, picture, icon) with the AI and shows the slides full screen with the caption and hashtags below. It uses the social preview, the repo icon and Bootstrap icons as Settings > Platforms allows. With the AI-powered templates switch on, the AI writes one shared style and a layout for each slide, while the app places your text, the brand logo (or the repo name), the footer and progress marks so every slide is consistent.
-- The README analysis with AI now also finds the repository's own icon and shows it on the repository page.
-- Settings > Platforms: choose how many hashtags an Instagram post gets, the default hashtags every post carries, and which visuals the designer may use (also `kodalo settings platforms`). Posts now respect the hashtag settings instead of always having five.
-- Studio writes the slides, caption, alt text and hashtags of the chosen Instagram post idea with the AI; you can edit and save them.
-- Studio keeps the post ideas the AI made for each feature and shows them again; Refresh with AI in the top bar makes new ones.
-- A plain Refresh on a repository now shows a see-through progress screen too.
-- While the AI works on a palette suggestion or a repository refresh, a see-through screen with a small robot animation shows that work is in progress.
-- A repository's social preview image shows on its page when the owner uploaded one on GitHub (GitHub CLI mode).
-- Repositories: a new page, API and `kodalo repositories` command to add, list, show and remove repositories. Studio now starts by picking one of them.
-- AI history can be exported as CSV or JSON for the chosen period.
-- Settings is reorganised: GitHub has separate connection and reading-limit blocks, AI joins connections and history in one tab (history opens on demand), and buttons are icons.
-- Saving an AI connection turns it on and turns any other off, so only one is used at a time.
-- The AI history entry shows Success or Failed, right-aligns the numbers and has a close button in the corner.
-- Canvases have a social platform (Instagram or Custom) and warn, without blocking, when the size is not one the platform recommends.
-- A brand's logo can be hidden on every slide, and the footer moves left when the logo is at the bottom right.
-- Preview slides open full screen, with arrow keys to step through them.
-- Suggest with AI on Palettes now asks first, showing where the request goes and the tokens it uses.
-- Buttons on Brands, Palettes, Canvases and Layouts are icons with tooltips, and the Brands menu in the sidebar collapses.
-- On Studio's Focus step, Next with AI plans the post: a strategy, three angles with hooks and five post ideas, kept for the same choice and refreshable. Ideas show as cards you can choose, copy and fold open, with the claims to repeat with care up top.
-- Studio has a new Focus step after Analyze to choose a Tool / Utility post or a Feature post, and for a Feature post, the feature, use case or capability to focus on.
-- Refresh with AI now also lists the product's features, alongside its capabilities and use cases, with how important and mature each is, the use cases it serves and claims to repeat with care.
-- The most of each document to read can now be set up to 2000 KB (it stopped at 200).
-- Studio's Repository step has a Next button that reads the README and the docs it links to and shows what the product is for, how to install it and what it can do; Refresh with AI reads those pages with your AI model for a cleaner summary and use cases, after asking first. Two new settings control how many documents are read and how much of each.
-- Reading a repository now also shows its README, changelog, contributing and license files and docs folder, the line that shows each project file's package, and which files were left unread (secret-looking, over 200 KB or unreadable).
-- Settings has a new AI History tab: every AI call with its date, purpose, connection, model and tokens, a token table and chart per connection and model, filters (last day, week, month, year, custom), the full prompt and answer if you choose to keep them, and a Purge button. `kodalo settings ai history`, `usage`, `history-settings` and `purge-history` do the same. Entries older than 90 days (changeable) are removed automatically.
-- Reading a repository now also lists its tooling (build, test, lint and format, CI, containers and package tools such as Make, Ruff, GitHub Actions, Docker or uv); `Refresh with AI` learns more, and your own JSON files can add more.
-- Reading a repository now lists the frameworks and tools it uses (React, FastAPI, Vite and about 120 more) with what showed them; `Refresh with AI` also asks your default AI model about packages Kodalo does not know, and your own JSON files can add more.
-- New palettes: `Suggest with AI` fills in a name and colors that differ from your existing palettes, for you to review before creating.
-- Studio can ask your default AI model to teach Kodalo project files it does not know yet (`Refresh with AI` in the window, `--refresh-with-ai` on the command line). It shows the tokens it expects to use and asks before sending anything.
-- `Refresh with AI` now makes one request to your AI model instead of two, so it asks once and uses fewer tokens.
-- AI models start with sensible max tokens, temperature and timeout for their kind (Opus, Sonnet, Haiku, Gemini, GPT).
-- AI Connections setting: connect Claude API, Claude Code, ChatGPT API or Gemini API, with API keys kept in the system keychain, a default model per connection, and tests that check each connection works, in `kodalo settings ai` and the Settings screen.
-- Reading a repository also reports its notable folders, whether it is a monorepo, and the package name, version and dependencies of its project files (npm, Python, Rust, Go, Java, .NET and more); rescan stored repositories to fill them in.
-- New GitHub setting for how many project files to read (10 by default), and your own JSON files can teach Kodalo new kinds of project files.
-- Settings has an Appearance tab to choose a light or dark theme, or follow the system (the default).
-- The window opens on a new Home page and loads each screen only when you first open it.
-- Canvases, palettes and layouts (with a number of slides, 6 by default) you can create, export, import and reuse across brands, from `kodalo brand` and the Brands screen.
-- `kodalo brand show` is grouped and shows color swatches; `brand settings list` and `brand settings set` replace `brand set`.
-- Studio screen and `kodalo studio` commands read a repository's details, languages and top-level files (from the GitHub CLI, the web or a local folder) and remember them; manifests, frameworks and tooling come next.
-- GitHub connectivity setting: choose the GitHub CLI (default), a local folder or web fetch, with `kodalo settings github` or in the new Settings screen.
-- Brand profiles (colors, fonts, logo and layout) can be created and managed with `kodalo brand`.
-- The Kodalo window lets you create and edit brands (colors, fonts, logo, layout) with a live preview, and has an About page that checks your installation.
-- Local database that stores your products and settings on your computer and updates itself safely when Kodalo is upgraded.
-
-### Changed
-
-- Opening a page always starts it fresh with current data. If the page you are leaving has unsaved changes, you are asked whether to discard them.
-- Every slide in the Studio design step is now shown the same way, whether a fixed template or the AI's layout, so what you see is what gets posted.
-- The `kodalo studio` commands to check, read, list and show a repository moved to `kodalo repositories` (`check`, `add`, `list`, `show`).
-- Refreshing a repository's README after the AI has analyzed it keeps the AI's text and only adds new details.
-- Using Claude Code as the AI connection now sends only Kodalo's own question, so a call uses about 1,700 tokens instead of about 37,000.
-- Kodalo starts a little faster.
+- Kodalo for Windows, as a window and a command line (`kodalo`). Each has its own setup, with the Kodalo icon, license page and ColdSoft Technologies as publisher, and the command line also comes as a portable zip.
+- The window opens straight away on a branded loading screen, starts on a Home page with shortcuts, and has an About page that checks your installation.
+- Settings > Appearance: choose a light or dark theme, or follow the system (the default).
+- Windows notifications when a task finishes or fails, such as analyzing a repository, generating Studio posts or checking a connection.
+- A local database on your computer holds your repositories, brands and settings, and updates itself safely when Kodalo is upgraded.
+- Daily log files in the data folder's `logs` folder. Settings > Logs (or `kodalo settings logs`) sets the level and how many days they are kept (90 by default).
+- Opening a page always shows current data, and asks before discarding unsaved changes.
+- Brands (`kodalo brand`): profiles with colors, fonts, logo and layout, created and edited with a live preview, and shown full screen with arrow keys to step through slides.
+- Reusable palettes, canvases and layouts that you can create, export, import and share across brands. Canvases have a social platform (Instagram or Custom) and warn about sizes it does not recommend; the logo can be hidden on any slide.
+- Suggest with AI on Palettes proposes a name and colors that differ from your existing ones, after showing where the request goes and the tokens it uses.
+- Repositories (`kodalo repositories`): add, list, show and remove repositories, read from the GitHub CLI, the web or a local folder. Shows the social preview image and the repository's own icon.
+- Reading a repository finds its languages, README, changelog, license and docs, notable folders, monorepo layout, project files (npm, Python, Rust, Go, Java, .NET and more) with their packages and dependencies, and what was left unread. Your own JSON files can teach Kodalo new project files, frameworks and tooling.
+- Reading also detects frameworks and tooling (React, FastAPI, Vite, Ruff, GitHub Actions, Docker, uv and about 120 more) and shows what revealed each.
+- Settings > GitHub: choose the GitHub CLI (default), a local folder or web fetch, and how many project files, documents and how much of each (up to 2000 KB) to read.
+- Settings > AI: connect Claude API, Claude Code, ChatGPT API or Gemini API, with keys in the system keychain, a default model and a connection test. Only one connection is active at a time, and Claude Code calls stay small.
+- Settings > AI > Models per job: choose which model suggests palettes, reads repositories and writes and designs Studio posts. Models start with sensible limits for their kind, and you choose how many post ideas Studio asks for (1 to 20, 5 by default).
+- Refresh with AI (and `--refresh-with-ai`) makes one request to your AI model to learn unknown project files and list the product's capabilities, use cases and features, with their importance, maturity and claims to repeat with care. It shows the tokens it expects and asks first, with a see-through progress screen while it works.
+- AI history lists every call with date, purpose, connection, model and tokens, with token tables and charts, filters, optional prompt and answer storage, CSV or JSON export and a Purge button (`kodalo settings ai history`). Entries older than 90 days are removed automatically.
+- Studio (`kodalo studio`) walks from a repository to a finished Instagram post. Repository and Analyze steps read the README and linked docs, with or without AI, and show what the product is for, how to install it and what it can do.
+- Studio's Focus step picks a Tool / Utility post or a Feature post, and Next with AI plans it: a strategy, three angles and post ideas as cards you can choose, copy and fold open. Ideas are kept, refreshed by adding new ones to the saved ones, and marked Posted once published.
+- Studio writes the slides, caption, alt text and hashtags of the chosen idea with the AI, which you can edit and save.
+- Studio designs the post: each slide gets a template, picture and icon, shown full screen with the caption and hashtags. With AI-powered templates on, the AI writes one shared style and a layout per slide, while Kodalo places your text, brand logo or repository name, footer and progress marks.
+- Posts can be written and designed for Instagram and custom canvases. Settings > Platforms sets the number of hashtags, default hashtags, visuals the designer may use and, for Instagram, the access token and account ID (checked with Instagram and kept in the system keychain). Captions include the repository URL between the call to action and the hashtags.
+- Post publishes a post to Instagram, installing the third-party tool Cloudflared if needed. Export saves the slides as pictures and the caption as a text file, or as HTML or SVG from the command line, to post by hand.
