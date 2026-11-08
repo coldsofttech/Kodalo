@@ -102,7 +102,10 @@ The database migration scripts are frozen into the executable like the rest of t
 | --- | --- |
 | Check | the tag must equal the version |
 | Installers | the Windows setups and the portable zip, built and smoke-tested (30-minute timeout, under 10 minutes expected) |
+| Approval | the `release` environment pauses the run until a required reviewer (`coldsofttech`) approves it |
 | Release page | all files plus `SHA256SUMS.txt`; release notes from the `CHANGELOG.md` section, only if the release has no notes yet |
+
+The reviewers are set once under Settings > Environments > `release` > Required reviewers; the workflow file cannot hold them. Add `coldsofttech` there (and leave "Prevent self-review" off while they are the only maintainer).
 
 To check a download, run `Get-FileHash <file>` on Windows and compare with `SHA256SUMS.txt`.
 
