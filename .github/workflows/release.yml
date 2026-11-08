@@ -33,8 +33,7 @@ jobs:
         env:
           TAG: ${{ github.event.release.tag_name }}
         run: |
-          version="$(uv version --short)"
-          [ "$TAG" = "v$version" ] || { echo "Tag $TAG does not match version $version"; exit 1; }
+          [ "$TAG" = "v$APP_VERSION" ] || { echo "Tag $TAG does not match version $APP_VERSION"; exit 1; }
       - uses: actions/setup-node@v7
         with:
           node-version-file: ${{ env.UI_DIR }}/.nvmrc
@@ -59,6 +58,7 @@ jobs:
 
   github-release:
     needs: installers-windows
+    environment: release # required reviewers (Settings > Environments) approve before files are attached
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:

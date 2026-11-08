@@ -89,10 +89,13 @@ describe('BrandsPage: editing', () => {
 
   it('updates the preview at once and saves only when asked', async () => {
     start();
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Main'));
     typeInto(await field('Background, light (hex)'), '#FF0000');
 
-    const strip = document.querySelector('.preview-strip');
-    await waitFor(() => expect(strip.style.getPropertyValue('--b-background')).toBe('#ff0000'));
+    await waitFor(() => {
+      const strip = document.querySelector('.preview-strip');
+      expect(strip.style.getPropertyValue('--b-background')).toBe('#ff0000');
+    });
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
     expect(sent('PATCH', '/brands/')).toHaveLength(0);
 
