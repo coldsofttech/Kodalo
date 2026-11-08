@@ -38,13 +38,8 @@ jobs:
           SKIP: pytest # covered by the test job across all Python versions
 
   ui:
-    name: ui (node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    strategy:
-      fail-fast: false
-      matrix:
-        node-version: ["22", "24"]
     steps:
       - uses: actions/checkout@v7
       - name: Read project names
@@ -52,7 +47,7 @@ jobs:
         run: python3 installer/projectinfo.py github || python installer/projectinfo.py github
       - uses: actions/setup-node@v7
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version-file: ${{ env.UI_DIR }}/.nvmrc
           cache: npm
           cache-dependency-path: ${{ env.UI_DIR }}/package-lock.json
       - run: npm ci
@@ -66,7 +61,6 @@ jobs:
       - run: npm run build
         working-directory: ${{ env.UI_DIR }}
       - uses: actions/upload-artifact@v7
-        if: matrix.node-version == '24'
         with:
           name: ui-dist
           path: ${{ env.UI_DIR }}/dist/
