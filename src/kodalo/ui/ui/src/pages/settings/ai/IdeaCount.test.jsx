@@ -1,9 +1,8 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
 import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import AiIdeaCount from './IdeaCount.jsx';
-import { mockApi, typeInto } from '../../../testing.js';
+import { mockApi, typeInto, clickWhenReady } from '../../../testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -17,7 +16,7 @@ describe('AiIdeaCount', () => {
     expect(screen.getByLabelText('Save post ideas')).toBeDisabled();
 
     typeInto(field, '12');
-    await userEvent.click(screen.getByLabelText('Save post ideas'));
+    await clickWhenReady(screen.getByLabelText('Save post ideas'));
 
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     expect(calls.findLast((call) => call.method === 'PUT').body).toEqual({ idea_count: 12 });

@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import InstagramConnection from './InstagramConnection.jsx';
-import { createBackend, mockApi, typeInto } from '../../../testing.js';
+import { createBackend, mockApi, typeInto, clickWhenReady } from '../../../testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -23,7 +23,7 @@ describe('InstagramConnection', () => {
     typeInto(screen.getByLabelText('Access token'), 'IGAAsecret1234');
     expect(screen.getByLabelText('Connect')).toBeDisabled();
     typeInto(screen.getByLabelText('Instagram account ID'), '1784140');
-    await userEvent.click(screen.getByLabelText('Connect'));
+    await clickWhenReady(screen.getByLabelText('Connect'));
 
     expect(await screen.findByText('Connected.')).toBeInTheDocument();
     expect(screen.getByText('sweepito')).toBeInTheDocument();
@@ -47,7 +47,7 @@ describe('InstagramConnection', () => {
 
     typeInto(await screen.findByLabelText('Access token'), 'bad');
     typeInto(screen.getByLabelText('Instagram account ID'), '1784140');
-    await userEvent.click(screen.getByLabelText('Connect'));
+    await clickWhenReady(screen.getByLabelText('Connect'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('Instagram rejected the token.');
   });

@@ -1,7 +1,8 @@
 // Helpers for the tests: a fake Python side, sample brands, and a way to "type" into the Fluent
 // custom elements (which keep their value as a property and report it with DOM events).
-import { fireEvent } from '@testing-library/react';
-import { vi } from 'vitest';
+import { fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { expect, vi } from 'vitest';
 
 const pair = (/** @type {string} */ light, /** @type {string} */ dark) => ({ light, dark });
 const font = (/** @type {string} */ family) => ({ family, source: 'bundled' });
@@ -271,6 +272,13 @@ export function mockApi(handler) {
 export function typeInto(/** @type {HTMLElement} */ element, /** @type {string} */ text) {
   Object.assign(element, { value: text });
   fireEvent.input(element);
+}
+
+/** Click a control once it is enabled: a button stays disabled until the page has caught up with
+ * what was just typed, and a click on a disabled button does nothing. */
+export async function clickWhenReady(/** @type {HTMLElement} */ element) {
+  await waitFor(() => expect(element).toBeEnabled());
+  await userEvent.click(element);
 }
 
 /** Flip a Fluent switch. */

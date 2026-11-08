@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import BrandsPage from './Brands.jsx';
-import { createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
+import { createBackend, makeBrand, mockApi, typeInto, clickWhenReady } from '../../testing.js';
 
 const saveJson = vi.fn();
 vi.mock('../../libs/download.js', async (importOriginal) => ({
@@ -35,7 +35,7 @@ describe('BrandsPage: first run', () => {
 
     await userEvent.click(screen.getByRole('radio', { name: /Paper/ }));
     typeInto(await field('Brand name'), 'Acme');
-    await userEvent.click(screen.getByText('Create brand'));
+    await clickWhenReady(screen.getByText('Create brand'));
 
     expect(await screen.findByRole('heading', { name: 'Preview' })).toBeInTheDocument();
     expect(sent('POST', '/api/v1/brands')[0].body).toEqual({
@@ -49,7 +49,7 @@ describe('BrandsPage: first run', () => {
     start([]);
     backend.state.brands = [makeBrand('x', 'Taken', true)];
     typeInto(await field('Brand name'), 'taken');
-    await userEvent.click(screen.getByText('Create brand'));
+    await clickWhenReady(screen.getByText('Create brand'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
@@ -126,7 +126,7 @@ describe('BrandsPage: editing', () => {
   it('discards edits', async () => {
     start();
     typeInto(await field('Brand name'), 'Renamed');
-    await userEvent.click(screen.getByLabelText('Discard'));
+    await clickWhenReady(screen.getByLabelText('Discard'));
 
     await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Main'));
     expect(screen.queryByText('You have unsaved changes.')).not.toBeInTheDocument();
@@ -135,7 +135,7 @@ describe('BrandsPage: editing', () => {
   it('renames through the same Save', async () => {
     start();
     typeInto(await field('Brand name'), 'Renamed');
-    await userEvent.click(screen.getByLabelText('Save'));
+    await clickWhenReady(screen.getByLabelText('Save'));
 
     await screen.findByText('Saved.');
     expect(sent('PATCH', '/brands/b1')[0].body.name).toBe('Renamed');
@@ -147,7 +147,7 @@ describe('BrandsPage: editing', () => {
   it('shows the server message when saving fails', async () => {
     start();
     typeInto(await field('Brand name'), 'Side');
-    await userEvent.click(screen.getByLabelText('Save'));
+    await clickWhenReady(screen.getByLabelText('Save'));
 
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
@@ -247,7 +247,7 @@ describe('BrandsPage: editing', () => {
   it('saves the colors of a brand as a palette', async () => {
     start();
     typeInto(await field('Palette name'), 'Ocean');
-    await userEvent.click(screen.getByLabelText('Save palette'));
+    await clickWhenReady(screen.getByLabelText('Save palette'));
     expect(await screen.findByText('Saved the palette "Ocean".')).toBeInTheDocument();
     expect(sent('POST', '/api/v1/brands/palettes')[0].body.name).toBe('Ocean');
     expect(backend.state.palettes.map((p) => p.name)).toContain('Ocean');
@@ -274,7 +274,7 @@ describe('BrandsPage: editing', () => {
   it('keeps unsaved edits when a logo is uploaded', async () => {
     start();
     typeInto(await field('Brand name'), 'Edited');
-    await userEvent.click(screen.getByRole('tab', { name: 'Logo' }));
+    await clickWhenReady(screen.getByRole('tab', { name: 'Logo' }));
     await userEvent.upload(
       screen.getByLabelText('Choose logo file'),
       new File(['png'], 'logo.png', { type: 'image/png' }),
@@ -323,7 +323,7 @@ describe('BrandsPage: editing', () => {
       expect(await field('Name of the copy')).toHaveProperty('value', 'Main copy'),
     );
     typeInto(await field('Name of the copy'), 'Third');
-    await userEvent.click(
+    await clickWhenReady(
       within(screen.getByRole('group', { name: 'Duplicate brand' })).getByText('Duplicate'),
     );
 
@@ -374,7 +374,7 @@ describe('BrandsPage: editing', () => {
     await userEvent.click(await screen.findByLabelText('New brand'));
     const group = screen.getByRole('group', { name: 'New brand' });
     typeInto(within(group).getByLabelText('Brand name'), 'Fresh');
-    await userEvent.click(within(group).getByText('Create brand'));
+    await clickWhenReady(within(group).getByText('Create brand'));
 
     expect(await screen.findByText('Created Fresh.')).toBeInTheDocument();
   });

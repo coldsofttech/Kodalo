@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import CanvasesPage from './Canvases.jsx';
-import { createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
+import { createBackend, makeBrand, mockApi, typeInto, clickWhenReady } from '../../testing.js';
 
 const saveJson = vi.fn();
 vi.mock('../../libs/download.js', async (importOriginal) => ({
@@ -40,7 +40,7 @@ describe('CanvasesPage', () => {
     const { calls, onChange } = start();
     await userEvent.click(await screen.findByLabelText('New canvas'));
     typeInto(await screen.findByLabelText('Canvas name'), 'Feed');
-    await userEvent.click(screen.getByLabelText('Create canvas'));
+    await clickWhenReady(screen.getByLabelText('Create canvas'));
     expect(await screen.findByText('Created "Feed".')).toBeInTheDocument();
     expect(calls.find((c) => c.method === 'POST').body).toEqual({
       name: 'Feed',
@@ -53,7 +53,7 @@ describe('CanvasesPage', () => {
     const feed = await rowOf('Feed');
     await userEvent.click(within(feed).getByLabelText('Edit Feed'));
     typeInto(await screen.findByLabelText('Canvas name'), 'Wide feed');
-    await userEvent.click(screen.getByLabelText('Save canvas'));
+    await clickWhenReady(screen.getByLabelText('Save canvas'));
     expect(await screen.findByText('Saved "Wide feed".')).toBeInTheDocument();
 
     const wide = await rowOf('Wide feed');
@@ -83,7 +83,7 @@ describe('CanvasesPage', () => {
     start();
     await userEvent.click(await screen.findByLabelText('New canvas'));
     typeInto(await screen.findByLabelText('Canvas name'), 'instagram portrait');
-    await userEvent.click(screen.getByLabelText('Create canvas'));
+    await clickWhenReady(screen.getByLabelText('Create canvas'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 

@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PostView from './PostView.jsx';
-import { typeInto } from '../../testing.js';
+import { typeInto, clickWhenReady } from '../../testing.js';
 
 const URL = 'https://github.com/o/r';
 const COPY = {
@@ -61,7 +61,7 @@ describe('PostView', () => {
     expect(await axe(container)).toHaveNoViolations();
 
     typeInto(screen.getByLabelText('Slide 2 headline'), 'Read the guide');
-    await userEvent.click(screen.getByLabelText('Save changes'));
+    await clickWhenReady(screen.getByLabelText('Save changes'));
 
     expect(save).toHaveBeenCalledWith({
       slides: [COPY.slides[0], { ...COPY.slides[1], headline: 'Read the guide' }],
@@ -85,7 +85,7 @@ describe('PostView', () => {
     typeInto(screen.getByLabelText('Caption text'), NEW_LINES);
     await waitFor(() => expect(screen.getByLabelText('Repo URL')).toHaveValue(URL));
     typeInto(screen.getByLabelText('Hashtags'), '#a, #b');
-    await userEvent.click(screen.getByLabelText('Save changes'));
+    await clickWhenReady(screen.getByLabelText('Save changes'));
 
     expect(save).toHaveBeenCalledWith({
       slides: COPY.slides,
@@ -105,7 +105,7 @@ describe('PostView', () => {
 
     await userEvent.click(screen.getByLabelText('Edit Slide 1'));
     typeInto(screen.getByLabelText('Slide 1 headline'), 'Changed');
-    await userEvent.click(screen.getByLabelText('Cancel'));
+    await clickWhenReady(screen.getByLabelText('Cancel'));
 
     expect(screen.queryByLabelText('Slide 1 headline')).not.toBeInTheDocument();
     expect(screen.queryByText('Changed')).not.toBeInTheDocument();

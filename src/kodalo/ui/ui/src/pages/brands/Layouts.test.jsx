@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import LayoutsPage from './Layouts.jsx';
-import { createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
+import { createBackend, makeBrand, mockApi, typeInto, clickWhenReady } from '../../testing.js';
 
 const saveJson = vi.fn();
 vi.mock('../../libs/download.js', async (importOriginal) => ({
@@ -41,7 +41,7 @@ describe('LayoutsPage', () => {
     await userEvent.click(await screen.findByLabelText('New layout'));
     typeInto(await screen.findByLabelText('Layout name'), 'Feed');
     typeInto(screen.getByLabelText('Number of slides'), '9');
-    await userEvent.click(screen.getByLabelText('Create layout'));
+    await clickWhenReady(screen.getByLabelText('Create layout'));
     expect(await screen.findByText('Created "Feed".')).toBeInTheDocument();
     const post = calls.find((call) => call.method === 'POST');
     expect(post.body.name).toBe('Feed');
@@ -55,7 +55,7 @@ describe('LayoutsPage', () => {
       'system-instagram_square',
     );
     typeInto(screen.getByLabelText('Footer text'), '@kodalo');
-    await userEvent.click(screen.getByLabelText('Save layout'));
+    await clickWhenReady(screen.getByLabelText('Save layout'));
     expect(await screen.findByText('Saved "Feed".')).toBeInTheDocument();
     const patch = calls.find((call) => call.method === 'PATCH');
     expect(patch.body.canvas_id).toBe('system-instagram_square');
@@ -87,7 +87,7 @@ describe('LayoutsPage', () => {
 
     await userEvent.click(screen.getByLabelText('New layout'));
     typeInto(await screen.findByLabelText('Layout name'), 'compact');
-    await userEvent.click(screen.getByLabelText('Create layout'));
+    await clickWhenReady(screen.getByLabelText('Create layout'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 

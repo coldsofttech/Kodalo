@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Platforms from './Platforms.jsx';
-import { createBackend, mockApi, setChecked, typeInto } from '../../../testing.js';
+import { createBackend, mockApi, setChecked, typeInto, clickWhenReady } from '../../../testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -44,7 +44,7 @@ describe('Platforms', () => {
 
     await userEvent.selectOptions(await screen.findByLabelText('Platform'), 'custom');
     typeInto(await screen.findByLabelText('Default hashtags'), '#kodalo');
-    await userEvent.click(screen.getByLabelText('Save'));
+    await clickWhenReady(screen.getByLabelText('Save'));
 
     await screen.findByText('Saved.');
     const put = calls.find((c) => c.method === 'PUT');
@@ -56,7 +56,7 @@ describe('Platforms', () => {
     mockApi(backend.handler);
     const first = render(<Platforms />);
     typeInto(await screen.findByLabelText('Default hashtags'), '#one');
-    await userEvent.click(screen.getByLabelText('Save'));
+    await clickWhenReady(screen.getByLabelText('Save'));
     await screen.findByText('Saved.');
     first.unmount();
 

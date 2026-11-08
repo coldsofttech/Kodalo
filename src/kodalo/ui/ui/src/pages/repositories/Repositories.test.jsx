@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RepositoriesPage from './Repositories.jsx';
-import { createBackend, mockApi, typeInto } from '../../testing.js';
+import { createBackend, mockApi, typeInto, clickWhenReady } from '../../testing.js';
 
 const NO_WORK = {
   provider: '',
@@ -54,7 +54,7 @@ describe('RepositoriesPage', () => {
     expect(await screen.findByText('No repositories yet.')).toBeInTheDocument();
     expect(screen.getByLabelText('Add')).toHaveAttribute('disabled');
     typeInto(await screen.findByLabelText('Repository address'), 'https://github.com/o/repo');
-    await userEvent.click(screen.getByLabelText('Add'));
+    await clickWhenReady(screen.getByLabelText('Add'));
 
     expect(await screen.findByRole('heading', { name: 'o/repo' })).toBeInTheDocument();
     expect(calls.find((call) => call.method === 'POST' && call.path === REPOSITORIES).body).toEqual(
@@ -80,7 +80,7 @@ describe('RepositoriesPage', () => {
     render(<RepositoriesPage visible onOpenSettings={() => undefined} />);
 
     typeInto(await screen.findByLabelText('Repository folder'), 'C:\\code\\proj');
-    await userEvent.click(screen.getByLabelText('Add'));
+    await clickWhenReady(screen.getByLabelText('Add'));
 
     expect(await screen.findByRole('heading', { name: 'About this repository' })).toBeVisible();
     await waitFor(async () =>
@@ -90,7 +90,7 @@ describe('RepositoriesPage', () => {
     typeInto(screen.getByLabelText('Owner'), 'me');
     typeInto(screen.getByLabelText('License'), 'MIT');
     typeInto(screen.getByLabelText('Topics (optional)'), 'cli, python');
-    await userEvent.click(screen.getByLabelText('Add'));
+    await clickWhenReady(screen.getByLabelText('Add'));
 
     expect(await screen.findByRole('heading', { name: 'me/repo' })).toBeInTheDocument();
     const body = calls.find((call) => call.method === 'POST' && call.path === REPOSITORIES).body;
@@ -109,7 +109,7 @@ describe('RepositoriesPage', () => {
     render(<RepositoriesPage visible onOpenSettings={open} />);
 
     typeInto(await screen.findByLabelText('Repository address'), 'nonsense');
-    await userEvent.click(screen.getByLabelText('Add'));
+    await clickWhenReady(screen.getByLabelText('Add'));
     expect(await screen.findByRole('alert')).toHaveTextContent('Use a GitHub address.');
 
     await userEvent.click(screen.getByRole('button', { name: 'Change in Settings' }));

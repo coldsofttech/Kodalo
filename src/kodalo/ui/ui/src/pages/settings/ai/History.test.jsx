@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AiHistory, { AiHistorySettings } from './History.jsx';
-import { createBackend, mockApi, setChecked, typeInto } from '../../../testing.js';
+import { createBackend, mockApi, setChecked, typeInto, clickWhenReady } from '../../../testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -75,7 +75,7 @@ describe('AiHistory', () => {
 
     setChecked(await screen.findByLabelText('Keep the text of prompts and answers'), true);
     typeInto(screen.getByLabelText('Remove entries after (days)'), '30');
-    await userEvent.click(screen.getByLabelText('Save history settings'));
+    await clickWhenReady(screen.getByLabelText('Save history settings'));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     expect(calls.findLast((call) => call.method === 'PUT').body).toEqual({
       store_text: true,

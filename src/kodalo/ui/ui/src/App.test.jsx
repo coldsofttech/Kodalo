@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App.jsx';
-import { createBackend, makeBrand, mockApi, typeInto } from './testing.js';
+import { createBackend, makeBrand, mockApi, typeInto, clickWhenReady } from './testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -42,7 +42,7 @@ describe('App', () => {
     const nav = await openBrandsPage('Brands');
 
     typeInto(await screen.findByLabelText('Brand name'), 'Edited');
-    await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
+    await clickWhenReady(within(nav).getByRole('button', { name: 'About' }));
 
     const ask = screen.getByRole('alertdialog', { name: 'Unsaved changes' });
     expect(ask).toHaveTextContent('open About');
@@ -62,7 +62,7 @@ describe('App', () => {
     const nav = await openBrandsPage('Brands');
 
     typeInto(await screen.findByLabelText('Brand name'), 'Edited');
-    await userEvent.click(within(nav).getByRole('button', { name: 'About' }));
+    await clickWhenReady(within(nav).getByRole('button', { name: 'About' }));
     await userEvent.click(screen.getByText('Discard changes'));
 
     expect(screen.getByRole('heading', { name: 'About Kodalo' })).toBeVisible();

@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import GitHub from './GitHub.jsx';
-import { createBackend, mockApi, typeInto } from '../../testing.js';
+import { createBackend, mockApi, typeInto, clickWhenReady } from '../../testing.js';
 
 afterEach(() => vi.unstubAllGlobals());
 
@@ -40,7 +40,7 @@ describe('GitHub', () => {
     expect(screen.queryByLabelText('Folder')).not.toBeInTheDocument();
     await userEvent.selectOptions(select, 'local_folder');
     typeInto(screen.getByLabelText('Folder'), 'C:/repos');
-    await userEvent.click(screen.getByLabelText('Save connection'));
+    await clickWhenReady(screen.getByLabelText('Save connection'));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     expect(put(calls).body).toMatchObject({ mode: 'local_folder', local_folder: 'C:/repos' });
   });
@@ -60,7 +60,7 @@ describe('GitHub', () => {
       '200',
     );
     typeInto(screen.getByLabelText('Documents to read'), '5');
-    await userEvent.click(screen.getByLabelText('Save reading limits'));
+    await clickWhenReady(screen.getByLabelText('Save reading limits'));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
     expect(put(calls).body).toMatchObject({ document_limit: 5 });
   });

@@ -3,7 +3,7 @@ import { axe } from 'vitest-axe';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import NewBrand from './NewBrand.jsx';
-import { PALETTES, typeInto } from '../testing.js';
+import { PALETTES, typeInto, clickWhenReady } from '../testing.js';
 
 const setup = (props = {}) => {
   const onCreate = vi.fn();
@@ -37,7 +37,7 @@ describe('NewBrand', () => {
   it('creates the brand from the palette that was picked', async () => {
     const { onCreate } = setup();
     typeInto(screen.getByLabelText('Brand name'), 'Acme');
-    await userEvent.click(screen.getByRole('radio', { name: /Paper/ }));
+    await clickWhenReady(screen.getByRole('radio', { name: /Paper/ }));
     expect(screen.getByRole('radio', { name: /Paper/ })).toBeChecked();
     await userEvent.click(screen.getByText('Create brand'));
     expect(onCreate).toHaveBeenCalledWith('Acme', 'system-paper');

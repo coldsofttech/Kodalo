@@ -3,7 +3,14 @@ import { axe } from 'vitest-axe';
 import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PalettesPage from './Palettes.jsx';
-import { SAMPLE_DATA, createBackend, makeBrand, mockApi, typeInto } from '../../testing.js';
+import {
+  SAMPLE_DATA,
+  createBackend,
+  makeBrand,
+  mockApi,
+  typeInto,
+  clickWhenReady,
+} from '../../testing.js';
 
 const saveJson = vi.fn();
 vi.mock('../../libs/download.js', async (importOriginal) => ({
@@ -39,7 +46,7 @@ describe('PalettesPage', () => {
     const { calls, onChange } = start();
     await userEvent.click(await screen.findByLabelText('New palette'));
     typeInto(await screen.findByLabelText('Palette name'), 'Ocean');
-    await userEvent.click(screen.getByLabelText('Create palette'));
+    await clickWhenReady(screen.getByLabelText('Create palette'));
     expect(await screen.findByText('Created "Ocean".')).toBeInTheDocument();
     const post = calls.find((call) => call.method === 'POST');
     expect(post.body.name).toBe('Ocean');
@@ -48,7 +55,7 @@ describe('PalettesPage', () => {
 
     await userEvent.click(within(await rowOf('Ocean')).getByLabelText('Edit Ocean'));
     typeInto(await screen.findByLabelText('Palette name'), 'Sea');
-    await userEvent.click(screen.getByLabelText('Save palette'));
+    await clickWhenReady(screen.getByLabelText('Save palette'));
     expect(await screen.findByText('Saved "Sea".')).toBeInTheDocument();
 
     await userEvent.click(within(await rowOf('Sea')).getByLabelText('Copy Sea'));
@@ -88,7 +95,7 @@ describe('PalettesPage', () => {
 
     await userEvent.click(screen.getByLabelText('New palette'));
     typeInto(await screen.findByLabelText('Palette name'), 'midnight');
-    await userEvent.click(screen.getByLabelText('Create palette'));
+    await clickWhenReady(screen.getByLabelText('Create palette'));
     expect(await screen.findByRole('alert')).toHaveTextContent('already exists');
   });
 });
