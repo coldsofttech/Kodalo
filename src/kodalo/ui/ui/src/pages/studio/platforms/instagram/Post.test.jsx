@@ -148,7 +148,10 @@ describe('InstagramPost', () => {
     release();
 
     expect(await screen.findByText(/Posted\./)).toBeInTheDocument();
-    const order = calls.filter((call) => call.method === 'POST').map((call) => call.path);
+    const order = calls
+      .filter((call) => call.method === 'POST')
+      .map((call) => call.path)
+      .filter((path) => !path.includes('/bridge/'));
     expect(order.filter((path) => !path.includes('/bridge/'))[0]).toMatch(/\/instagram\/tunnel$/);
     expect(order.at(-1)).toMatch(/\/design\/post$/);
     expect(screen.queryByText(/Installing Cloudflared/)).toBeNull();

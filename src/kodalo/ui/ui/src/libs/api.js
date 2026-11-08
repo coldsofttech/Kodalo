@@ -53,6 +53,49 @@ async function request(path, { json, headers, ...options } = {}) {
   return parsed;
 }
 
+/** Cornea limits on a notification's text. */
+const MAX_TITLE = 64;
+const MAX_MESSAGE = 256;
+
+/** @param {string} text @param {number} max */
+const clip = (text, max) => (text.length > max ? `${text.slice(0, max - 1)}…` : text);
+
+/**
+ * Raise a Windows notification through the Cornea bridge. It is only a courtesy, so it never
+ * fails: outside the window, or when notifications are off, nothing happens.
+ * @param {string} title
+ * @param {string} message
+ */
+export async function notify(title, message) {
+  try {
+    await request('/api/bridge/show_notification', {
+      method: 'POST',
+      json: { title: clip(title, MAX_TITLE), message: clip(message, MAX_MESSAGE) },
+    });
+  } catch {
+    // The task's own result is what matters.
+  }
+}
+
+/**
+ * Run a call and notify when it finishes, whether it worked or not. The result or the error is
+ * passed on unchanged.
+ * @template T
+ * @param {string} task what finished, such as "Repository analysis"
+ * @param {() => Promise<T>} call
+ * @returns {Promise<T>}
+ */
+async function notifying(task, call) {
+  try {
+    const result = await call();
+    void notify(task, 'Finished.');
+    return result;
+  } catch (error) {
+    void notify(`${task} failed`, error instanceof Error ? error.message : 'Something went wrong.');
+    throw error;
+  }
+}
+
 const BRANDS = '/api/v1/brands';
 
 export const listBrands = () => request(BRANDS);
@@ -108,7 +151,8 @@ export const listPalettes = () => request(PALETTES);
 export const createPalette = (body) => request(PALETTES, { method: 'POST', json: body });
 /** Ask the default AI model for a palette; nothing is saved. */
 export const planPaletteSuggestion = () => request(`${PALETTES}/suggest/plan`, { method: 'POST' });
-export const suggestPalette = () => request(`${PALETTES}/suggest`, { method: 'POST' });
+export const suggestPalette = () =>
+  notifying('Palette suggestion', () => request(`${PALETTES}/suggest`, { method: 'POST' }));
 /** @param {string} id @param {{ name?: string, colors?: object }} body */
 export const updatePalette = (id, body) =>
   request(`${PALETTES}/${id}`, { method: 'PATCH', json: body });
@@ -261,7 +305,8 @@ export const connectInstagram = (accessToken, accountId) =>
     method: 'PUT',
     json: { access_token: accessToken, account_id: accountId },
   });
-export const checkInstagramConnection = () => request(`${INSTAGRAM}/check`, { method: 'POST' });
+export const checkInstagramConnection = () =>
+  notifying('Instagram check', () => request(`${INSTAGRAM}/check`, { method: 'POST' }));
 export const disconnectInstagram = () => request(INSTAGRAM, { method: 'DELETE' });
 const TUNNEL = '/api/v1/settings/platforms/instagram/tunnel';
 export const getInstagramTunnel = () => request(TUNNEL);
@@ -284,7 +329,8 @@ export const removeRepository = (repoId) =>
 export const checkRepository = (source) =>
   request(`${REPOSITORIES}/check`, { method: 'POST', json: { source } });
 /** @param {{ source: string, refresh?: boolean, details?: object }} body */
-export const addRepository = (body) => request(REPOSITORIES, { method: 'POST', json: body });
+export const addRepository = (body) =>
+  notifying('Repository added', () => request(REPOSITORIES, { method: 'POST', json: body }));
 /** What asking the AI to analyze a repository would send and cost; nothing is sent. */
 export const planAnalysis = (/** @type {string} */ repoId) =>
   request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis/plan`, {
@@ -292,14 +338,16 @@ export const planAnalysis = (/** @type {string} */ repoId) =>
   });
 /** Ask the AI once for parser, framework and tooling configs and save the valid ones. */
 export const runAnalysis = (/** @type {string} */ repoId) =>
-  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis`, {
-    method: 'POST',
-  });
+  notifying('Repository analysis', () =>
+    request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/analysis`, {
+      method: 'POST',
+    }),
+  );
 const readmeUrl = (/** @type {string} */ repoId) =>
   `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/readme`;
 /** Read the README and the docs it links to, without AI; a saved result is returned unless refreshed. */
 export const readReadme = (/** @type {string} */ repoId, refresh = false) =>
-  request(readmeUrl(repoId), { method: 'POST', json: { refresh } });
+  notifying('README read', () => request(readmeUrl(repoId), { method: 'POST', json: { refresh } }));
 /** The saved README analysis. */
 export const getReadme = (/** @type {string} */ repoId) => request(readmeUrl(repoId));
 /** What asking the AI to read the documents would send and cost; nothing is sent. */
@@ -307,7 +355,9 @@ export const planReadmeAnalysis = (/** @type {string} */ repoId) =>
   request(`${readmeUrl(repoId)}/analysis/plan`, { method: 'POST' });
 /** Ask the AI once to read the documents and save what it finds with evidence. */
 export const runReadmeAnalysis = (/** @type {string} */ repoId) =>
-  request(`${readmeUrl(repoId)}/analysis`, { method: 'POST' });
+  notifying('Document analysis', () =>
+    request(`${readmeUrl(repoId)}/analysis`, { method: 'POST' }),
+  );
 /**
  * What asking the AI for post ideas would send and cost; nothing is sent.
  * @param {string} repoId
@@ -333,10 +383,12 @@ export const getIdeas = (repoId, body) =>
  * @param {{ post_type: string, kind: string, name: string }} body
  */
 export const makeIdeas = (repoId, body) =>
-  request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/ideas`, {
-    method: 'POST',
-    json: body,
-  });
+  notifying('Post ideas', () =>
+    request(`/api/v1/studio/repositories/${encodeURIComponent(repoId)}/ideas`, {
+      method: 'POST',
+      json: body,
+    }),
+  );
 /** @typedef {{ brand_id: string, post_type: string, kind: string, name: string, idea_id: string, hook_id: string }} CopyRequest */
 const copyUrl = (/** @type {string} */ repoId) =>
   `/api/v1/studio/repositories/${encodeURIComponent(repoId)}/copy`;
@@ -358,7 +410,8 @@ export const planCopy = (repoId, body) =>
  * @param {string} repoId
  * @param {CopyRequest} body
  */
-export const makeCopy = (repoId, body) => request(copyUrl(repoId), { method: 'POST', json: body });
+export const makeCopy = (repoId, body) =>
+  notifying('Post copy', () => request(copyUrl(repoId), { method: 'POST', json: body }));
 /**
  * Save the copy as the user edited it.
  * @param {string} repoId
@@ -380,7 +433,9 @@ export const getDesign = (repoId, body) =>
  * @param {Record<string, string>} body the post's request, and `mode` (`light` or `dark`)
  */
 export const postToInstagram = (repoId, body) =>
-  request(`${designUrl(repoId)}/post`, { method: 'POST', json: body });
+  notifying('Instagram post', () =>
+    request(`${designUrl(repoId)}/post`, { method: 'POST', json: body }),
+  );
 /**
  * Flag a post idea as posted so it is not posted twice, or clear the flag.
  * @param {string} repoId
@@ -399,7 +454,9 @@ export const setIdeaPosted = (repoId, ideaId, body) =>
  * @param {Record<string, string>} body the post's request, `mode` and the chosen `folder`
  */
 export const exportPost = (repoId, body) =>
-  request(`${designUrl(repoId)}/export`, { method: 'POST', json: body });
+  notifying('Post export', () =>
+    request(`${designUrl(repoId)}/export`, { method: 'POST', json: body }),
+  );
 /**
  * What asking the AI to design the post would send and cost; nothing is sent.
  * @param {string} repoId
@@ -433,7 +490,8 @@ export const designSvgUrl = (repoId, body, slide, version = '') =>
  */
 export const designSlideUrl = (repoId, body, slide, mode, version = '') =>
   `${designUrl(repoId)}/slide?${new URLSearchParams({ ...body, slide: String(slide), mode, v: version })}`;
-export const checkGithub = () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' });
+export const checkGithub = () =>
+  notifying('GitHub check', () => request(`${GITHUB_SETTINGS}/check`, { method: 'POST' }));
 
 const AI = '/api/v1/settings/ai/connections';
 
@@ -447,10 +505,13 @@ export const removeAiConnection = (provider) => request(`${AI}/${provider}`, { m
 export const setDefaultAiConnection = (provider) =>
   request(`${AI}/default`, { method: 'PUT', json: { provider } });
 /** @param {string} provider */
-export const testAiConnection = (provider) => request(`${AI}/${provider}/test`, { method: 'POST' });
+export const testAiConnection = (provider) =>
+  notifying('AI connection test', () => request(`${AI}/${provider}/test`, { method: 'POST' }));
 /** @param {string} provider */
 export const refreshAiModels = (provider) =>
-  request(`${AI}/${provider}/models/refresh`, { method: 'POST' });
+  notifying('AI models refresh', () =>
+    request(`${AI}/${provider}/models/refresh`, { method: 'POST' }),
+  );
 /**
  * @param {string} provider
  * @param {string} name

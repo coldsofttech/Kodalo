@@ -6,6 +6,7 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ### Added
 
+- Kodalo now shows a Windows notification when a task finishes or fails, such as adding or analyzing a repository, generating Studio ideas, copy or posts, and checking connections.
 - The Kodalo logo now appears in the window and taskbar icon, the sidebar and the About page, matching light and dark themes.
 - Kodalo now keeps daily log files in its data folder's `logs` folder. Settings > Logs (also `kodalo settings logs`) sets the log level (INFO by default) and how many days logs are kept (90 by default).
 - Studio shows a Posted badge on post ideas that were posted to Instagram. After an export it asks whether to mark the idea as posted.

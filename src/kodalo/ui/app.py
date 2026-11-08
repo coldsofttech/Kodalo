@@ -103,7 +103,7 @@ def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
     if sys.platform != "win32":
         raise UiUnavailableError("The UI needs Windows. The CLI and API work on every system.")
     try:
-        from cornea import DEV_CSP, App, Process, Security, Shell, Static, Window
+        from cornea import DEV_CSP, App, Bridge, Process, Security, Shell, Static, Window
     except ImportError as exc:
         raise UiUnavailableError("The UI needs the 'cornea-shell' package.") from exc
 
@@ -124,6 +124,7 @@ def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
             if window
             else None
         ),
+        bridge=Bridge(notifications=True),
         identity=App(id=APP_ID),
     )
     shell.action("app_info")(app_info)

@@ -328,8 +328,8 @@ describe('RepositoriesPage Analyze step', () => {
     ).toBeInTheDocument();
     expect(screen.getByText('Planned or experimental')).toBeInTheDocument();
     expect(screen.queryByText('SECURITY.md')).not.toBeInTheDocument(); // documents are not listed
-    expect(calls.at(-1).path).toMatch(/\/readme$/);
-    expect(calls.at(-1).body).toEqual({ refresh: false });
+    const read = calls.filter((call) => call.path.endsWith('/readme')).at(-1);
+    expect(read.body).toEqual({ refresh: false });
 
     await userEvent.click(screen.getByLabelText('Refresh with AI'));
     expect(await screen.findByText(/About 400 tokens sent/)).toBeInTheDocument();

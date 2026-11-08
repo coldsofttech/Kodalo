@@ -7,7 +7,7 @@ The desktop window is hosted by [Cornea Shell](https://github.com/coldsofttech/C
 Cornea serves the built files in `src/kodalo/ui/ui/dist`, but the page is a normal single-page app that talks to Python while it runs. `ui/` holds only the interface; everything dynamic lives in `kodalo.api` and `kodalo.core`:
 
 - **Data:** `fetch('/api/v1/...')` calls the `kodalo.api` routes and gets JSON.
-- **Native actions:** `POST /api/bridge/<action>` runs a Python function registered in `kodalo/ui/app.py`. `app_info` returns the app name and version for the About page. Cornea also provides file and folder pickers, opening links and platform info.
+- **Native actions:** `POST /api/bridge/<action>` runs a Python function registered in `kodalo/ui/app.py`. `app_info` returns the app name and version for the About page. Cornea also provides file and folder pickers, `show_notification` (turned on with `Bridge(notifications=True)` and the `cornea-shell[notifications]` extra; `notifying()` in `src/libs/api.js` calls it when a repository, Studio or settings task finishes or fails), opening links and platform info.
 - **State:** lives in React in the page, and in Python behind the routes.
 
 Cornea hosts the page and the API on one address, behind a start-up token that becomes a session cookie, a host and origin check, and strict response headers. See [security](security.md).
