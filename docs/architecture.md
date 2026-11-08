@@ -160,7 +160,7 @@ Shared setup behavior lives in `installer/windows/nsis/common.nsh`. Names and th
 
 | Workflow | Trigger | Purpose |
 | --- | --- | --- |
-| `ci.yml` | Pull request, push to `main` | Runs `lint`, `ui`, `test`, `integration` and `ui-windows`. A final `ci` job gates on all of them and is a required check. |
+| `ci.yml` | Pull request, push to `main` | Runs `lint`, `ui`, `test` and `integration`; the last two have one job each for core, cli, api and ui, on Python 3.13. A final `ci` job gates on all of them and is a required check. |
 | `dependency-review.yml` | Pull request | Blocks pull requests that add vulnerable dependencies. Required check. |
 | `api-compat.yml` | Pull request that changes `docs/openapi.json` | Reports breaking API changes with oasdiff. Not required. |
 | `security.yml` | Pull request, push, weekly | Semgrep, uploaded as code scanning results. Not required. |

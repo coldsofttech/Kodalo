@@ -51,7 +51,7 @@ Change a route or schema, and `docs/openapi.json` must be regenerated (CI fails 
 
 ## Continuous integration
 
-The `ci` workflow runs `lint` (pre-commit and the OpenAPI check), `ui` (frontend lint, tests and build), `test` (Python 3.11 to 3.15 on Windows), `integration` and `ui-windows` (the real Cornea test against the built frontend). A final `ci` job gates on all of them and is a required check. The other workflows are listed in [architecture](architecture.md#workflows).
+The `ci` workflow runs `lint` (pre-commit and the OpenAPI check), `ui` (frontend lint, tests and build), `test` and `integration` (one job each for core, cli, api and ui on Windows with Python 3.13, the version the installers bundle; the ui integration job runs the real Cornea test against the built frontend). CI does not measure coverage, since a single component covers only part of the code; run `uv run pytest` locally for the minimum. A final `ci` job gates on all of them and is a required check. The other workflows are listed in [architecture](architecture.md#workflows).
 
 ## Repository settings
 
