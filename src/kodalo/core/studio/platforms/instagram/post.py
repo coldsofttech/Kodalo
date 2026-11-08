@@ -24,9 +24,16 @@ MODES = ("light", "dark")
 
 
 def caption_of(post: PostCopy) -> str:
-    """The text posted with the pictures: the opening, the body, the call to action and the
-    hashtags, each as a paragraph."""
-    parts = [post.caption.opening, *post.caption.body, post.caption.cta, " ".join(post.hashtags)]
+    """The text posted with the pictures: the opening, the body, the call to action, the
+    repository address and the hashtags, each as a paragraph."""
+    caption = post.caption
+    parts = [
+        caption.opening,
+        *caption.body,
+        caption.cta,
+        caption.repo_url,
+        " ".join(post.hashtags),
+    ]
     return "\n\n".join(part.strip() for part in parts if part.strip())
 
 

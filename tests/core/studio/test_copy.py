@@ -127,7 +127,9 @@ def _assistant(database: Database, ai: FakeAi, ideas: Ideas | None = None) -> Co
     found = ideas if ideas is not None else _ideas()
     return CopyAssistant(
         SimpleNamespace(get=lambda _id: SimpleNamespace(tagline="Tag", summary="Sum")),  # type: ignore[arg-type]
-        SimpleNamespace(get=lambda _id: SimpleNamespace(name="Sweepito")),  # type: ignore[arg-type]
+        SimpleNamespace(
+            get=lambda _id: SimpleNamespace(name="Sweepito", url="https://github.com/o/sweepito")
+        ),  # type: ignore[arg-type]
         SimpleNamespace(saved=lambda *args: found),  # type: ignore[arg-type]
         ai,  # type: ignore[arg-type]
         Platforms(database),

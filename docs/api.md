@@ -81,7 +81,7 @@ The post is identified by `brand_id`, `post_type`, `kind`, `name`, `idea_id` and
 | PUT | `/studio/repositories/{repo_id}/ideas/{idea_id}/posted` | Body `IdeaPostedUpdate` (`post_type`, `kind`, `name`, `posted`) | Flag an idea as posted, or clear the flag |
 | GET | `/studio/repositories/{repo_id}/copy` | Query `brand_id*`, `post_type*`, `idea_id*`, `kind`, `name`, `hook_id` | The saved copy |
 | POST | `/studio/repositories/{repo_id}/copy/plan` | Body `CopyRequest` | Plan the copy request |
-| POST | `/studio/repositories/{repo_id}/copy` | Body `CopyRequest` | Ask the AI for slides, caption, alternative opening, alt text and hashtags. Replaces the copy saved before; statements to avoid are listed in `warnings` |
+| POST | `/studio/repositories/{repo_id}/copy` | Body `CopyRequest` | Ask the AI for slides, caption (with the repository URL), alternative opening, alt text and hashtags. Replaces the copy saved before; statements to avoid are listed in `warnings` |
 | PUT | `/studio/repositories/{repo_id}/copy` | Body `CopyEdit` | Replace the saved copy with the user's edits |
 | GET | `/studio/repositories/{repo_id}/design` | Same query as copy | The saved design: per slide template, alignment, picture, accent, icon, image source, plus `logo_box` and `warnings` |
 | POST | `/studio/repositories/{repo_id}/design/plan` | Body `CopyRequest` | Plan the design request |

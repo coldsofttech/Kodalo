@@ -26,6 +26,12 @@ TITLE = "Kodalo"
 VERSION = __version__
 # Window and taskbar icon: public/icon.png is copied into dist by the build. Replace it with yours.
 ICON = UI_DIR / "dist" / "icon.png"
+# Shown under the logo on the loading screen, which runs no scripts, so it is a single line.
+TAG_LINE = "Know your repositories, inside out"
+LOADING_SECONDS = 5.0
+PUBLISHER = "ColdSoft Technologies"
+# Cornea's loading page has no footer yet, so the note is added to the page it renders.
+_NOTE_STYLE = ".note { position: fixed; right: 16px; bottom: 12px; margin: 0; font-size: 12px; }"
 MAX_EXPORT_BYTES = 5_000_000
 
 
@@ -90,6 +96,15 @@ def quiet_connection_resets() -> None:
         logger.addFilter(_ResetFilter())
 
 
+def loading_page(loading: Any, window: Any) -> str:
+    """Return Cornea's loading page with the publisher note at the bottom right."""
+    from cornea.core.window.loading import render_loading
+
+    page: str = render_loading(loading, window)
+    page = page.replace("</style>", f"{_NOTE_STYLE}</style>", 1)
+    return page.replace("</body>", f'<p class="note">{PUBLISHER}</p></body>', 1)
+
+
 def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
     """Build the Cornea shell.
 
@@ -103,7 +118,17 @@ def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
     if sys.platform != "win32":
         raise UiUnavailableError("The UI needs Windows. The CLI and API work on every system.")
     try:
-        from cornea import DEV_CSP, App, Bridge, Process, Security, Shell, Static, Window
+        from cornea import (
+            DEV_CSP,
+            App,
+            Bridge,
+            Loading,
+            Process,
+            Security,
+            Shell,
+            Static,
+            Window,
+        )
     except ImportError as exc:
         raise UiUnavailableError("The UI needs the 'cornea-shell' package.") from exc
 
@@ -115,15 +140,22 @@ def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
     else:
         source = Static(package="kodalo.ui", package_path="ui/dist")
 
+    icon = ICON if ICON.is_file() else None
+    window_config = Window(title=TITLE, size=(1024, 768), icon=icon)
+    loading = Loading(title=TITLE, subtitle=TAG_LINE, icon=icon, min_display=LOADING_SECONDS)
+    loading = Loading(
+        title=TITLE,
+        subtitle=TAG_LINE,
+        icon=icon,
+        min_display=LOADING_SECONDS,
+        html=loading_page(loading, window_config),
+    )
     shell = Shell(
         source,
         routers=[api_router()],
         security=security,
-        window=(
-            Window(title=TITLE, size=(1024, 768), icon=ICON if ICON.is_file() else None)
-            if window
-            else None
-        ),
+        window=window_config if window else None,
+        loading=loading if window else None,
         bridge=Bridge(notifications=True),
         identity=App(id=APP_ID),
     )

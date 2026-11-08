@@ -46,6 +46,7 @@ class Caption:
     opening: str
     body: tuple[str, ...]
     cta: str
+    repo_url: str = ""
 
 
 @dataclass(frozen=True)
@@ -149,6 +150,7 @@ def _caption(value: object) -> Caption:
         _text(data.get("opening"), 200),
         tuple(line for line in kept if line),
         _text(data.get("cta"), 200),
+        _text(data.get("repo_url"), 512),
     )
 
 
@@ -186,7 +188,12 @@ def _post_from_json(payload: str) -> PostCopy:
         data["hook_text"],
         data["format"],
         tuple(Slide(**slide) for slide in data["slides"]),
-        Caption(caption["opening"], tuple(caption["body"]), caption["cta"]),
+        Caption(
+            caption["opening"],
+            tuple(caption["body"]),
+            caption["cta"],
+            caption.get("repo_url", ""),
+        ),
         AltOpening(**data["alt_opening"]),
         tuple(data["hashtags"]),
         tuple(ReviewFlag(**flag) for flag in data["review_flags"]),
@@ -334,7 +341,7 @@ class CopyAssistant:
             hook_text,
             idea.format,
             slides[:1] if idea.format == "single_image" else slides,
-            _caption(data.get("caption")),
+            replace(_caption(data.get("caption")), repo_url=self._repos.get(choice.repo_id).url),
             AltOpening(_text(alt.get("text"), 200), _text(alt.get("hook_id"), 64)),
             self._hashtags(choice.platform, data.get("hashtags")),
             _flags(data.get("review_flags")),

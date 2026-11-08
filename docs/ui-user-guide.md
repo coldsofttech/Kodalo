@@ -20,7 +20,7 @@ This guide walks through every screen of the Kodalo window. The menu on the left
 
 1. **Add a repository.** Point Kodalo at a project and let it read what it does.
 2. **Pick an idea.** Choose a post idea and angle suggested for your project.
-3. **Write the copy.** Edit the headline, slides, caption and hashtags.
+3. **Write the copy.** Edit the headline, slides, caption (including the repository URL) and hashtags.
 4. **Design and share.** Slides use your brand. Post to Instagram or export them.
 
 Before you start, open [Settings](#settings) to connect GitHub, choose an AI provider and, if you want to post, connect Instagram.

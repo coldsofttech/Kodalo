@@ -1662,6 +1662,9 @@ class CaptionModel(BaseModel):
     opening: str = Field(max_length=200)
     body: list[Annotated[str, Field(max_length=300)]] = Field(max_length=8)
     cta: str = Field(max_length=200)
+    repo_url: str = Field(
+        default="", max_length=512, description="The repository address shown in the caption."
+    )
 
 
 class CopyEdit(CopyRequest):
@@ -1737,7 +1740,10 @@ class PostCopyResponse(BaseModel):
             format="carousel" if post.format == "carousel" else "single_image",
             slides=[SlideModel(**asdict(s)) for s in post.slides],
             caption=CaptionModel(
-                opening=post.caption.opening, body=list(post.caption.body), cta=post.caption.cta
+                opening=post.caption.opening,
+                body=list(post.caption.body),
+                cta=post.caption.cta,
+                repo_url=post.caption.repo_url,
             ),
             alt_opening=AltOpeningResponse(
                 text=post.alt_opening.text, hook_id=post.alt_opening.hook_id

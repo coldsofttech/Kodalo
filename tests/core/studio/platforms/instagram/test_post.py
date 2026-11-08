@@ -20,7 +20,12 @@ CHOICE = Choice("instagram", "r1", "feature", "features", "Hooks", "idea-1", "")
 def _copy(slides: int = 3) -> Any:
     return SimpleNamespace(
         slides=[SimpleNamespace(alt_text=f"Alt {n}") for n in range(slides)],
-        caption=SimpleNamespace(opening="Opening", body=("Line one", " "), cta="Read more."),
+        caption=SimpleNamespace(
+            opening="Opening",
+            body=("Line one", " "),
+            cta="Read more.",
+            repo_url="https://github.com/o/r",
+        ),
         hashtags=("#a", "#b"),
     )
 
@@ -107,8 +112,10 @@ def parts(tmp_path: Path) -> SimpleNamespace:
     )
 
 
-def test_the_caption_is_paragraphs_of_opening_body_call_to_action_and_hashtags() -> None:
-    assert caption_of(_copy()) == "Opening\n\nLine one\n\nRead more.\n\n#a #b"
+def test_the_caption_is_paragraphs_of_opening_body_call_to_action_repo_url_hashtags() -> None:
+    assert caption_of(_copy()) == (
+        "Opening\n\nLine one\n\nRead more.\n\nhttps://github.com/o/r\n\n#a #b"
+    )
 
 
 def test_pages_are_stored_in_the_data_folder_for_both_modes(parts: SimpleNamespace) -> None:

@@ -85,7 +85,12 @@ def save_copy(
             assistant.edit(
                 post_choice(repo_id, body, brands),
                 tuple(Slide(**slide.model_dump()) for slide in body.slides),
-                Caption(body.caption.opening, tuple(body.caption.body), body.caption.cta),
+                Caption(
+                    body.caption.opening,
+                    tuple(body.caption.body),
+                    body.caption.cta,
+                    body.caption.repo_url,
+                ),
                 body.alt_opening,
                 tuple(body.hashtags),
             )

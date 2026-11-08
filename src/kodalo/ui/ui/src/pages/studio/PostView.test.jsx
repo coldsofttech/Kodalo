@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import PostView from './PostView.jsx';
 import { typeInto } from '../../testing.js';
 
+const URL = 'https://github.com/o/r';
 const COPY = {
   platform: 'instagram',
   idea_id: 'idea-1',
@@ -21,7 +22,7 @@ const COPY = {
     },
     { role: 'cta', headline: 'Read the docs', body: 'Set it up.', visual_note: '', alt_text: '' },
   ],
-  caption: { opening: 'Opening line', body: ['One', 'Two'], cta: 'Read the docs.' },
+  caption: { opening: 'Opening line', body: ['One', 'Two'], cta: 'Read the docs.', repo_url: URL },
   alt_opening: { text: 'Another opening', hook_id: 'hook-1-2' },
   hashtags: ['#sweepito', '#git'],
   review_flags: [{ type: 'needs_review', text: 'Runs after commits', reason: 'Check it' }],
@@ -62,7 +63,12 @@ describe('PostView', () => {
 
     expect(save).toHaveBeenCalledWith({
       slides: [COPY.slides[0], { ...COPY.slides[1], headline: 'Read the guide' }],
-      caption: { opening: 'Opening line', body: ['One', 'Two'], cta: 'Read the docs.' },
+      caption: {
+        opening: 'Opening line',
+        body: ['One', 'Two'],
+        cta: 'Read the docs.',
+        repo_url: URL,
+      },
       alt_opening: 'Another opening',
       hashtags: ['#sweepito', '#git'],
     });
@@ -75,12 +81,18 @@ describe('PostView', () => {
     await userEvent.click(screen.getByLabelText('Edit caption'));
     expect(screen.getByLabelText('Hashtags')).toHaveValue('#sweepito #git');
     typeInto(screen.getByLabelText('Caption text'), NEW_LINES);
+    expect(screen.getByLabelText('Repo URL')).toHaveValue(URL);
     typeInto(screen.getByLabelText('Hashtags'), '#a, #b');
     await userEvent.click(screen.getByLabelText('Save changes'));
 
     expect(save).toHaveBeenCalledWith({
       slides: COPY.slides,
-      caption: { opening: 'Opening line', body: ['First', 'Second'], cta: 'Read the docs.' },
+      caption: {
+        opening: 'Opening line',
+        body: ['First', 'Second'],
+        cta: 'Read the docs.',
+        repo_url: URL,
+      },
       alt_opening: 'Another opening',
       hashtags: ['#a', '#b'],
     });

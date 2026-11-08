@@ -9,6 +9,7 @@ function draftOf(copy) {
     opening: copy.caption.opening,
     body: copy.caption.body.join('\n'),
     cta: copy.caption.cta,
+    repoUrl: copy.caption.repo_url ?? '',
     alt: copy.alt_opening.text,
     hashtags: copy.hashtags.join(' '),
   };
@@ -59,6 +60,7 @@ export default function PostView({ copy, busy, onSave }) {
           .map((/** @type {string} */ line) => line.trim())
           .filter(Boolean),
         cta: draft.cta,
+        repo_url: draft.repoUrl.trim(),
       },
       alt_opening: draft.alt,
       hashtags: draft.hashtags.split(/[\s,]+/).filter(Boolean),
@@ -173,6 +175,12 @@ export default function PostView({ copy, busy, onSave }) {
                   onChange={(value) => change({ cta: value })}
                 />
                 <TextField
+                  label="Repo URL"
+                  value={draft.repoUrl}
+                  maxLength={512}
+                  onChange={(value) => change({ repoUrl: value })}
+                />
+                <TextField
                   label="Alternative opening"
                   value={draft.alt}
                   maxLength={200}
@@ -193,6 +201,7 @@ export default function PostView({ copy, busy, onSave }) {
                   <p key={line}>{line}</p>
                 ))}
                 {copy.caption.cta ? <p>{copy.caption.cta}</p> : null}
+                {copy.caption.repo_url ? <p>{copy.caption.repo_url}</p> : null}
                 {copy.alt_opening.text ? (
                   <p className="hint">Alternative opening: {copy.alt_opening.text}</p>
                 ) : null}

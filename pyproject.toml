@@ -51,12 +51,12 @@ api = [
 ]
 # The Windows window (src/kodalo/ui).
 ui = [
-  "cornea-shell[notifications]>=0.1.0 ; sys_platform == 'win32'",
+  "cornea-shell[notifications]>=0.1.1 ; sys_platform == 'win32'",
 ]
 dev = [
   { include-group = "api" },
   { include-group = "ui" },
-  "cornea-shell[proxy]>=0.1.0",
+  "cornea-shell[proxy]>=0.1.1",
   "httpx>=0.28.1",
   "mypy>=1.13",
   "pre-commit>=4.0",

@@ -1988,6 +1988,13 @@
             "maxLength": 200,
             "title": "Opening",
             "type": "string"
+          },
+          "repo_url": {
+            "default": "",
+            "description": "The repository address shown in the caption.",
+            "maxLength": 512,
+            "title": "Repo Url",
+            "type": "string"
           }
         },
         "required": [
