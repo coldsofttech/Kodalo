@@ -39,6 +39,8 @@ export default function AboutPage() {
 
   return (
     <section className="about card" aria-labelledby="about-title">
+      <img className="about-logo logo-light" src="/logo-light.svg" alt="" />
+      <img className="about-logo logo-dark" src="/logo-dark.svg" alt="" />
       <h1 id="about-title">About Kodalo</h1>
       {info ? <p className="hint">Version {info.version}</p> : null}
       <p>

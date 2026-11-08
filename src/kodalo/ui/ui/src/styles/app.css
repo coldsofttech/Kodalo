@@ -145,10 +145,44 @@ p {
 }
 
 .nav-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-size: 1.15rem;
   font-weight: 600;
   padding: 0 0.75rem;
   margin-bottom: 1rem;
+}
+
+/* The light logo suits light themes, the dark one dark themes. */
+.nav-logo {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.about-logo {
+  width: 5rem;
+  height: 5rem;
+  margin-bottom: 0.5rem;
+}
+
+.logo-dark,
+:root[data-theme='dark'] .logo-light {
+  display: none;
+}
+
+:root[data-theme='dark'] .logo-dark {
+  display: block;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light'], [data-theme='dark']) .logo-light {
+    display: none;
+  }
+
+  :root:not([data-theme='light'], [data-theme='dark']) .logo-dark {
+    display: block;
+  }
 }
 
 .nav ul,

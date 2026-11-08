@@ -84,7 +84,11 @@ export default function App() {
   return (
     <div className="shell">
       <nav className="nav" aria-label="Main">
-        <p className="nav-title">Kodalo</p>
+        <p className="nav-title">
+          <img className="nav-logo logo-light" src="/logo-light.svg" alt="" />
+          <img className="nav-logo logo-dark" src="/logo-dark.svg" alt="" />
+          Kodalo
+        </p>
         <ul>
           {PAGES.map(([key, label, children]) => (
             <li key={key}>

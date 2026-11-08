@@ -202,9 +202,7 @@ def smoke(products: list[str]) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "products", nargs="*", choices=["cli", "ui"], help="default: all"
-    )
+    parser.add_argument("products", nargs="*", choices=["cli", "ui"], help="default: all")
     parser.add_argument("--build-frontend", action="store_true", help="run npm ci && npm run build")
     parser.add_argument("--smoke", action="store_true", help="run the smoke tests on the builds")
     parser.add_argument("--jobs", type=int, default=os.cpu_count() or 1,
