@@ -284,7 +284,7 @@ def _generate_claude_code(request: GenerateRequest, timeout: int) -> Generation:
                 command += ["--model", request.model]
             # The program is found on PATH, every option is fixed and the model name is checked
             # above; the prompt goes in on stdin, never on the command line.
-            result = subprocess.run(  # noqa: S603  # nosemgrep: subprocess-injection
+            result = subprocess.run(  # noqa: S603  # nosemgrep: python.django.security.injection.command.subprocess-injection.subprocess-injection
                 command,
                 input=prompt,
                 capture_output=True,

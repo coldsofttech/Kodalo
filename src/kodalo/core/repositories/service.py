@@ -1,6 +1,7 @@
 """Read repositories the way the GitHub setting says, and keep what was read in the database."""
 
 import json
+import os
 import re
 from collections.abc import Callable
 from dataclasses import asdict, replace
@@ -260,6 +261,16 @@ def _quote(text: str, needle: str | None) -> str:
     return ""
 
 
+def _stored_file(directory: Path, repo_id: str, extension: str) -> Path:
+    """The file ``<repo_id>.<extension>`` in ``directory``. An id that would leave the folder is
+    treated as an unknown repository."""
+    root = os.path.normpath(directory)
+    full = os.path.normpath(os.path.join(root, f"{repo_id}.{extension}"))
+    if not full.startswith(root + os.sep):
+        raise RepoNotFoundError("No repository has that id.")
+    return Path(full)
+
+
 class RepoService:
     """Repositories kept in the local database."""
 
@@ -324,7 +335,7 @@ class RepoService:
         if self._previews_dir is None:
             return None
         for extension, media_type in (("png", "image/png"), ("jpg", "image/jpeg")):
-            path = self._previews_dir / f"{repo_id}.{extension}"
+            path = _stored_file(self._previews_dir, repo_id, extension)
             if path.is_file():
                 return path, media_type
         return None
@@ -340,7 +351,7 @@ class RepoService:
             ("svg", "image/svg+xml"),
         )
         for extension, media_type in kinds:
-            path = self._icons_dir / f"{repo_id}.{extension}"
+            path = _stored_file(self._icons_dir, repo_id, extension)
             if path.is_file():
                 return path, media_type
         return None
@@ -352,10 +363,10 @@ class RepoService:
         kind = icon_type(data) if data and len(data) <= MAX_ICON_BYTES else None
         if self._icons_dir is not None:
             for extension in ("png", "jpg", "webp", "svg"):
-                (self._icons_dir / f"{repo_id}.{extension}").unlink(missing_ok=True)
+                _stored_file(self._icons_dir, repo_id, extension).unlink(missing_ok=True)
             if data and kind:
                 self._icons_dir.mkdir(parents=True, exist_ok=True)
-                (self._icons_dir / f"{repo_id}.{kind}").write_bytes(data)
+                _stored_file(self._icons_dir, repo_id, kind).write_bytes(data)
             else:
                 kind = None
         else:
@@ -395,7 +406,7 @@ class RepoService:
         if self._previews_dir is None:
             return
         for extension in ("png", "jpg"):
-            (self._previews_dir / f"{repo_id}.{extension}").unlink(missing_ok=True)
+            _stored_file(self._previews_dir, repo_id, extension).unlink(missing_ok=True)
 
     def _save_preview(self, info: RepoInfo) -> None:
         """Keep the owner's social preview, or drop an old one that is gone. Never fails."""
@@ -407,7 +418,7 @@ class RepoService:
             self._forget_preview(info.id)
             if data and kind:
                 self._previews_dir.mkdir(parents=True, exist_ok=True)
-                (self._previews_dir / f"{info.id}.{kind}").write_bytes(data)
+                _stored_file(self._previews_dir, info.id, kind).write_bytes(data)
         except OSError:
             return
 
