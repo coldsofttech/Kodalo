@@ -108,7 +108,7 @@ describe('BrandsPage: editing', () => {
     start();
     typeInto(await field('Text, dark (hex)'), '#12');
 
-    expect(screen.getByText('Use six hex digits, such as #2563eb.')).toBeInTheDocument();
+    expect(await screen.findByText('Use six hex digits, such as #2563eb.')).toBeInTheDocument();
     expect(screen.queryByText('You have unsaved changes.')).not.toBeInTheDocument();
   });
 
