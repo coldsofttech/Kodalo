@@ -22,7 +22,8 @@ desktop.ini
 *.bak
 
 # Claude Code local settings
-.claude/settings.local.json
+.claude/
+CLAUDE.md
 
 
 # Python
