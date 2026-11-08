@@ -4,9 +4,13 @@ from pathlib import Path
 from typing import ClassVar
 
 import pytest
+from sqlalchemy import Engine
 
 from kodalo.api import deps
-from kodalo.core.storage import Database, database_path
+from kodalo.core.storage import database as storage_database
+from kodalo.core.storage import database_path
+
+_real_migrate = storage_database.migrate
 
 
 def pytest_collection_modifyitems(items: list[pytest.Item]) -> None:
@@ -56,16 +60,32 @@ def _migrated_database(tmp_path_factory: pytest.TempPathFactory) -> Path:
     Creating the tables takes a moment on a slow disk (a CI runner), and doing it in every test made
     the first request of each one wait long enough to time out."""
     folder = tmp_path_factory.mktemp("migrated-data")
-    Database.open(database_path(folder)).close()
+    _real_migrate(database_path(folder)).dispose()
     return database_path(folder)
 
 
 @pytest.fixture(autouse=True)
-def _fresh_state(tmp_path: Path, _migrated_database: Path) -> Iterator[None]:
-    """Give every API test its own data folder, with an empty database already in place."""
-    folder = tmp_path / "api-data"
-    folder.mkdir()
-    shutil.copy2(_migrated_database, database_path(folder))
-    deps.configure(folder)
+def _start_from_migrated_database(
+    request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch, _migrated_database: Path
+) -> None:
+    """Let a new database start as a copy of the migrated one, so opening it skips the migration.
+
+    The storage tests keep the real migration, since migrating is what they test."""
+    if "storage" in request.path.parts:
+        return
+
+    def copy_then_migrate(path: Path) -> Engine:
+        if not path.exists():
+            path.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(_migrated_database, path)
+        return _real_migrate(path)
+
+    monkeypatch.setattr(storage_database, "migrate", copy_then_migrate)
+
+
+@pytest.fixture(autouse=True)
+def _fresh_state(tmp_path: Path) -> Iterator[None]:
+    """Give every API test its own empty data folder."""
+    deps.configure(tmp_path / "api-data")
     yield
     deps.configure(None)

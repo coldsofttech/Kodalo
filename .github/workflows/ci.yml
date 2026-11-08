@@ -84,7 +84,7 @@ jobs:
           python-version: "3.13"
       - run: uv sync --locked
       # faulthandler_timeout prints every thread's stack when a test hangs for 30 seconds.
-      - run: uv run pytest -n auto tests/${{ matrix.component }} --no-cov -o faulthandler_timeout=30
+      - run: uv run pytest -n auto tests/${{ matrix.component }} --no-cov --durations=20 -o faulthandler_timeout=30
 
   # The UI's tests need the built frontend and Windows, where Cornea Shell runs.
   integration:
@@ -110,7 +110,7 @@ jobs:
           name: ui-dist
           path: ${{ env.UI_DIR }}/dist/
       - run: uv sync --locked
-      - run: uv run pytest -n auto -m integration tests/${{ matrix.component }} --no-cov -o faulthandler_timeout=30
+      - run: uv run pytest -n auto -m integration tests/${{ matrix.component }} --no-cov --durations=20 -o faulthandler_timeout=30
 
   # Single required status check for the branch ruleset.
   ci:
