@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "id": "python-requirements-dev",
+  "ecosystem": "python",
+  "priority": 10,
+  "files": [
+    "requirements-dev.txt",
+    "requirements_dev.txt",
+    "dev-requirements.txt"
+  ],
+  "format": "lines",
+  "dev_dependencies": [
+    {
+      "regex": "^(?P<value>[A-Za-z0-9][A-Za-z0-9._-]*)"
+    }
+  ]
+}

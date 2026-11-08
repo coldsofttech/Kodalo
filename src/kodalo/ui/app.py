@@ -1,0 +1,188 @@
+"""Wire Cornea Shell to ``kodalo.api`` and ``kodalo.core``. It holds no business logic.
+
+Cornea serves the built frontend, gates every mounted router behind its session cookie and
+registers the native actions. It never prints or exits; the CLI shows errors and picks exit codes.
+"""
+
+import logging
+import sys
+from collections.abc import Callable
+from pathlib import Path
+from typing import TYPE_CHECKING, Any
+
+from fastapi import APIRouter
+
+from kodalo.api.routers import v1
+from kodalo.core import __version__
+
+if TYPE_CHECKING:
+    from cornea import Shell
+
+UI_DIR = Path(__file__).parent / "ui"
+DEV_URL = "http://localhost:5173"
+DEV_COMMAND = "npm run dev"
+APP_ID = "com.kodalo.app"
+TITLE = "Kodalo"
+VERSION = __version__
+# Window and taskbar icon: public/icon.png is copied into dist by the build. Replace it with yours.
+ICON = UI_DIR / "dist" / "icon.png"
+# Shown under the logo on the loading screen, which runs no scripts, so it is a single line.
+TAG_LINE = "Know your repositories, inside out"
+LOADING_SECONDS = 5.0
+PUBLISHER = "ColdSoft Technologies"
+# Cornea's loading page has no footer yet, so the note is added to the page it renders.
+_NOTE_STYLE = ".note { position: fixed; right: 16px; bottom: 12px; margin: 0; font-size: 12px; }"
+MAX_EXPORT_BYTES = 5_000_000
+
+
+class UiUnavailableError(RuntimeError):
+    """Raised when the window cannot be used on this system."""
+
+
+def api_router() -> APIRouter:
+    """Return the ``kodalo.api`` routes as Cornea mounts them: ``/api/v1/...``.
+
+    Cornea adds the ``/api`` prefix itself, and its session gate has already authenticated the
+    request before it reaches a route.
+    """
+    router = APIRouter(prefix="/v1")
+    router.include_router(v1.router)
+    return router
+
+
+def app_info() -> dict[str, str]:
+    """Native action ``app_info``: what the page may ask the app about itself."""
+    return {"name": TITLE, "version": VERSION}
+
+
+def write_json_file(path: str, text: str) -> None:
+    """Native action ``write_json_file``: save an export where the user chose in the save dialog.
+
+    Raises:
+        ValueError: If the path is not a local ``.json`` file in an existing folder, or the text
+            is too large.
+    """
+    if not path or "\0" in path or path.startswith(("\\\\", "//")):
+        raise ValueError("Choose a file on this computer.")
+    target = Path(path)
+    if target.suffix.lower() != ".json" or not target.parent.is_dir():
+        raise ValueError("Exports are saved as .json files in an existing folder.")
+    data = text.encode("utf-8")
+    if len(data) > MAX_EXPORT_BYTES:
+        raise ValueError("That export is too large to save.")
+    target.write_bytes(data)
+
+
+_WINDOWS_CONNECTION_RESET = 10054
+
+
+class _ResetFilter(logging.Filter):
+    """Drop Python's log of a connection the other side closed abruptly on Windows. The window
+    cancels requests when it reloads a picture or a frame, which is normal and harmless, but
+    asyncio's Windows event loop reports it as an error while closing the socket."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        error = record.exc_info[1] if record.exc_info else None
+        return not (
+            isinstance(error, ConnectionResetError)
+            and getattr(error, "winerror", None) == _WINDOWS_CONNECTION_RESET
+        )
+
+
+def quiet_connection_resets() -> None:
+    """Keep the harmless "connection forcibly closed" messages out of the console."""
+    logger = logging.getLogger("asyncio")
+    if not any(isinstance(f, _ResetFilter) for f in logger.filters):
+        logger.addFilter(_ResetFilter())
+
+
+def loading_page(loading: Any, window: Any) -> str:
+    """Return Cornea's loading page with the publisher note at the bottom right."""
+    from cornea.core.window.loading import render_loading
+
+    page: str = render_loading(loading, window)
+    page = page.replace("</style>", f"{_NOTE_STYLE}</style>", 1)
+    return page.replace("</body>", f'<p class="note">{PUBLISHER}</p></body>', 1)
+
+
+def build_shell(*, dev: bool = False, window: bool = True) -> "Shell":
+    """Build the Cornea shell.
+
+    Args:
+        dev: Start Vite (``npm run dev``) and show it through Cornea for hot reload.
+        window: Open a native window. ``False`` only serves, so a browser can be used.
+
+    Raises:
+        UiUnavailableError: If the UI needs Windows, or Cornea is not installed.
+    """
+    if sys.platform != "win32":
+        raise UiUnavailableError("The UI needs Windows. The CLI and API work on every system.")
+    try:
+        from cornea import (
+            DEV_CSP,
+            App,
+            Bridge,
+            Loading,
+            Process,
+            Security,
+            Shell,
+            Static,
+            Window,
+        )
+    except ImportError as exc:
+        raise UiUnavailableError("The UI needs the 'cornea-shell' package.") from exc
+
+    source: Any
+    security = Security()
+    if dev:
+        source = Process(DEV_COMMAND, url=DEV_URL, cwd=UI_DIR, mode="proxy")
+        security = Security(csp=DEV_CSP)
+    else:
+        source = Static(package="kodalo.ui", package_path="ui/dist")
+
+    icon = ICON if ICON.is_file() else None
+    window_config = Window(title=TITLE, size=(1024, 768), icon=icon)
+    loading = Loading(title=TITLE, subtitle=TAG_LINE, icon=icon, min_display=LOADING_SECONDS)
+    loading = Loading(
+        title=TITLE,
+        subtitle=TAG_LINE,
+        icon=icon,
+        min_display=LOADING_SECONDS,
+        html=loading_page(loading, window_config),
+    )
+    shell = Shell(
+        source,
+        routers=[api_router()],
+        security=security,
+        window=window_config if window else None,
+        loading=loading if window else None,
+        bridge=Bridge(notifications=True),
+        identity=App(id=APP_ID),
+    )
+    shell.action("app_info")(app_info)
+    shell.action("write_json_file")(write_json_file)
+    return shell
+
+
+def run_ui(
+    *, dev: bool = False, window: bool = True, on_ready: Callable[[str], None] | None = None
+) -> None:
+    """Build the shell and run it until the window closes (or, without a window, until stopped).
+
+    Args:
+        dev: See ``build_shell``.
+        window: See ``build_shell``.
+        on_ready: Called once with a JSON line holding the address, which carries the one-time
+            start-up token. Use it to show the address when there is no window.
+
+    Raises:
+        UiUnavailableError: If the UI needs Windows, or Cornea is not installed.
+    """
+    quiet_connection_resets()
+    shell = build_shell(dev=dev, window=window)
+    if on_ready is None:
+        shell.run()
+        return
+    from cornea import ready_line
+
+    shell.run(on_ready=lambda ready: on_ready(ready_line(ready)))

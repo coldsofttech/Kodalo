@@ -44,15 +44,16 @@ class ProjectInfo:
     api_package: str
     version: str
     title: str
+    publisher: str  # [tool.installer] publisher, else the first author
 
     @property
     def ui_dir(self) -> Path:
-        return self.root / "src" / self.ui_package / "ui"
+        return self.root / "src" / Path(*self.ui_package.split(".")) / "ui"
 
     @property
     def api_env_prefix(self) -> str:
         """Prefix of the API's settings: the package name upper-cased (KODALO_API_)."""
-        return f"{self.api_package.upper()}_"
+        return f"{self.api_package.upper().replace('.', '_')}_"
 
     def values(self) -> dict[str, str]:
         """The values workflows use, as environment variables."""
@@ -93,20 +94,27 @@ def load(root: Path = ROOT) -> ProjectInfo:
         ) from None
 
     version_file = root / data["tool"]["hatch"]["version"]["path"]
-    ui_package = ui_target.split(":")[0].split(".")[0]
+    # Packages are dotted when they sit inside one top-level package (kodalo.ui).
+    ui_package = ui_target.split(":")[0].rsplit(".", 1)[0]
+    cli_module = cli_target.split(":")[0]
     return ProjectInfo(
         root=root,
         project=project,
         cli_script=cli,
         ui_script=ui,
-        cli_module=cli_target.split(":")[0],
+        cli_module=cli_module,
         entry_points={cli: cli_target, ui: ui_target},
-        core_package=version_file.parent.name,
-        cli_package=cli_target.split(":")[0].split(".")[0],
+        core_package=".".join(version_file.parent.relative_to(root / "src").parts),
+        cli_package=cli_module.rsplit(".", 1)[0],
         ui_package=ui_package,
         api_package=api,
+        publisher=settings.get("publisher") or (project.get("authors") or [{}])[0].get("name", ""),
         version=_read(version_file, r'^__version__\s*=\s*"([^"]+)"', "__version__"),
-        title=_read(root / "src" / ui_package / "app.py", r'^TITLE\s*=\s*"([^"]+)"', "TITLE"),
+        title=_read(
+            root / "src" / Path(*ui_package.split(".")) / "app.py",
+            r'^TITLE\s*=\s*"([^"]+)"',
+            "TITLE",
+        ),
     )
 
 

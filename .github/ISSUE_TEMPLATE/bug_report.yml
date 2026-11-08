@@ -7,7 +7,7 @@ body:
     attributes:
       label: Which part is affected?
       options:
-        - Command line (kodalo-cli)
+        - Command line (kodalo)
         - API
         - UI window (kodalo-ui)
         - Not sure
@@ -33,14 +33,26 @@ body:
     id: version
     attributes:
       label: Version
-      description: Release or commit you are using.
+      description: Release (from `kodalo --version`) or commit you are using.
+  - type: dropdown
+    id: install
+    attributes:
+      label: How did you install it?
+      options:
+        - Setup (installer)
+        - Built from source
+        - Not sure
+    validations:
+      required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Operating system and version, Python version, and how you installed it. For the UI window, also say if the Microsoft Edge WebView2 runtime is installed.
+      description: Windows version. For the UI window, also say if the Microsoft Edge WebView2 runtime is installed.
       placeholder: |
-        Windows 11, Python 3.13, installed with uv tool install
+        Windows 11 23H2, WebView2 runtime installed
+    validations:
+      required: true
   - type: textarea
     id: logs
     attributes:

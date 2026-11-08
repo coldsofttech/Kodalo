@@ -1,8 +1,9 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
 
-import kodalo_package
+import kodalo.core
 
 
 def _run(*command: str) -> subprocess.CompletedProcess[str]:
@@ -10,26 +11,26 @@ def _run(*command: str) -> subprocess.CompletedProcess[str]:
 
 
 def test_module_entrypoint() -> None:
-    result = _run(sys.executable, "-m", "kodalo_cli", "--version")
+    result = _run(sys.executable, "-m", "kodalo.cli", "--version")
 
     assert result.returncode == 0
-    assert kodalo_package.__version__ in result.stdout
+    assert kodalo.core.__version__ in result.stdout
 
 
-def test_console_script() -> None:
-    script = Path(sys.executable).parent / (
-        "kodalo-cli.exe" if sys.platform == "win32" else "kodalo-cli"
+def test_console_script(tmp_path: Path) -> None:
+    script = Path(sys.executable).parent / ("kodalo.exe" if sys.platform == "win32" else "kodalo")
+
+    result = _run(str(script), "--data-dir", str(tmp_path), "doctor", "--json")
+
+    assert result.returncode == 0
+    assert json.loads(result.stdout)["healthy"] is True
+
+
+def test_errors_go_to_stderr(tmp_path: Path) -> None:
+    result = _run(
+        sys.executable, "-m", "kodalo.cli", "--data-dir", str(tmp_path), "brand", "show", "x"
     )
 
-    result = _run(str(script), "hello", "Ada")
-
-    assert result.returncode == 0
-    assert "Hello, Ada!" in result.stdout
-
-
-def test_errors_go_to_stderr() -> None:
-    result = _run(sys.executable, "-m", "kodalo_cli", "hello", " ")
-
     assert result.returncode == 1
-    assert "must not be empty" in result.stderr
+    assert "No brand named" in result.stderr
     assert result.stdout == ""

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "flutter",
+      "name": "Flutter",
+      "category": "mobile",
+      "dependencies": [
+        "flutter"
+      ],
+      "ecosystems": [
+        "dart"
+      ]
+    },
+    {
+      "id": "vapor",
+      "name": "Vapor",
+      "category": "web",
+      "dependencies": [
+        "vapor"
+      ],
+      "ecosystems": [
+        "swift"
+      ]
+    },
+    {
+      "id": "xcode",
+      "name": "Xcode project",
+      "category": "mobile",
+      "files": [
+        "*.xcodeproj",
+        "*.xcworkspace"
+      ]
+    },
+    {
+      "id": "cocoapods",
+      "name": "CocoaPods",
+      "category": "build",
+      "files": [
+        "Podfile"
+      ]
+    },
+    {
+      "id": "phoenix",
+      "name": "Phoenix",
+      "category": "web",
+      "dependencies": [
+        "phoenix"
+      ],
+      "ecosystems": [
+        "elixir"
+      ]
+    },
+    {
+      "id": "qt",
+      "name": "Qt",
+      "category": "desktop",
+      "files": [
+        "*.pro"
+      ]
+    },
+    {
+      "id": "googletest",
+      "name": "GoogleTest",
+      "category": "testing",
+      "dependencies": [
+        "gtest",
+        "googletest"
+      ],
+      "ecosystems": [
+        "cpp"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "id": "python-pipfile",
+  "ecosystem": "python",
+  "files": [
+    "Pipfile"
+  ],
+  "lockfiles": [
+    "Pipfile.lock"
+  ],
+  "format": "toml",
+  "dependencies": [
+    {
+      "path": "packages",
+      "shape": "keys"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "path": "dev-packages",
+      "shape": "keys"
+    }
+  ]
+}

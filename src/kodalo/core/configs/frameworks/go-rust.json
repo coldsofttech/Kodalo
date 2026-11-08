@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "gin",
+      "name": "Gin",
+      "category": "web",
+      "dependencies": [
+        "github.com/gin-gonic/gin"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "echo",
+      "name": "Echo",
+      "category": "web",
+      "dependencies": [
+        "github.com/labstack/echo*"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "fiber",
+      "name": "Fiber",
+      "category": "web",
+      "dependencies": [
+        "github.com/gofiber/fiber*"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "chi",
+      "name": "chi",
+      "category": "web",
+      "dependencies": [
+        "github.com/go-chi/chi*"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "cobra",
+      "name": "Cobra",
+      "category": "cli",
+      "dependencies": [
+        "github.com/spf13/cobra"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "bubbletea",
+      "name": "Bubble Tea",
+      "category": "cli",
+      "dependencies": [
+        "github.com/charmbracelet/bubbletea"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "gorm",
+      "name": "GORM",
+      "category": "data",
+      "dependencies": [
+        "gorm.io/gorm"
+      ],
+      "ecosystems": [
+        "go"
+      ]
+    },
+    {
+      "id": "actix",
+      "name": "Actix Web",
+      "category": "web",
+      "dependencies": [
+        "actix-web"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "axum",
+      "name": "Axum",
+      "category": "web",
+      "dependencies": [
+        "axum"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "rocket",
+      "name": "Rocket",
+      "category": "web",
+      "dependencies": [
+        "rocket"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "tokio",
+      "name": "Tokio",
+      "category": "other",
+      "dependencies": [
+        "tokio"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "clap",
+      "name": "clap",
+      "category": "cli",
+      "dependencies": [
+        "clap"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "ratatui",
+      "name": "Ratatui",
+      "category": "cli",
+      "dependencies": [
+        "ratatui"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "tauri-rust",
+      "name": "Tauri",
+      "category": "desktop",
+      "dependencies": [
+        "tauri"
+      ],
+      "ecosystems": [
+        "rust"
+      ],
+      "files": [
+        "tauri.conf.json"
+      ]
+    },
+    {
+      "id": "bevy",
+      "name": "Bevy",
+      "category": "other",
+      "dependencies": [
+        "bevy"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "leptos",
+      "name": "Leptos",
+      "category": "ui",
+      "dependencies": [
+        "leptos"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    },
+    {
+      "id": "yew",
+      "name": "Yew",
+      "category": "ui",
+      "dependencies": [
+        "yew"
+      ],
+      "ecosystems": [
+        "rust"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "swift-package",
+  "ecosystem": "swift",
+  "files": [
+    "Package.swift"
+  ],
+  "lockfiles": [
+    "Package.resolved"
+  ],
+  "format": "lines",
+  "name": [
+    "Package\\(\\s*name:\\s*\\\"(?P<value>[^\\\"]+)\\\""
+  ],
+  "dependencies": [
+    {
+      "regex": "\\.package\\(\\s*url:\\s*\\\"[^\\\"]*/(?P<value>[^/\\\"]+?)(?:\\.git)?\\\""
+    }
+  ]
+}

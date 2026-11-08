@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
-"""Build the installers: PyInstaller folders, then NSIS setups (Windows) or deb and rpm (Linux).
+"""Build the installers: PyInstaller folders, then NSIS setups (Windows only).
 
 Everything comes from the project's own metadata (installer/projectinfo.py), so renaming the
 project needs no edit here: names from [project.scripts] and [tool.installer], version from
 ``__version__``, title from ``TITLE`` in the window's app module, description, author, homepage and
-license from [project] in pyproject.toml, icon from the window's ui/public/icon.png. Tool versions
+license from [project] in pyproject.toml, icon and setup art from brand/. Tool versions
 are pinned in installer/tools.toml.
 
 Signing is off by default. Set SIGN_COMMAND to a command that signs one file, with {file} where
 its path goes (for example a signtool or SignPath call); the executables and then each setup.exe
 are signed. Nothing in this script is tied to one provider.
 
-Products:  cli  the command line (Windows setup, Linux deb and rpm)
+Products:  cli  the command line (Windows setup and portable zip)
            ui   the window together with the command line (Windows setup only)
 
 Usage:  uv sync --group installer
@@ -22,11 +22,9 @@ The installers are written to dist/installer/. See docs/packaging.md for the det
 import argparse
 import functools
 import os
-import platform
 import re
 import shlex
 import shutil
-import stat
 import subprocess
 import sys
 from collections.abc import Callable
@@ -46,9 +44,7 @@ WORK = ROOT / "build" / "installer-work"
 OUT = ROOT / "dist" / "installer"
 SPECS = ROOT / "installer" / "pyinstaller"
 NSIS_DIR = ROOT / "installer" / "windows" / "nsis"
-NFPM_CONFIG = ROOT / "installer" / "linux" / "nfpm.yaml"
 WINDOWS = sys.platform == "win32"
-LINUX = sys.platform.startswith("linux")
 T = TypeVar("T")
 
 
@@ -79,17 +75,12 @@ def run(command: list[str], *, env: dict[str, str] | None = None, cwd: Path = RO
 def run_parallel(tasks: list[Callable[[], T]], jobs: int) -> list[T]:
     """Run independent ``tasks`` on up to ``jobs`` threads; results keep the order of ``tasks``.
 
-    The work is in subprocesses (PyInstaller, makensis, nfpm), so threads are enough. The first
+    The work is in subprocesses (PyInstaller, makensis), so threads are enough. The first
     failure is raised once the others have finished.
     """
     with ThreadPoolExecutor(max_workers=max(1, min(jobs, len(tasks) or 1))) as pool:
         futures = [pool.submit(task) for task in tasks]
         return [future.result() for future in futures]
-
-
-def author(meta: Meta) -> dict[str, str]:
-    authors = meta.project.get("authors") or [{}]
-    return dict(authors[0])  # type: ignore[index, call-overload]
 
 
 # ---- PyInstaller -------------------------------------------------------------------------------
@@ -120,15 +111,19 @@ def freeze(product: str) -> Path:
 
 # ---- Windows: NSIS -----------------------------------------------------------------------------
 @functools.cache
-def make_icon() -> Path:
-    """The installer icon: the same PNG the window uses, converted to .ico."""
-    from PIL import Image
+def brand_icon() -> Path:
+    """The installer icon: the .ico in brand/light (the same one the executables carry)."""
+    icons = sorted((ROOT / "brand" / "light").glob("*.ico"))
+    if not icons:
+        raise SystemExit("No .ico found in brand/light.")
+    return icons[0]
 
-    icon = WORK / "icon.ico"
-    icon.parent.mkdir(parents=True, exist_ok=True)
-    with Image.open(UI_DIR / "public" / "icon.png") as image:
-        image.save(icon, sizes=[(16, 16), (32, 32), (48, 48), (64, 64), (128, 128), (256, 256)])
-    return icon
+
+def brand_art() -> dict[str, str]:
+    """The setup's header and welcome bitmaps from brand/dark/nsis, when they exist."""
+    art = ROOT / "brand" / "dark" / "nsis"
+    names = {"HEADER_IMAGE": "header.bmp", "WELCOME_IMAGE": "welcome.bmp"}
+    return {key: str(art / name) for key, name in names.items() if (art / name).is_file()}
 
 
 def sign(files: list[Path]) -> None:
@@ -165,19 +160,22 @@ def numeric_version(version: str) -> str:
 def package_exe(product: str, folder: Path) -> Path:
     """Build the NSIS setup for one product."""
     OUT.mkdir(parents=True, exist_ok=True)
-    name = META.cli if product == "cli" else META.ui
     sign(sorted(folder.glob("*.exe")))
-    setup = OUT / f"{name}-{META.version}-setup.exe"
+    # Setup names: <cli>-cli-<version>.setup.exe (command line), <cli>-<version>.setup.exe (window).
+    stem = f"{META.cli}-cli" if product == "cli" else META.cli
+    setup = OUT / f"{stem}-{META.version}.setup.exe"
     urls = META.project.get("urls") or {}
     flags = {
         "APP_NAME": META.cli_title if product == "cli" else META.title,
+        "FOLDER_NAME": META.title,
         "APP_VERSION": META.version,
         "APP_VERSION_NUMERIC": numeric_version(META.version),
         "SOURCE_DIR": str(folder),
         "OUT_FILE": str(setup),
-        "ICON_FILE": str(make_icon()),
+        "ICON_FILE": str(brand_icon()),
+        **brand_art(),
         "LICENSE_FILE": str(ROOT / "LICENSE"),
-        "PUBLISHER": author(META).get("name", ""),
+        "PUBLISHER": INFO.publisher,
         "URL": str(urls.get("Homepage", "")),  # type: ignore[attr-defined]
     }
     command = [find_makensis(), "/V2"]
@@ -194,58 +192,6 @@ def package_zip(folder: Path) -> Path:
     return Path(shutil.make_archive(str(target), "zip", root_dir=folder))
 
 
-# ---- Linux: nfpm -------------------------------------------------------------------------------
-def normalise_modes(folder: Path) -> None:
-    """Folders 755, files 644, and 755 for anything executable, whatever the build umask was."""
-    for path in [folder, *folder.rglob("*")]:
-        if path.is_symlink():
-            continue
-        if path.is_dir() or path.stat().st_mode & stat.S_IXUSR or ".so" in path.name:
-            path.chmod(0o755)
-        else:
-            path.chmod(0o644)
-
-
-def package_linux(folder: Path, formats: list[str], jobs: int = 1) -> list[Path]:
-    """Build the deb and rpm packages of the command line."""
-    normalise_modes(folder)
-    OUT.mkdir(parents=True, exist_ok=True)
-    machine = platform.machine().lower()
-    who = author(META)
-    maintainer = who.get("name", "")
-    if who.get("email"):
-        maintainer = f"{maintainer} <{who['email']}>"
-    urls = META.project.get("urls") or {}
-    env = {
-        **os.environ,
-        "PKG_NAME": META.cli,
-        "PKG_VERSION": META.version,
-        "PKG_ARCH": {"x86_64": "amd64", "amd64": "amd64", "aarch64": "arm64"}.get(machine, machine),
-        "PKG_DESCRIPTION": str(META.project.get("description", META.cli)),
-        "PKG_MAINTAINER": maintainer,
-        "PKG_HOMEPAGE": str(urls.get("Homepage", "")),  # type: ignore[attr-defined]
-        "PKG_LICENSE": str(META.project.get("license", "")),
-        "PKG_SOURCE_DIR": str(folder),
-        "PKG_LICENSE_FILE": str(ROOT / "LICENSE"),
-    }
-    nfpm = shlex.split(os.environ.get("NFPM", "nfpm"))
-    if shutil.which(nfpm[0]) is None:
-        raise SystemExit(
-            "nfpm not found. Install it (version in installer/tools.toml) or set NFPM."
-        )
-    before = set(OUT.iterdir())
-
-    def package(packager: str) -> None:
-        run(
-            [*nfpm, "package", "--config", str(NFPM_CONFIG), "--packager", packager,
-             "--target", str(OUT)],
-            env=env,
-        )  # fmt: skip
-
-    run_parallel([functools.partial(package, packager) for packager in formats], jobs)
-    return sorted(set(OUT.iterdir()) - before)
-
-
 # ---- smoke test --------------------------------------------------------------------------------
 def smoke(products: list[str]) -> None:
     """Start each built executable and check it answers (the test_frozen_*.py integration tests)."""
@@ -256,25 +202,36 @@ def smoke(products: list[str]) -> None:
          *tests])  # fmt: skip
 
 
+def sync(products: list[str]) -> None:
+    """Install the dependency groups the chosen products need, keeping what is already there."""
+    uv = shutil.which("uv")
+    if uv is None:
+        raise SystemExit("--sync needs uv on PATH.")
+    groups = ["installer", *(["ui", "api"] if "ui" in products else [])]
+    run([uv, "sync", "--inexact", *(arg for g in groups for arg in ("--group", g))])
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument(
-        "products", nargs="*", choices=["cli", "ui"], help="default: all for this OS"
-    )
+    # No choices= here: argparse rejects the empty list that nargs="*" yields when none is given.
+    parser.add_argument("products", nargs="*", metavar="{cli,ui}", help="default: all")
     parser.add_argument("--build-frontend", action="store_true", help="run npm ci && npm run build")
+    parser.add_argument("--sync", action="store_true",
+                        help="uv sync the installer, ui and api groups first")  # fmt: skip
     parser.add_argument("--smoke", action="store_true", help="run the smoke tests on the builds")
-    parser.add_argument("--formats", nargs="+", default=["deb", "rpm"], choices=["deb", "rpm"],
-                        help="Linux package formats")  # fmt: skip
     parser.add_argument("--jobs", type=int, default=os.cpu_count() or 1,
                         help="builds to run at once (1 = one after the other)")  # fmt: skip
     args = parser.parse_args()
 
-    if not (WINDOWS or LINUX):
-        raise SystemExit("Installers are built on Windows (setup.exe) and Linux (deb, rpm) only.")
-    products = args.products or (["cli", "ui"] if WINDOWS else ["cli"])
-    if "ui" in products and not WINDOWS:
-        raise SystemExit("The UI is Windows only.")
+    if not WINDOWS:
+        raise SystemExit("Installers are built on Windows only.")
+    unknown = sorted(set(args.products) - {"cli", "ui"})
+    if unknown:
+        parser.error(f"invalid product: {', '.join(unknown)} (choose from 'cli', 'ui')")
+    products = args.products or ["cli", "ui"]
 
+    if args.sync:
+        sync(products)
     built: list[Path] = []
     if "ui" in products and args.build_frontend:
         build_frontend()
@@ -285,16 +242,12 @@ def main() -> None:
             strict=True,
         )
     )
-    if WINDOWS:
-        make_icon()  # once, before the setups are built side by side
-        tasks: list[Callable[[], Path]] = [
-            functools.partial(package_exe, p, folders[p]) for p in products
-        ]
-        if "cli" in products:
-            tasks.append(functools.partial(package_zip, folders["cli"]))
-        built.extend(run_parallel(tasks, args.jobs))
-    else:
-        built.extend(package_linux(folders["cli"], args.formats, args.jobs))
+    tasks: list[Callable[[], Path]] = [
+        functools.partial(package_exe, p, folders[p]) for p in products
+    ]
+    if "cli" in products:
+        tasks.append(functools.partial(package_zip, folders["cli"]))
+    built.extend(run_parallel(tasks, args.jobs))
     if args.smoke:
         smoke(products)
     print("\nBuilt:")

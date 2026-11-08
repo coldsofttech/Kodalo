@@ -44,6 +44,9 @@ These apply on top of the rules above.
 
 9. **Layout**: source lives in `src/<package>/`, tests in `tests/`. Keep the package typed
    (`py.typed`). The version lives only in `__version__` in the package `__init__.py`.
+   All AI prompts and skill files live in `src/kodalo/core/ai/prompts/<area>/` (for example
+   `prompts/repo/`), never next to the feature that uses them; load them with
+   `importlib.resources` from `kodalo.core.ai`.
 
 10. **Style**: Ruff handles lint and formatting (line length 100); mypy runs in strict mode, so add
     type hints to all new code. Target Python 3.11+ and don't use syntax or APIs newer than the
@@ -101,8 +104,8 @@ These apply to `src/kodalo_api/`, on top of the rules above.
 18. **Dependencies and settings**: use `Annotated[..., Depends(...)]` for settings, auth and shared
     objects such as the store, and add no new global state; tests reset the cached ones in
     `tests/conftest.py`. Add settings to `config.py` with the `KODALO_API_` prefix, read them
-    through `get_settings()` and never `os.environ` elsewhere, and document each in `.env.example`
-    and `docs/api.md`.
+    through `get_settings()` and never `os.environ` elsewhere, and document each in
+    `docs/api.md`.
 
 19. **Contract, logging and tests**: breaking changes go in a new `/api/v2` router. Log with the
     `logging` module (JSON, with the request ID), never `print`, and never log keys or request
@@ -130,6 +133,10 @@ These apply to `src/kodalo_ui/` and its frontend in `src/kodalo_ui/ui/`, on top 
     `npm run lint`, `npm test` and `npm run build`, scoped to that folder. ESLint and Prettier
     (`.prettierrc.json`) decide formatting; do not hand-format or disable a rule without a comment
     saying why.
+    Icons come from Bootstrap Icons (`bootstrap-icons`, a devDependency imported in
+    `styles/fonts.css`): use `<i className="bi bi-..." aria-hidden="true" />` for icon-only controls,
+    and give the control a `label` (accessible name) and a `title` (tooltip) with the action's text.
+    No other icon set and no hand-drawn SVG icons.
 
 23. **Code and Python access**: function components and hooks only, in `.jsx`; plain `.js` for
     non-component modules. No class components and no TypeScript; use JSDoc types where they help,
@@ -177,15 +184,10 @@ These apply to `installer/`, `scripts/build_installer.py`, `scripts/update_manif
     after the first release. PATH edits go through `path.ps1`, never NSIS string functions, which
     cut long values.
 
-29. **Linux packages**: `installer/linux/nfpm.yaml` builds the `.deb` and `.rpm` of the command line
-    only, installed under `/usr/lib/<name>/` with a `/usr/bin` symlink. Values arrive as `PKG_*`
-    environment variables from `scripts/build_installer.py`, which also sets file modes. Packages
-    never touch a user's home folder.
-
-30. **Releases and signing**: tool versions (NSIS, nfpm) are pinned in `installer/tools.toml` and
-    PyInstaller in `uv.lock`; nothing else is installed unpinned. Signing is off by default and
-    provider-neutral (`SIGN_COMMAND` with `{file}`). Homebrew, Scoop and winget updates are pull
-    requests behind repository variables, never direct pushes. Update `docs/packaging.md` and
-    `docs/releasing.md` whenever installer files, `build.yml` or `release.yml` change.
+29. **Releases**: tool versions (NSIS) are pinned in `installer/tools.toml` and PyInstaller in
+    `uv.lock`; nothing else is installed unpinned. A release is a GitHub release that
+    `release.yml` turns into the Windows installers and a `SHA256SUMS.txt` on that release;
+    nothing is published to PyPI or a package manager, and the installers are not signed. Update
+    `docs/packaging.md` whenever installer files, `build.yml` or `release.yml` change.
 
 <!-- markdownlint-enable MD029 -->

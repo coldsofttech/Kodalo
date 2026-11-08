@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "tools": [
+    {
+      "id": "pytest",
+      "name": "pytest",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pytest"
+      ],
+      "files": [
+        "pytest.ini",
+        "conftest.py"
+      ]
+    },
+    {
+      "id": "coverage",
+      "name": "coverage.py",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "coverage",
+        "pytest-cov"
+      ],
+      "files": [
+        ".coveragerc"
+      ]
+    },
+    {
+      "id": "jest",
+      "name": "Jest",
+      "category": "test",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "jest"
+      ],
+      "files": [
+        "jest.config.*"
+      ]
+    },
+    {
+      "id": "vitest",
+      "name": "Vitest",
+      "category": "test",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "vitest"
+      ],
+      "files": [
+        "vitest.config.*"
+      ]
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "category": "test",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "@playwright/test",
+        "playwright"
+      ],
+      "files": [
+        "playwright.config.*"
+      ]
+    },
+    {
+      "id": "cypress",
+      "name": "Cypress",
+      "category": "test",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "cypress"
+      ],
+      "files": [
+        "cypress.config.*"
+      ]
+    },
+    {
+      "id": "mocha",
+      "name": "Mocha",
+      "category": "test",
+      "ecosystems": [
+        "js"
+      ],
+      "dependencies": [
+        "mocha"
+      ],
+      "files": [
+        ".mocharc.*"
+      ]
+    },
+    {
+      "id": "schemathesis",
+      "name": "Schemathesis",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "schemathesis"
+      ]
+    },
+    {
+      "id": "junit",
+      "name": "JUnit",
+      "category": "test",
+      "ecosystems": [
+        "jvm"
+      ],
+      "dependencies": [
+        "junit*",
+        "org.junit*"
+      ]
+    },
+    {
+      "id": "rspec",
+      "name": "RSpec",
+      "category": "test",
+      "ecosystems": [
+        "ruby"
+      ],
+      "dependencies": [
+        "rspec"
+      ],
+      "files": [
+        ".rspec"
+      ]
+    },
+    {
+      "id": "phpunit",
+      "name": "PHPUnit",
+      "category": "test",
+      "ecosystems": [
+        "php"
+      ],
+      "dependencies": [
+        "phpunit/phpunit"
+      ],
+      "files": [
+        "phpunit.xml",
+        "phpunit.xml.dist"
+      ]
+    },
+    {
+      "id": "pytest-xdist",
+      "name": "pytest-xdist",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pytest-xdist"
+      ]
+    },
+    {
+      "id": "pytest-asyncio",
+      "name": "pytest-asyncio",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pytest-asyncio"
+      ]
+    },
+    {
+      "id": "pytest-mock",
+      "name": "pytest-mock",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "pytest-mock"
+      ]
+    },
+    {
+      "id": "hypothesis",
+      "name": "Hypothesis",
+      "category": "test",
+      "ecosystems": [
+        "python"
+      ],
+      "dependencies": [
+        "hypothesis"
+      ]
+    }
+  ]
+}

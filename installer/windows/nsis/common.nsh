@@ -3,18 +3,21 @@
 ; A product file defines what is specific to it, then includes this file:
 ;
 ;   GUID          stable id of the product (upgrades replace an earlier install), "{...}"
+;   INSTALL_SUBDIR  the product's folder under <publisher>\<name>, e.g. "CLI" or "UI"
 ;   MAIN_EXE      the program the Start Menu shortcut starts, e.g. "kodalo-ui.exe"
-;   EXTRA_EXE     optional second program shipped in the same folder, e.g. "kodalo-cli.exe"
+;   EXTRA_EXE     optional second program shipped in the same folder, e.g. "kodalo.exe"
 ;   HAS_PATH      optional: offer to add the install folder to PATH (command line product)
 ;   HAS_DESKTOP   optional: offer a desktop shortcut and "run now" (window product)
 ;
 ; scripts/build_installer.py passes the rest, from pyproject.toml and the code, with /D:
 ;
-;   APP_NAME      product name; also the Start Menu folder and the default install folder
+;   APP_NAME      product name; also the default shortcut names
 ;   APP_VERSION   e.g. 0.1.0 (APP_VERSION_NUMERIC "0.1.0.0" is derived if not given)
-;   SOURCE_DIR    the PyInstaller folder to install (build/installer/kodalo-cli)
-;   OUT_FILE      the installer to write (e.g. dist/kodalo-cli-0.1.0-setup.exe)
+;   SOURCE_DIR    the PyInstaller folder to install (build/installer/kodalo)
+;   OUT_FILE      the installer to write (e.g. dist/kodalo-cli-0.1.0.setup.exe)
 ;   PUBLISHER, URL, ICON_FILE (.ico), LICENSE_FILE   optional
+;   FOLDER_NAME   optional: Start Menu and install folder name shared by the products (default: APP_NAME)
+;   HEADER_IMAGE (.bmp, 150x57), WELCOME_IMAGE (.bmp, 164x314)   optional, from brand/
 ;   USER_DATA_DIR optional: folder with settings and data; the uninstaller asks before removing it
 ;
 ; Silent use: Setup.exe /S [/allusers | /currentuser] [/NOPATH] [/DESKTOP] [/D=C:\folder]
@@ -41,6 +44,12 @@
 !endif
 !ifndef APP_VERSION_NUMERIC
   !define APP_VERSION_NUMERIC "${APP_VERSION}.0"
+!endif
+!ifndef INSTALL_SUBDIR
+  !error "Define INSTALL_SUBDIR in the product file."
+!endif
+!ifndef FOLDER_NAME
+  !define FOLDER_NAME "${APP_NAME}"
 !endif
 !ifndef PUBLISHER
   !define PUBLISHER "${APP_NAME}"
@@ -86,7 +95,8 @@ VIAddVersionKey "LegalCopyright" "${PUBLISHER}"
 !define MULTIUSER_INSTALLMODE_ALLOW_ELEVATION
 !define MULTIUSER_INSTALLMODE_DEFAULT_CURRENTUSER
 !define MULTIUSER_USE_PROGRAMFILES64
-!define MULTIUSER_INSTALLMODE_INSTDIR "${APP_NAME}"
+; <publisher>\<name>\<CLI or UI>, so the two products never share (or remove) each other's files.
+!define MULTIUSER_INSTALLMODE_INSTDIR "${PUBLISHER}\${FOLDER_NAME}\${INSTALL_SUBDIR}"
 !define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_KEY "Software\${APP_NAME}"
 !define MULTIUSER_INSTALLMODE_INSTDIR_REGISTRY_VALUENAME "InstallLocation"
 !define MULTIUSER_INSTALLMODE_DEFAULT_REGISTRY_KEY "Software\${APP_NAME}"
@@ -102,10 +112,20 @@ VIAddVersionKey "LegalCopyright" "${PUBLISHER}"
 !insertmacro GetOptions
 !insertmacro un.GetParameters
 !insertmacro un.GetOptions
+!insertmacro un.GetParent
+!insertmacro un.GetFileName
 
 !ifdef ICON_FILE
   !define MUI_ICON "${ICON_FILE}"
   !define MUI_UNICON "${ICON_FILE}"
+!endif
+!ifdef HEADER_IMAGE
+  !define MUI_HEADERIMAGE
+  !define MUI_HEADERIMAGE_BITMAP "${HEADER_IMAGE}"
+!endif
+!ifdef WELCOME_IMAGE
+  !define MUI_WELCOMEFINISHPAGE_BITMAP "${WELCOME_IMAGE}"
+  !define MUI_UNWELCOMEFINISHPAGE_BITMAP "${WELCOME_IMAGE}"
 !endif
 !define MUI_ABORTWARNING
 
@@ -162,16 +182,15 @@ Section "!${APP_NAME}" SecMain
 
   WriteUninstaller "$INSTDIR\${UNINSTALLER}"
 
-  ; Start Menu > Programs > <app name>
-  CreateDirectory "$SMPROGRAMS\${APP_NAME}"
+  ; Start Menu > Programs > <start menu name>
+  CreateDirectory "$SMPROGRAMS\${FOLDER_NAME}"
   !ifdef HAS_PATH
-    ; A prompt where the command already works, even if it was not added to PATH.
-    CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME} prompt.lnk" "$SYSDIR\cmd.exe" \
+    ; Opens a prompt where the command already works, even if it was not added to PATH.
+    CreateShortcut "$SMPROGRAMS\${FOLDER_NAME}\${APP_NAME}.lnk" "$SYSDIR\cmd.exe" \
       '/K set "PATH=$INSTDIR;%PATH%"' "$INSTDIR\${MAIN_EXE}" 0
   !else
-    CreateShortcut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${MAIN_EXE}"
+    CreateShortcut "$SMPROGRAMS\${FOLDER_NAME}\${APP_NAME}.lnk" "$INSTDIR\${MAIN_EXE}"
   !endif
-  CreateShortcut "$SMPROGRAMS\${APP_NAME}\Uninstall ${APP_NAME}.lnk" "$INSTDIR\${UNINSTALLER}"
 
   ; Where it is installed (also tells a later setup, and the uninstaller, which mode this was).
   WriteRegStr SHCTX "Software\${APP_NAME}" "InstallLocation" "$INSTDIR"
@@ -291,8 +310,24 @@ Section "Uninstall"
   Delete "$INSTDIR\path.ps1"
   Delete "$INSTDIR\${UNINSTALLER}"
   RMDir "$INSTDIR"
+  ; Then the folders above it, if setup made them (<publisher>\<name>) and nothing else is in them.
+  ${un.GetParent} "$INSTDIR" $0
+  ${un.GetFileName} "$0" $1
+  ${If} $1 == "${FOLDER_NAME}"
+    RMDir "$0"
+    ${un.GetParent} "$0" $0
+    ${un.GetFileName} "$0" $1
+    ${If} $1 == "${PUBLISHER}"
+      RMDir "$0"
+    ${EndIf}
+  ${EndIf}
 
-  RMDir /r "$SMPROGRAMS\${APP_NAME}"
+  ; The folder is shared by the products, so remove only this product's shortcuts, then the
+  ; folder if nothing else is left in it.
+  Delete "$SMPROGRAMS\${FOLDER_NAME}\${APP_NAME}.lnk"
+  ; Earlier setups also created an uninstall shortcut; Settings > Apps is the way to uninstall now.
+  Delete "$SMPROGRAMS\${FOLDER_NAME}\Uninstall ${APP_NAME}.lnk"
+  RMDir "$SMPROGRAMS\${FOLDER_NAME}"
   !ifdef HAS_DESKTOP
     Delete "$DESKTOP\${APP_NAME}.lnk"
   !endif

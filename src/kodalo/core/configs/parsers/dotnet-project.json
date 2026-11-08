@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "id": "dotnet-project",
+  "ecosystem": "dotnet",
+  "files": [
+    "*.csproj",
+    "*.fsproj"
+  ],
+  "lockfiles": [
+    "packages.lock.json"
+  ],
+  "format": "xml",
+  "name": [
+    "PropertyGroup/PackageId",
+    "PropertyGroup/AssemblyName"
+  ],
+  "version": [
+    "PropertyGroup/Version"
+  ],
+  "dependencies": [
+    {
+      "path": "ItemGroup/PackageReference/@Include",
+      "shape": "values"
+    }
+  ]
+}

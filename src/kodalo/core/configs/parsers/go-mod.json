@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "id": "go-mod",
+  "ecosystem": "go",
+  "files": [
+    "go.mod"
+  ],
+  "lockfiles": [
+    "go.sum"
+  ],
+  "format": "lines",
+  "name": [
+    "^module\\s+(?P<value>\\S+)"
+  ],
+  "dependencies": [
+    {
+      "regex": "^\\s*(?:require\\s+)?(?P<value>[\\w.\\-/~]+\\.[\\w.\\-/~]+)\\s+v\\d"
+    }
+  ]
+}

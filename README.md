@@ -1,8 +1,6 @@
 # Kodalo
 
 [![CI](https://github.com/coldsofttech/Kodalo/actions/workflows/ci.yml/badge.svg)](https://github.com/coldsofttech/Kodalo/actions/workflows/ci.yml)
-[![PyPI](https://img.shields.io/pypi/v/Kodalo)](https://pypi.org/project/Kodalo/)
-[![Python versions](https://img.shields.io/pypi/pyversions/Kodalo)](https://pypi.org/project/Kodalo/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 [![License](https://img.shields.io/github/license/coldsofttech/Kodalo)](LICENSE)
 [![Built with Cornea Shell](https://img.shields.io/badge/built%20with-Cornea%20Shell-blue)](https://github.com/coldsofttech/CorneaShell)
@@ -13,74 +11,64 @@
 [![uv](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/uv/main/assets/badge/v0.json)](https://github.com/astral-sh/uv)
 [![PyInstaller](https://img.shields.io/badge/PyInstaller-installers-blue)](https://pyinstaller.org/)
 [![NSIS](https://img.shields.io/badge/NSIS-Windows%20setup-blue)](https://nsis.sourceforge.io/)
-[![nfpm](https://img.shields.io/badge/nfpm-deb%20%26%20rpm-blue)](https://nfpm.goreleaser.com/)
 
-A ready-to-use starting point for public Python tools that come with a command line, an HTTP API and a desktop window. The window runs a React app on Windows, hosted by [Cornea Shell](https://github.com/coldsofttech/CorneaShell). It also includes automated testing, linting, one-step releases to PyPI, and the community and security files a public repository needs.
+Kodalo is an AI-powered social media content studio for your GitHub projects. It reads your repositories and turns them into accurate, on-brand posts, starting with Instagram. It runs on your Windows desktop, keeps your repositories, brands and content history on your own computer, and lets you choose your own AI provider. Nothing is posted without your approval.
 
-## What you get
+## What it does
 
-- A command line with `--help`, `--version`, `--verbose`, `--quiet`, `--no-color` and shell completion
-- A desktop window (Windows) with an example React app that talks to Python, started with `kodalo-ui`
-- An HTTP API you can also run on its own, on any system
-- A separate typed library, so your logic is reused by the command line, the API and the window
-- Fast, reproducible setup with [uv](https://docs.astral.sh/uv/)
-- Linting, formatting and type checking before every commit and in CI
-- Automated tests on Python 3.11 to 3.15 (Ubuntu) and 3.11 (Windows and macOS)
-- Publishing to PyPI when you create a GitHub release, with no stored tokens
-- Contribution, conduct, support and security-reporting guidelines
-- Issue forms, a pull request template and automated dependency updates
-
-## Getting started
-
-1. Click **Use this template** on GitHub and create your new repository.
-2. Run the **Init** workflow from the Actions tab, giving it a short lowercase name (for example `acme`) and a display title, and merge the pull request it opens. This fills in your owner and repository name and renames the example packages and commands to yours. See the [development guide](docs/development.md).
-3. Replace the example React app, API routes, window action and icon with your own.
-4. Add your contact details in `CODE_OF_CONDUCT.md`, delete `.github/workflows/init.yml`, and replace this description.
-5. Apply the repository protections by following the [setup guide](docs/repo-setup.md). Before your first release, work through the checklist in the [releasing guide](docs/releasing.md).
-6. Install dependencies and commit checks:
-
-   ```bash
-   uv sync
-   uv run pre-commit install --hook-type pre-commit --hook-type post-commit
-   ```
+- Reads a GitHub repository (through the GitHub CLI, a folder on your computer, or the web) and works out what the product is: languages, frameworks, tooling, purpose, how to install it and what it can do
+- Suggests post ideas, writes the copy and designs single-image posts and carousels, with every claim traced back to the repository
+- Keeps your brand colors, fonts, logo and layout consistent across posts, with a live preview
+- Exports finished pictures and captions for you to post, or posts to Instagram when you choose to
+- Works with Claude (API or Claude Code), ChatGPT or Gemini, using your own credentials; every AI request shows what it will send and what it will cost, and asks first
 
 ## Installation
 
-The Python package gives you the command line (`kodalo-cli`). Requires Python 3.11 or newer. The recommended way to install a tool is in its own isolated environment:
+Kodalo is installed with a Windows setup program from the [releases page](https://github.com/coldsofttech/Kodalo/releases). Each release has two setups and a `SHA256SUMS.txt` to check your download:
 
-```bash
-uv tool install Kodalo
-```
+| File | What it installs |
+| --- | --- |
+| `kodalo-<version>.setup.exe` | The desktop window |
+| `kodalo-cli-<version>.setup.exe` | The `kodalo` command line, and can add it to your PATH |
 
-Or with pipx:
+Both can install for just you or for everyone, and remove cleanly from Settings > Apps. You do not need Python or Node. The window needs Windows 10 or 11 with the Microsoft Edge WebView2 runtime, which current versions already have. Windows may warn about the setup because it is not code-signed. See [packaging](docs/packaging.md) for silent installs and how releases are built.
 
-```bash
-pipx install Kodalo
-```
+## Getting started
 
-For the desktop window, use the Windows installer. The API and the window are not part of the Python package. Or use a ready-made installer from the [releases page](https://github.com/coldsofttech/Kodalo/releases), where each file has a checksum in `SHA256SUMS.txt`:
+1. Open **Kodalo** and, under **Settings**, choose how Kodalo reaches GitHub and connect an AI provider with your own key.
+2. Under **Brands**, create a brand from a starter palette: colors for light and dark posts, fonts, a logo and a layout. You can keep your own palettes, layouts and canvases and reuse them.
+3. Under **Repositories**, add a repository by folder or GitHub address. Kodalo reads it and remembers it.
+4. In **Studio**, pick the repository and what to post about. Kodalo suggests ideas, writes the copy and designs the slides, asking before every AI request.
+5. Export the pictures and caption, or post to Instagram once you have connected your account in Settings.
 
-- **Windows:** the setup program installs for you or for everyone, and can add the command to your PATH. winget and Scoop are available once the maintainer enables them.
-- **Linux:** a `.deb` (Debian, Ubuntu) or `.rpm` (Fedora) package.
-- **macOS:** Homebrew, once the maintainer enables it.
-
-See the [releasing guide](docs/releasing.md) for the install commands of each.
-
-The window needs Windows 10 or 11 with the Microsoft Edge WebView2 runtime, which is already installed on current versions. You do not need Node to use the installed tool.
-
-## Usage
+Everything in the window is also available from the command line:
 
 ```console
-$ kodalo-cli hello Ada
-Hello, Ada!
-$ kodalo-ui
+kodalo repositories add https://github.com/owner/name
+kodalo studio ideas make <repository-id>
+kodalo brand create Main --palette paper
 ```
 
-`kodalo-ui` opens the app window. `kodalo-ui --no-window` prints an address you can open in a browser instead. On other systems it explains that the window needs Windows; the command line and the API work everywhere.
+Run `kodalo --help` for the list. See the [CLI reference](docs/cli.md) for every command and option.
 
-See the [CLI reference](docs/cli.md) for every command, option and exit code, and the [API guide](docs/api.md) to run the API on its own.
+## Your data
 
-> After renaming the commands, update the examples above. Once you have written your tool's real behavior, replace this example with a short walkthrough.
+Kodalo stores everything in `%LOCALAPPDATA%\Kodalo`. API keys and the Instagram token go to the Windows Credential Manager, never to a file. Nothing leaves your computer except the requests you approve to your AI provider, GitHub, and Instagram when you post. See [security](docs/security.md).
+
+## Documentation
+
+| Guide | What is in it |
+| --- | --- |
+| [CLI](docs/cli.md) | Every command, argument, option and exit code |
+| [User guide](docs/ui-user-guide.md) | A screen-by-screen tour of the window, with screenshots |
+| [UI](docs/ui.md) | The window, its screens and design decisions |
+| [API](docs/api.md) | The routes the window uses and the Cornea bridge |
+| [Repository analysis](docs/repository-analysis.md) | How project files, frameworks and the README are read |
+| [Architecture](docs/architecture.md) | How the pieces fit together |
+| [Security](docs/security.md) | Secrets, AI requests and posting |
+| [Packaging](docs/packaging.md) | Building the installers and making a release |
+| [Third-party notices](docs/third-party-notices.md) | Open source components Kodalo uses |
+| [Development](docs/development.md) | Setting up, testing and CI |
 
 ## Development
 
@@ -88,12 +76,12 @@ See the [CLI reference](docs/cli.md) for every command, option and exit code, an
 git clone https://github.com/coldsofttech/Kodalo.git
 cd Kodalo
 uv sync
-npm ci --prefix src/kodalo_ui/ui
-npm run build --prefix src/kodalo_ui/ui
-uv run python -m kodalo_ui
+npm ci --prefix src/kodalo/ui/ui
+npm run build --prefix src/kodalo/ui/ui
+uv run python -m kodalo.ui
 ```
 
-See the [development guide](docs/development.md) for testing, hot reload, linting and releasing.
+See the [development guide](docs/development.md) for testing, hot reload and linting.
 
 ## Contributing
 
@@ -101,4 +89,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Please report security issues privately 
 
 ## License
 
-Released under the [MIT License](LICENSE).
+Released under the [MIT License](LICENSE). Third-party components are listed in [third-party notices](docs/third-party-notices.md).

@@ -1,0 +1,415 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "react",
+      "name": "React",
+      "category": "ui",
+      "dependencies": [
+        "react"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "next",
+      "name": "Next.js",
+      "category": "web",
+      "dependencies": [
+        "next"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "next.config.*"
+      ]
+    },
+    {
+      "id": "vue",
+      "name": "Vue",
+      "category": "ui",
+      "dependencies": [
+        "vue"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "nuxt",
+      "name": "Nuxt",
+      "category": "web",
+      "dependencies": [
+        "nuxt",
+        "nuxt3"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "nuxt.config.*"
+      ]
+    },
+    {
+      "id": "angular",
+      "name": "Angular",
+      "category": "ui",
+      "dependencies": [
+        "@angular/core"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "angular.json"
+      ]
+    },
+    {
+      "id": "svelte",
+      "name": "Svelte",
+      "category": "ui",
+      "dependencies": [
+        "svelte"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "svelte.config.*"
+      ]
+    },
+    {
+      "id": "sveltekit",
+      "name": "SvelteKit",
+      "category": "web",
+      "dependencies": [
+        "@sveltejs/kit"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "solid",
+      "name": "SolidJS",
+      "category": "ui",
+      "dependencies": [
+        "solid-js"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "astro",
+      "name": "Astro",
+      "category": "web",
+      "dependencies": [
+        "astro"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "astro.config.*"
+      ]
+    },
+    {
+      "id": "remix",
+      "name": "Remix",
+      "category": "web",
+      "dependencies": [
+        "@remix-run/*"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "gatsby",
+      "name": "Gatsby",
+      "category": "web",
+      "dependencies": [
+        "gatsby"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "gatsby-config.*"
+      ]
+    },
+    {
+      "id": "express",
+      "name": "Express",
+      "category": "web",
+      "dependencies": [
+        "express"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "fastify",
+      "name": "Fastify",
+      "category": "web",
+      "dependencies": [
+        "fastify"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "koa",
+      "name": "Koa",
+      "category": "web",
+      "dependencies": [
+        "koa"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "nestjs",
+      "name": "NestJS",
+      "category": "web",
+      "dependencies": [
+        "@nestjs/core"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "nest-cli.json"
+      ]
+    },
+    {
+      "id": "hono",
+      "name": "Hono",
+      "category": "web",
+      "dependencies": [
+        "hono"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "vite",
+      "name": "Vite",
+      "category": "build",
+      "dependencies": [
+        "vite"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "vite.config.*"
+      ]
+    },
+    {
+      "id": "webpack",
+      "name": "webpack",
+      "category": "build",
+      "dependencies": [
+        "webpack"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "webpack.config.*"
+      ]
+    },
+    {
+      "id": "rollup",
+      "name": "Rollup",
+      "category": "build",
+      "dependencies": [
+        "rollup"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "rollup.config.*"
+      ]
+    },
+    {
+      "id": "esbuild",
+      "name": "esbuild",
+      "category": "build",
+      "dependencies": [
+        "esbuild"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "tailwind",
+      "name": "Tailwind CSS",
+      "category": "ui",
+      "dependencies": [
+        "tailwindcss"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "tailwind.config.*"
+      ]
+    },
+    {
+      "id": "electron",
+      "name": "Electron",
+      "category": "desktop",
+      "dependencies": [
+        "electron"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "tauri",
+      "name": "Tauri",
+      "category": "desktop",
+      "dependencies": [
+        "@tauri-apps/api",
+        "@tauri-apps/cli"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "tauri.conf.json"
+      ]
+    },
+    {
+      "id": "react-native",
+      "name": "React Native",
+      "category": "mobile",
+      "dependencies": [
+        "react-native"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "expo",
+      "name": "Expo",
+      "category": "mobile",
+      "dependencies": [
+        "expo"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "ionic",
+      "name": "Ionic",
+      "category": "mobile",
+      "dependencies": [
+        "@ionic/*"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "ionic.config.json"
+      ]
+    },
+    {
+      "id": "jest",
+      "name": "Jest",
+      "category": "testing",
+      "dependencies": [
+        "jest"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "jest.config.*"
+      ]
+    },
+    {
+      "id": "vitest",
+      "name": "Vitest",
+      "category": "testing",
+      "dependencies": [
+        "vitest"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "vitest.config.*"
+      ]
+    },
+    {
+      "id": "mocha",
+      "name": "Mocha",
+      "category": "testing",
+      "dependencies": [
+        "mocha"
+      ],
+      "ecosystems": [
+        "js"
+      ]
+    },
+    {
+      "id": "playwright",
+      "name": "Playwright",
+      "category": "testing",
+      "dependencies": [
+        "@playwright/test",
+        "playwright"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "playwright.config.*"
+      ]
+    },
+    {
+      "id": "cypress",
+      "name": "Cypress",
+      "category": "testing",
+      "dependencies": [
+        "cypress"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "files": [
+        "cypress.config.*"
+      ]
+    },
+    {
+      "id": "storybook",
+      "name": "Storybook",
+      "category": "ui",
+      "dependencies": [
+        "storybook",
+        "@storybook/*"
+      ],
+      "ecosystems": [
+        "js"
+      ],
+      "paths": [
+        ".storybook"
+      ]
+    }
+  ]
+}

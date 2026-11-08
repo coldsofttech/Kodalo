@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "frameworks": [
+    {
+      "id": "laravel",
+      "name": "Laravel",
+      "category": "web",
+      "dependencies": [
+        "laravel/framework"
+      ],
+      "ecosystems": [
+        "php"
+      ],
+      "files": [
+        "artisan"
+      ]
+    },
+    {
+      "id": "symfony",
+      "name": "Symfony",
+      "category": "web",
+      "dependencies": [
+        "symfony/framework-bundle",
+        "symfony/symfony"
+      ],
+      "ecosystems": [
+        "php"
+      ]
+    },
+    {
+      "id": "wordpress",
+      "name": "WordPress",
+      "category": "web",
+      "dependencies": [
+        "johnpbloch/wordpress*"
+      ],
+      "ecosystems": [
+        "php"
+      ],
+      "files": [
+        "wp-config.php"
+      ],
+      "paths": [
+        "wp-content"
+      ]
+    },
+    {
+      "id": "slim",
+      "name": "Slim",
+      "category": "web",
+      "dependencies": [
+        "slim/slim"
+      ],
+      "ecosystems": [
+        "php"
+      ]
+    },
+    {
+      "id": "phpunit",
+      "name": "PHPUnit",
+      "category": "testing",
+      "dependencies": [
+        "phpunit/phpunit"
+      ],
+      "ecosystems": [
+        "php"
+      ],
+      "files": [
+        "phpunit.xml*"
+      ]
+    },
+    {
+      "id": "rails",
+      "name": "Ruby on Rails",
+      "category": "web",
+      "dependencies": [
+        "rails"
+      ],
+      "ecosystems": [
+        "ruby"
+      ],
+      "paths": [
+        "config/routes.rb"
+      ]
+    },
+    {
+      "id": "sinatra",
+      "name": "Sinatra",
+      "category": "web",
+      "dependencies": [
+        "sinatra"
+      ],
+      "ecosystems": [
+        "ruby"
+      ]
+    },
+    {
+      "id": "jekyll",
+      "name": "Jekyll",
+      "category": "web",
+      "dependencies": [
+        "jekyll"
+      ],
+      "ecosystems": [
+        "ruby"
+      ],
+      "files": [
+        "_config.yml"
+      ]
+    },
+    {
+      "id": "rspec",
+      "name": "RSpec",
+      "category": "testing",
+      "dependencies": [
+        "rspec",
+        "rspec-rails"
+      ],
+      "ecosystems": [
+        "ruby"
+      ],
+      "files": [
+        ".rspec"
+      ]
+    },
+    {
+      "id": "fastlane",
+      "name": "fastlane",
+      "category": "build",
+      "dependencies": [
+        "fastlane"
+      ],
+      "ecosystems": [
+        "ruby"
+      ],
+      "files": [
+        "Fastfile"
+      ]
+    }
+  ]
+}

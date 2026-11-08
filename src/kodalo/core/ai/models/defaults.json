@@ -1,0 +1,26 @@
+{
+  "models": {
+    "claude_api": {
+      "claude-fable-5-1": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 1.0], "timeout_s": 600},
+      "claude-opus-5-5": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 1.0], "timeout_s": 600},
+      "claude-sonnet-5-5": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 1.0], "timeout_s": 300},
+      "claude-haiku-5-5": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 1.0], "timeout_s": 120}
+    },
+    "chatgpt_api": {
+      "gpt-6-astra": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 2.0], "timeout_s": 600},
+      "gpt-6.1-sol": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 2.0], "timeout_s": 300},
+      "gpt-6.1-terra": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 2.0], "timeout_s": 300},
+      "gpt-6-luna": {"max_tokens": 128000, "temperature": 1.0, "temperature_range": [0.0, 2.0], "timeout_s": 120}
+    },
+    "gemini_api": {
+      "gemini-4-argon": {"max_tokens": 65536, "temperature": 1.0, "temperature_range": [0.0, 2.0], "timeout_s": 300}
+    }
+  },
+  "aliases": {
+    "claude_code": {
+      "opus": ["claude_api", "claude-opus-5-5"],
+      "sonnet": ["claude_api", "claude-sonnet-5-5"],
+      "haiku": ["claude_api", "claude-haiku-5-5"]
+    }
+  }
+}

@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "id": "jvm-maven",
+  "ecosystem": "jvm",
+  "files": [
+    "pom.xml"
+  ],
+  "format": "xml",
+  "name": [
+    "artifactId"
+  ],
+  "version": [
+    "version"
+  ],
+  "dependencies": [
+    {
+      "path": "dependencies/dependency/artifactId",
+      "shape": "values"
+    }
+  ],
+  "dev_dependencies": [
+    {
+      "path": "dependencies/dependency[scope='test']/artifactId",
+      "shape": "values"
+    }
+  ],
+  "dev_wins": true
+}

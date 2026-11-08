@@ -1,95 +1,74 @@
 # Development
 
+How to work on Kodalo locally. For how the pieces fit together, see [architecture](architecture.md).
+
+## Setup
+
+You need [uv](https://docs.astral.sh/uv/) (Python 3.11 or newer) and, for the window's frontend, Node (version in `src/kodalo/ui/ui/.nvmrc`). The window itself runs on Windows only; everything else works on any system.
+
+```bash
+uv sync                          # create .venv and install the dev dependencies
+npm ci --prefix src/kodalo/ui/ui # install the frontend exactly as package-lock.json says
+uv run pre-commit install --hook-type pre-commit --hook-type post-commit   # optional: checks on every commit (post-commit is for the Sweepito cleanup)
+```
+
 ## Layout
 
 ```text
-src/kodalo_package/   library: all the logic, never prints or exits (typed)
-src/kodalo_cli/       Typer + Rich command line: parses input, calls the library, shows output
-src/kodalo_api/       FastAPI app: routers, schemas, errors, settings (see api.md)
-src/kodalo_ui/        Cornea Shell wiring and the `kodalo-ui` command (see ui.md)
-src/kodalo_ui/ui/     React + Vite frontend (JavaScript)
-tests/                 pytest tests, one folder per component: core/, cli/, api/, ui/ (each with integration/)
-installer/             PyInstaller specs, NSIS scripts, nfpm config, pinned tool versions (see packaging.md)
-scripts/               repository settings, OpenAPI export, installer build, release manifests
-docs/                  documentation, including the generated openapi.json and cli-reference.md
-pyproject.toml         metadata, dependencies and tool configuration
-uv.lock                locked dependencies (commit this file)
+src/kodalo/core/     library: all the logic, never prints or exits
+src/kodalo/cli/      Typer + Rich command line (see cli.md)
+src/kodalo/api/      FastAPI routes the window calls (see api.md)
+src/kodalo/ui/       Cornea Shell wiring and the `kodalo-ui` command (see ui.md)
+src/kodalo/ui/ui/    React + Vite frontend (JavaScript)
+tests/               pytest tests: core/, cli/, api/, ui/, each with an integration/ folder
+installer/           PyInstaller specs and NSIS scripts (see packaging.md)
+scripts/             OpenAPI export, installer build, release notes
+docs/                documentation, including the generated openapi.json
 ```
 
-The example names are `kodalo_package` (library), `kodalo_cli` (command line package), `kodalo_api`, `kodalo_ui`, and the commands `kodalo-cli` and `kodalo-ui`. After creating a repo from this template, run the **Init** workflow with a short lowercase `name` (for example `acme`) and a display `title` (for example "Acme Studio"). It opens a pull request that:
+## Everyday commands
 
-- replaces the owner and repository name;
-- renames the packages (`acme_package`, `acme_cli`, `acme_api`, `acme_ui`), the commands (`acme-cli`, `acme-ui`), the settings prefix (`ACME_API_`) and the app id, and replaces "Kodalo" with your title;
-- generates new product GUIDs for the Windows installers, then regenerates `uv.lock`, `docs/cli-reference.md` and `docs/openapi.json`.
+```bash
+uv run kodalo --help                # the command line
+uv run python -m kodalo.ui          # the window (Windows)
+uv run python -m kodalo.ui --dev    # the window on the Vite dev server, with hot reload
+uv run python -m kodalo.ui --no-window   # serve the UI for a browser instead
+```
 
-The rename is `scripts/init_template.py` (it replaces only those exact patterns, so prose such as "for example" is left alone, and it deletes itself afterwards). The workflows and the installer scripts read names from `pyproject.toml` (`[project.scripts]` and `[tool.installer]`, through `installer/projectinfo.py`), so they need no renaming. If you add a new place that uses an example name, keep it in one of the patterns the script knows.
-
-What is left for you:
-
-1. Replace the window icon (`src/<ui package>/ui/public/icon.png`).
-2. Set the description and URLs, and add an email to the author, in `pyproject.toml`.
-3. Review the pull request for lines that still say "example" (the script lists them).
-4. Replace the example React app, API routes and window action.
-
-See [packaging](packaging.md) and [releasing](releasing.md) for the installers and the first-release checklist.
-
-Commands, options and exit codes are documented in [CLI reference](cli.md).
-
-## Tooling
-
-| Purpose | Tool |
+| Task | Command |
 | --- | --- |
-| Environment, dependencies, build | [uv](https://docs.astral.sh/uv/) with Hatchling |
-| Lint and format | Ruff |
-| Type checking | mypy (strict) |
-| Tests and coverage | pytest with pytest-cov (80% minimum) |
-| API | FastAPI, uvicorn, pydantic-settings; Schemathesis for contract tests |
-| Window | `cornea-shell` (Windows only) |
-| Frontend | Node 22 or newer, Vite, React, Vitest, ESLint, Prettier |
+| Unit tests with coverage (80% minimum, skips integration) | `uv run pytest` |
+| One component | `uv run pytest tests/api --no-cov` |
+| Integration tests only | `uv run pytest -m integration --no-cov` |
+| Lint and format | `uv run ruff check .` and `uv run ruff format .` |
+| Type check (strict) | `uv run mypy` |
+| Regenerate the OpenAPI document | `uv run python scripts/export_openapi.py` |
+| Frontend lint, tests, build | `npm run lint`, `npm test`, `npm run build` in `src/kodalo/ui/ui` |
 
-```bash
-uv sync                    # create .venv and install dev dependencies
-uv run pytest              # unit tests with coverage (skips integration tests)
-uv run pytest -m integration --no-cov   # integration tests only
-uv run ruff check .        # lint
-uv run ruff format .       # format
-uv run mypy                # type check
-uv build                   # build the sdist and wheel (core library and command line only)
-```
+Tests in any `integration/` folder are marked `integration` by `tests/conftest.py`. They are skipped by default and in pre-commit, and run as their own CI job. They include a Schemathesis contract test and, on Windows with a built frontend, a real Cornea server without a window.
 
-Frontend, from `src/kodalo_ui/ui` (or with `--prefix`):
-
-```bash
-npm ci                     # install exactly what package-lock.json says
-npm run dev                # Vite dev server; `uv run python -m kodalo_ui --dev` wraps it in the window
-npm run build              # writes dist/, which the window serves and the Windows installer freezes in
-npm run lint && npm test   # ESLint, Vitest
-npm run format             # Prettier
-```
-
-Other useful commands:
-
-```bash
-uv run python -m kodalo_api              # run the API on its own (see api.md)
-uv run python scripts/export_openapi.py   # regenerate docs/openapi.json
-uv run python -m kodalo_ui --no-window   # serve the UI for a browser
-```
-
-## Integration tests
-
-Tests are grouped by component: `tests/core/`, `tests/cli/`, `tests/api/` and `tests/ui/`. Each has an `integration/` folder, and tests in any `integration/` folder are marked `integration` automatically by `tests/conftest.py`. Run one component with, for example, `uv run pytest tests/api --no-cov`. They are excluded from the default `pytest` run, and therefore from the pre-commit hook, and run as their own job in CI. Put slower or end-to-end tests there. They include a real API server, a Schemathesis contract test and, on Windows with a built frontend, a real Cornea server without a window.
+Change a route or schema, and `docs/openapi.json` must be regenerated (CI fails when it is out of date). Change a command or option, and update [cli](cli.md) by hand.
 
 ## Continuous integration
 
-The `ci` workflow runs six jobs: `lint` (pre-commit including Ruff, mypy, ESLint and Prettier, plus the generated-file checks), `ui` (frontend lint, tests and build), `test` (unit tests), `integration` (tests marked `integration`), `ui-windows` (the real Cornea test against the built frontend), and `build` (the wheel, `twine check`). The `test` and `integration` jobs run on Python 3.11 to 3.15 on Ubuntu, and on 3.11 on Windows and macOS. A final `ci` job gates on all of them and is the single required check in the branch ruleset.
+The `ci` workflow runs `lint` (pre-commit and the OpenAPI check), `ui` (frontend lint, tests and build), `test` and `integration` (one job each for core, cli, api and ui on Windows with Python 3.13, the version the installers bundle; the ui integration job runs the real Cornea test against the built frontend). CI does not measure coverage, since a single component covers only part of the code; run `uv run pytest` locally for the minimum. A final `ci` job gates on all of them and is a required check. The other workflows are listed in [architecture](architecture.md#workflows).
 
-## Releasing to PyPI
+## Repository settings
 
-This section covers the PyPI side. Installers, signing and the package managers are in [releasing](releasing.md) and [packaging](packaging.md).
+Repository settings are not stored in the repo, so they are applied by hand (Settings on GitHub):
 
-Publishing uses [trusted publishing](https://docs.pypi.org/trusted-publishers/), so no API token is stored.
+| Setting | Value |
+| --- | --- |
+| Dependency graph, Dependabot alerts and security updates | On |
+| Secret protection | On, with push protection |
+| CodeQL | Default setup (it needs a supported language in the repo) |
+| Malware alerts, Private vulnerability reporting | On (Settings > Advanced Security) |
+| Copilot Autofix | Off |
 
-1. On PyPI, add a trusted publisher for this repository: workflow `release.yml`, environment `pypi`.
-2. Create an environment named `pypi`. The settings script does this and restricts it to `v*` tags.
-3. Bump `__version__` in `src/<package>/__init__.py` and update `CHANGELOG.md`.
-4. Publish a GitHub release tagged `v<version>`. The workflow fails if the tag and version differ.
+The `main` ruleset is in `.github/rulesets/main.json`; import it under Settings > Rules. It blocks deletion and force pushes, and requires a pull request (code owner review, resolved conversations, squash merge only), the `ci` and `dependency-review` checks with the branch up to date, and CodeQL results. Enable "Require code quality results" in the ruleset UI by hand, as the JSON does not include it. Repository admins can bypass the ruleset through a pull request, so a solo maintainer can merge despite the code owner rule (authors cannot approve their own pull requests); remove the bypass actor if there are more maintainers.
+
+Some scripts look optional but workflows run them, so do not delete them: `scripts/export_openapi.py` (`ci.yml` checks `docs/openapi.json`), `scripts/build_installer.py` and `installer/` (`build.yml`, `release.yml`), `scripts/update_manifests.py` (release notes) and `installer/projectinfo.py` (project names for every workflow).
+
+## Releasing
+
+Publishing a GitHub release runs `release.yml`, which builds the Windows installers and attaches them. See [packaging](packaging.md#releasing).

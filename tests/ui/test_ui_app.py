@@ -9,8 +9,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from kodalo_package import __version__
-from kodalo_ui import app as ui_app
+from kodalo.core import __version__
+from kodalo.ui import app as ui_app
 
 
 class FakeShell:
@@ -123,21 +123,9 @@ def test_api_router_is_mounted_under_cornea_prefix() -> None:
     app = FastAPI()
     app.include_router(ui_app.api_router(), prefix="/api")
 
-    response = TestClient(app).get("/api/v1/hello/Ada")
+    response = TestClient(app).get("/api/v1/brands/palettes")
 
-    assert response.json() == {"message": "Hello, Ada!"}
-
-
-def test_api_router_leaves_authentication_to_cornea(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("KODALO_API_AUTH_MODE", "api_key")
-    monkeypatch.setenv("KODALO_API_API_KEYS", '["s3cret"]')
-    app = FastAPI()
-    app.include_router(ui_app.api_router(), prefix="/api")
-
-    response = TestClient(app).get("/api/v1/whoami")
-
-    assert response.status_code == 200
-    assert response.json()["method"] == "none"
+    assert response.json()[0]["name"] == "Graphite"
 
 
 def test_run_without_callback_just_runs(shell_on_windows: type[FakeShell]) -> None:
@@ -153,3 +141,26 @@ def test_run_passes_the_ready_line_to_the_callback(shell_on_windows: type[FakeSh
 
     on_ready = shell_on_windows.instances[0].run_kwargs["on_ready"]  # type: ignore[index]
     assert callable(on_ready)
+
+
+def test_a_windows_connection_reset_is_not_logged_but_other_errors_are() -> None:
+    import logging
+
+    ui_app.quiet_connection_resets()
+    ui_app.quiet_connection_resets()  # asking twice adds the filter once
+    logger = logging.getLogger("asyncio")
+    assert sum(isinstance(f, ui_app._ResetFilter) for f in logger.filters) == 1
+    keep = ui_app._ResetFilter()
+
+    def record(error: BaseException) -> logging.LogRecord:
+        return logging.LogRecord(
+            "asyncio", logging.ERROR, "", 0, "x", None, (type(error), error, None)
+        )
+
+    reset = ConnectionResetError(10054, "forcibly closed")
+    setattr(reset, "winerror", 10054)  # noqa: B010  # only exists on Windows; mypy differs by OS
+    other = ConnectionResetError(104, "reset")
+    assert not keep.filter(record(reset))
+    assert keep.filter(record(other))
+    assert keep.filter(record(ValueError("boom")))
+    assert keep.filter(logging.LogRecord("asyncio", logging.ERROR, "", 0, "x", None, None))
