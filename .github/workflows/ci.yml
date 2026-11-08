@@ -88,30 +88,11 @@ jobs:
       - run: uv sync --locked
       - run: uv run pytest -n auto
 
+  # One Python version on pull requests; integration.yml runs every version weekly.
   integration:
-    name: integration (${{ matrix.python-version }})
-    runs-on: windows-latest
-    timeout-minutes: 20
-    strategy:
-      fail-fast: false
-      matrix:
-        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: astral-sh/setup-uv@v10.3.3
-        with:
-          python-version: ${{ matrix.python-version }}
-      - run: uv sync --locked
-      # One step per component (tests/<component>/integration), so a failure names its area. The
-      # UI's integration test needs the built frontend and Windows, so the ui-windows job runs it.
-      - name: Integration tests (core)
-        run: uv run pytest -n auto -m integration tests/core --no-cov
-      - name: Integration tests (cli)
-        if: ${{ !cancelled() }}
-        run: uv run pytest -n auto -m integration tests/cli --no-cov
-      - name: Integration tests (api)
-        if: ${{ !cancelled() }}
-        run: uv run pytest -n auto -m integration tests/api --no-cov
+    uses: ./.github/workflows/integration.yml
+    with:
+      python-versions: '["3.11"]'
 
   # The UI Python tests need the built frontend and Windows, where Cornea Shell runs.
   ui-windows:
