@@ -9,8 +9,8 @@ import pytest
 import kodalo.core
 from tests.frozen import locate, skip_if_blocked
 
-# cli.spec builds the command line alone; ui.spec builds it again beside the window.
-FOLDERS = ["kodalo", "kodalo-ui"]
+# cli.spec builds the command line alone; the window (ui.spec) does not ship it.
+FOLDERS = ["kodalo"]
 
 
 def _run(exe: Path, *arguments: str) -> subprocess.CompletedProcess[str]:

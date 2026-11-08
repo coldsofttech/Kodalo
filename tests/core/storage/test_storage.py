@@ -3,13 +3,18 @@ import sqlite3
 from pathlib import Path
 
 import pytest
-from alembic import command
 from alembic.autogenerate import compare_metadata
 from alembic.runtime.migration import MigrationContext
 from sqlalchemy import inspect, text
 from sqlalchemy.exc import IntegrityError
 
-from kodalo.core.storage import Database, DatabaseTooNewError, MigrationError, database_path
+from kodalo.core.storage import (
+    Database,
+    DatabaseTooNewError,
+    MigrationError,
+    bundled,
+    database_path,
+)
 from kodalo.core.storage import database as database_module
 from kodalo.core.storage.database import backup_path
 from kodalo.core.storage.models import (
@@ -116,12 +121,12 @@ def test_failed_migration_restores_existing_data(
         connection.execute("UPDATE schema_migrations SET version_num = '0000'")
     monkeypatch.setattr(database_module, "_is_known", lambda *_: True)
 
-    def broken_upgrade(config: object, revision: str) -> None:
+    def broken_upgrade(config: object, script: object) -> None:
         with sqlite3.connect(db_path) as connection:
             connection.execute("DROP TABLE repositories")
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(command, "upgrade", broken_upgrade)
+    monkeypatch.setattr(bundled, "upgrade_to_head", broken_upgrade)
     with pytest.raises(MigrationError):
         Database.open(db_path)
     monkeypatch.undo()
@@ -134,10 +139,10 @@ def test_failed_migration_restores_existing_data(
 def test_failed_first_migration_leaves_no_file(
     db_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def broken_upgrade(config: object, revision: str) -> None:
+    def broken_upgrade(config: object, script: object) -> None:
         raise RuntimeError("boom")
 
-    monkeypatch.setattr(command, "upgrade", broken_upgrade)
+    monkeypatch.setattr(bundled, "upgrade_to_head", broken_upgrade)
     with pytest.raises(MigrationError):
         Database.open(db_path)
     assert not db_path.exists()

@@ -44,6 +44,7 @@ class ProjectInfo:
     api_package: str
     version: str
     title: str
+    publisher: str  # [tool.installer] publisher, else the first author
 
     @property
     def ui_dir(self) -> Path:
@@ -107,6 +108,7 @@ def load(root: Path = ROOT) -> ProjectInfo:
         cli_package=cli_module.rsplit(".", 1)[0],
         ui_package=ui_package,
         api_package=api,
+        publisher=settings.get("publisher") or (project.get("authors") or [{}])[0].get("name", ""),
         version=_read(version_file, r'^__version__\s*=\s*"([^"]+)"', "__version__"),
         title=_read(
             root / "src" / Path(*ui_package.split(".")) / "app.py",

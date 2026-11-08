@@ -16,7 +16,6 @@ if TYPE_CHECKING:
     from alembic.config import Config
     from alembic.script import ScriptDirectory
 
-MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 
 
 # Alembic is imported inside the functions that use it: it is slow to load and only needed
@@ -24,9 +23,13 @@ MIGRATIONS_DIR = Path(__file__).parent / "migrations"
 def _config() -> "Config":
     from alembic.config import Config
 
-    config = Config()
-    config.set_main_option("script_location", str(MIGRATIONS_DIR))
-    return config
+    return Config()
+
+
+def _scripts() -> "ScriptDirectory":
+    from kodalo.core.storage.bundled import BundledScripts
+
+    return BundledScripts()
 
 
 def _make_engine(path: Path) -> Engine:
@@ -61,16 +64,12 @@ def _is_known(script: "ScriptDirectory", revision: str) -> bool:
 
 def head_revision() -> str | None:
     """Return the id of the newest migration this version of the application knows."""
-    from alembic.script import ScriptDirectory
-
-    return ScriptDirectory.from_config(_config()).get_current_head()
+    return _scripts().get_current_head()
 
 
 def is_known_revision(revision: str) -> bool:
     """Return whether this version of the application knows the migration ``revision``."""
-    from alembic.script import ScriptDirectory
-
-    return _is_known(ScriptDirectory.from_config(_config()), revision)
+    return _is_known(_scripts(), revision)
 
 
 def backup_path(path: Path) -> Path:
@@ -85,13 +84,12 @@ def migrate(path: Path) -> Engine:
     the copy is put back (or the new file removed), so existing data is never left half-migrated.
     A database written by a newer version of the application is refused and left alone.
     """
-    from alembic import command
-    from alembic.script import ScriptDirectory
+    from kodalo.core.storage.bundled import upgrade_to_head
 
     path.parent.mkdir(parents=True, exist_ok=True)
     existed = path.exists()
     config = _config()
-    script = ScriptDirectory.from_config(config)
+    script = _scripts()
     engine = _make_engine(path)
     try:
         current = _current_revision(engine)
@@ -112,7 +110,7 @@ def migrate(path: Path) -> Engine:
     try:
         with engine.begin() as connection:
             config.attributes["connection"] = connection
-            command.upgrade(config, "head")
+            upgrade_to_head(config, script)
     except Exception as exc:
         engine.dispose()
         if existed and current is not None:

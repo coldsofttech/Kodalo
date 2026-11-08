@@ -81,6 +81,8 @@ cli = "kodalo"
 ui = "kodalo-ui"
 ui-target = "kodalo.ui.__main__:main"
 api = "kodalo.api"
+# The company shown as publisher in Add/Remove programs and in the file properties.
+publisher = "ColdSoft Technologies"
 
 [tool.hatch.version]
 path = "src/kodalo/core/__init__.py"

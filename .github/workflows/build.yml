@@ -53,23 +53,20 @@ jobs:
         shell: pwsh
         run: |
           foreach ($product in 'cli', 'ui') {
-            $name = if ($product -eq 'cli') { $env:CLI_NAME } else { $env:UI_NAME }
-            $setup = Get-ChildItem "dist/installer/$name-*-setup.exe" | Select-Object -First 1
+            $pattern = if ($product -eq 'cli') { "$env:CLI_NAME-cli-*.setup.exe" } else { "$env:CLI_NAME-[0-9]*.setup.exe" }
+            $setup = Get-ChildItem "dist/installer/$pattern" | Select-Object -First 1
             $dir = Join-Path $env:RUNNER_TEMP "installed-$product"
             $userPath = { [Environment]::GetEnvironmentVariable('Path', 'User') }
 
             $install = Start-Process -Wait -PassThru -FilePath $setup.FullName -ArgumentList '/S', '/currentuser', "/D=$dir"
             if ($install.ExitCode -ne 0) { throw "the $product setup exited with code $($install.ExitCode)" }
-            if (-not (Test-Path "$dir/$env:CLI_NAME.exe")) {
+            $main = if ($product -eq 'cli') { $env:CLI_NAME } else { $env:UI_NAME }
+            if (-not (Test-Path "$dir/$main.exe")) {
               Get-ChildItem $dir -ErrorAction SilentlyContinue | Out-String | Write-Host
               throw "the $product setup did not install into $dir"
             }
-            & "$dir/$env:CLI_NAME.exe" --version
-            if ($LASTEXITCODE -ne 0) { throw "$env:CLI_NAME failed after installing $product" }
-            if ($product -eq 'ui') {
-              & "$dir/$env:UI_NAME.exe" --version
-              if ($LASTEXITCODE -ne 0) { throw "$env:UI_NAME failed after installing" }
-            }
+            & "$dir/$main.exe" --version
+            if ($LASTEXITCODE -ne 0) { throw "$main failed after installing $product" }
             if (-not (Test-Path "$dir/uninstall.exe")) { throw "no uninstaller for $product" }
             $onPath = (& $userPath) -like "*$dir*"
             if ($product -eq 'cli' -and -not $onPath) { throw "the CLI setup did not add itself to PATH" }
@@ -77,7 +74,7 @@ jobs:
 
             # _?= makes the uninstaller run in place, so Start-Process can wait for it.
             Start-Process -Wait -FilePath "$dir/uninstall.exe" -ArgumentList '/S', "_?=$dir"
-            if (Test-Path "$dir/$env:CLI_NAME.exe") { throw "uninstall left the program behind ($product)" }
+            if (Test-Path "$dir/$main.exe") { throw "uninstall left the program behind ($product)" }
             if ((& $userPath) -like "*$dir*") { throw "uninstall left PATH changed ($product)" }
             Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
           }

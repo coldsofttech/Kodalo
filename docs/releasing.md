@@ -73,7 +73,7 @@ What to tell your users, once the channels are on:
 | --- | --- | --- |
 | winget | `winget install <Identifier>` | `winget uninstall <Identifier>` |
 | Scoop | `scoop bucket add <name> https://github.com/<owner>/scoop-bucket`, then `scoop install <name>` | `scoop uninstall <name>` |
-| Windows setup | run `<name>-<version>-setup.exe` from the release page | Settings > Apps |
+| Windows setup | run `<name>-cli-<version>.setup.exe` (command line) or `<name>-<version>.setup.exe` (window) from the release page | Settings > Apps |
 | PyPI (command line only) | `uv tool install <project>` or `pipx install <project>` | `uv tool uninstall <project>` |
 
 ## Before the first release

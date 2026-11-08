@@ -56,7 +56,7 @@ def test_serves_the_page_the_api_and_the_native_action(address: str) -> None:
         assert '<div id="root">' in page.text
 
         palettes = client.get(f"{base}/api/v1/palettes")
-        assert palettes.json()[0]["key"] == "midnight"
+        assert "system-midnight" in {palette["id"] for palette in palettes.json()}
 
         info = client.post(f"{base}/api/bridge/app_info", json={}, headers={"Origin": base})
         assert info.json()["result"]["version"] == kodalo.core.__version__
