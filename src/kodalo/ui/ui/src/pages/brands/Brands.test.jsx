@@ -184,7 +184,9 @@ describe('BrandsPage: editing', () => {
 
     expect(await screen.findByText(/text on background, light: 1.2:1/)).toBeInTheDocument();
     expect(screen.getByText(/never changed for you/)).toBeInTheDocument();
-    expect(await field('Text, light (hex)')).toHaveProperty('value', '#eeeeee');
+    await waitFor(async () =>
+      expect(await field('Text, light (hex)')).toHaveProperty('value', '#eeeeee'),
+    );
   });
 
   it('reports good contrast', async () => {
