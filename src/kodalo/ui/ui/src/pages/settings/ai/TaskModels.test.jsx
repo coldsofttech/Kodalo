@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AiTaskModels from './TaskModels.jsx';
 import { mockApi } from '../../../testing.js';
@@ -34,8 +34,10 @@ describe('AiTaskModels', () => {
     const calls = mockApi(backend(['fast', 'smart']));
     const { container } = render(<AiTaskModels />);
 
-    expect(await screen.findByLabelText('Studio copywriter')).toHaveValue('smart');
-    expect(screen.getByLabelText('Palette suggestion')).toHaveValue('');
+    await waitFor(async () =>
+      expect(await screen.findByLabelText('Studio copywriter')).toHaveValue('smart'),
+    );
+    await waitFor(() => expect(screen.getByLabelText('Palette suggestion')).toHaveValue(''));
     expect(screen.getByLabelText('Save models')).toBeDisabled();
 
     await userEvent.selectOptions(screen.getByLabelText('Palette suggestion'), 'fast');

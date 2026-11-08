@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Appearance from './Appearance.jsx';
 import { createBackend, mockApi } from '../../testing.js';
@@ -16,7 +16,7 @@ describe('Appearance', () => {
     const { container } = render(<Appearance />);
 
     const select = await screen.findByLabelText('Theme');
-    expect(select).toHaveProperty('value', 'system');
+    await waitFor(() => expect(select).toHaveProperty('value', 'system'));
     const choices = Array.from(select.querySelectorAll('option')).map((o) => o.textContent);
     expect(choices).toEqual(['System (default)', 'Light', 'Dark']);
 

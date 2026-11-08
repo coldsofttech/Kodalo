@@ -42,7 +42,7 @@ describe('BrandsPage: first run', () => {
       name: 'Acme',
       palette: 'system-paper',
     });
-    expect(await field('Brand name')).toHaveProperty('value', 'Acme');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Acme'));
   });
 
   it('shows why creating failed', async () => {
@@ -71,7 +71,7 @@ describe('BrandsPage: editing', () => {
     start();
     const list = await screen.findByRole('complementary', { name: 'Brand profiles' });
     expect(within(list).getByRole('img', { name: 'Default brand' })).toBeInTheDocument();
-    expect(await field('Brand name')).toHaveProperty('value', 'Main');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Main'));
     expect(screen.getByRole('tab', { name: 'Colors', selected: true })).toBeInTheDocument();
   });
 
@@ -117,7 +117,9 @@ describe('BrandsPage: editing', () => {
     const picker = await screen.findByLabelText('Primary, light color picker');
     fireEvent.change(picker, { target: { value: '#00ff00' } });
 
-    expect(await field('Primary, light (hex)')).toHaveProperty('value', '#00ff00');
+    await waitFor(async () =>
+      expect(await field('Primary, light (hex)')).toHaveProperty('value', '#00ff00'),
+    );
     expect(screen.getByText('You have unsaved changes.')).toBeInTheDocument();
   });
 
@@ -126,7 +128,7 @@ describe('BrandsPage: editing', () => {
     typeInto(await field('Brand name'), 'Renamed');
     await userEvent.click(screen.getByLabelText('Discard'));
 
-    expect(await field('Brand name')).toHaveProperty('value', 'Main');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Main'));
     expect(screen.queryByText('You have unsaved changes.')).not.toBeInTheDocument();
   });
 
@@ -159,11 +161,11 @@ describe('BrandsPage: editing', () => {
 
     expect(screen.getByRole('alertdialog', { name: 'Unsaved changes' })).toBeInTheDocument();
     await userEvent.click(screen.getByText('Keep editing'));
-    expect(await field('Brand name')).toHaveProperty('value', 'Edited');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Edited'));
 
     await userEvent.click(within(list).getByRole('button', { name: /Side/ }));
     await userEvent.click(screen.getByText('Discard changes'));
-    expect(await field('Brand name')).toHaveProperty('value', 'Side');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Side'));
   });
 
   it('switches brands without asking when nothing changed', async () => {
@@ -172,7 +174,7 @@ describe('BrandsPage: editing', () => {
     await userEvent.click(within(list).getByRole('button', { name: /Side/ }));
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(await field('Brand name')).toHaveProperty('value', 'Side');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Side'));
   });
 
   it('shows contrast problems without changing any color', async () => {
@@ -227,7 +229,7 @@ describe('BrandsPage: editing', () => {
     start();
     await userEvent.click(await screen.findByRole('tab', { name: 'Layout' }));
     const select = screen.getByRole('combobox', { name: 'Layout' });
-    expect(select).toHaveProperty('value', 'system-default');
+    await waitFor(() => expect(select).toHaveProperty('value', 'system-default'));
     expect(screen.getByText('Instagram portrait (1080 x 1350)')).toBeInTheDocument();
     expect(screen.getByText('6')).toBeInTheDocument();
 
@@ -317,7 +319,9 @@ describe('BrandsPage: editing', () => {
   it('duplicates a brand under a new name', async () => {
     start();
     await userEvent.click(await screen.findByLabelText('Duplicate'));
-    expect(await field('Name of the copy')).toHaveProperty('value', 'Main copy');
+    await waitFor(async () =>
+      expect(await field('Name of the copy')).toHaveProperty('value', 'Main copy'),
+    );
     typeInto(await field('Name of the copy'), 'Third');
     await userEvent.click(
       within(screen.getByRole('group', { name: 'Duplicate brand' })).getByText('Duplicate'),
@@ -325,7 +329,7 @@ describe('BrandsPage: editing', () => {
 
     expect(await screen.findByText('Created Third.')).toBeInTheDocument();
     expect(sent('POST', '/duplicate')[0].body).toEqual({ name: 'Third' });
-    expect(await field('Brand name')).toHaveProperty('value', 'Third');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Third'));
   });
 
   it('deletes only after confirmation', async () => {
@@ -337,7 +341,7 @@ describe('BrandsPage: editing', () => {
     await userEvent.click(screen.getByLabelText('Delete'));
     await userEvent.click(screen.getByText('Delete brand'));
     expect(await screen.findByText('Deleted Main.')).toBeInTheDocument();
-    expect(await field('Brand name')).toHaveProperty('value', 'Side');
+    await waitFor(async () => expect(await field('Brand name')).toHaveProperty('value', 'Side'));
   });
 
   it('exports a brand to a file', async () => {

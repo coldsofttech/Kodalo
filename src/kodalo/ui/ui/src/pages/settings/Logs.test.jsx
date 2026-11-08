@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Logs from './Logs.jsx';
 import { createBackend, mockApi } from '../../testing.js';
@@ -13,7 +13,7 @@ describe('Logs', () => {
     const { container } = render(<Logs />);
 
     const select = await screen.findByLabelText('Log level');
-    expect(select).toHaveProperty('value', 'INFO');
+    await waitFor(() => expect(select).toHaveProperty('value', 'INFO'));
     expect(await screen.findByText(/C:\/Kodalo\/logs/)).toBeInTheDocument();
 
     await userEvent.selectOptions(select, 'DEBUG');

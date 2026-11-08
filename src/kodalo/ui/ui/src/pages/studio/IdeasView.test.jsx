@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import IdeasView from './IdeasView.jsx';
 
@@ -88,7 +88,7 @@ describe('IdeasView', () => {
   it('lets the chosen idea use another hook of its angle', async () => {
     const { onPick } = setup({ pick: { idea: 'idea-1', hook: 'hook-1-1' } });
     const hook = screen.getByLabelText('Hook');
-    expect(hook).toHaveValue('hook-1-1');
+    await waitFor(() => expect(hook).toHaveValue('hook-1-1'));
     await userEvent.selectOptions(hook, 'hook-1-2');
     expect(onPick).toHaveBeenCalledWith({ idea: 'idea-1', hook: 'hook-1-2' });
   });

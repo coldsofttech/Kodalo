@@ -115,10 +115,14 @@ describe('AiConnections', () => {
     typeInto(screen.getByLabelText('Claude Code max tokens'), '500');
     await userEvent.click(screen.getByLabelText('Save Claude Code model'));
     await screen.findByText('Model saved.');
-    expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', ''),
+    );
 
     await userEvent.type(screen.getByLabelText('Claude Code model name'), 'mine');
-    expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500'),
+    );
   });
 
   it('fills the empty settings of a saved model with its starting values', async () => {
@@ -136,8 +140,12 @@ describe('AiConnections', () => {
     await waitFor(() =>
       expect(screen.getByLabelText('Claude Code temperature')).toHaveProperty('value', '0.7'),
     );
-    expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500');
-    expect(screen.getByLabelText('Claude Code timeout')).toHaveProperty('value', '90');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Claude Code max tokens')).toHaveProperty('value', '500'),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Claude Code timeout')).toHaveProperty('value', '90'),
+    );
     expect(calls.some((call) => call.path.includes('/model-defaults?name=mine'))).toBe(true);
   });
 });

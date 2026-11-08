@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen, within } from '@testing-library/react';
+import { render, screen, within, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from './App.jsx';
 import { createBackend, makeBrand, mockApi, typeInto } from './testing.js';
@@ -50,7 +50,9 @@ describe('App', () => {
     await userEvent.click(within(ask).getByText('Keep editing'));
 
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-    expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Brand name')).toHaveProperty('value', 'Edited'),
+    );
   });
 
   it('discards the edits when you choose to, and the page starts fresh when you return', async () => {
@@ -73,7 +75,9 @@ describe('App', () => {
         name: 'Brands',
       }),
     );
-    expect(await screen.findByLabelText('Brand name')).toHaveProperty('value', 'Main');
+    await waitFor(async () =>
+      expect(await screen.findByLabelText('Brand name')).toHaveProperty('value', 'Main'),
+    );
   });
 
   it('reloads a page from the server every time it is opened when nothing is unsaved', async () => {

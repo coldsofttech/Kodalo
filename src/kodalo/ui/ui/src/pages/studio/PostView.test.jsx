@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import PostView from './PostView.jsx';
 import { typeInto } from '../../testing.js';
@@ -53,7 +53,9 @@ describe('PostView', () => {
     const { container } = render(<PostView copy={COPY} busy={false} onSave={save} />);
 
     await userEvent.click(screen.getByLabelText('Edit Slide 2'));
-    expect(screen.getByLabelText('Slide 2 headline')).toHaveValue('Read the docs');
+    await waitFor(() =>
+      expect(screen.getByLabelText('Slide 2 headline')).toHaveValue('Read the docs'),
+    );
     expect(screen.getByLabelText('Edit caption')).toHaveAttribute('disabled');
     expect(screen.getByLabelText('Save changes')).toHaveAttribute('disabled');
     expect(await axe(container)).toHaveNoViolations();
@@ -79,9 +81,9 @@ describe('PostView', () => {
     render(<PostView copy={COPY} busy={false} onSave={save} />);
 
     await userEvent.click(screen.getByLabelText('Edit caption'));
-    expect(screen.getByLabelText('Hashtags')).toHaveValue('#sweepito #git');
+    await waitFor(() => expect(screen.getByLabelText('Hashtags')).toHaveValue('#sweepito #git'));
     typeInto(screen.getByLabelText('Caption text'), NEW_LINES);
-    expect(screen.getByLabelText('Repo URL')).toHaveValue(URL);
+    await waitFor(() => expect(screen.getByLabelText('Repo URL')).toHaveValue(URL));
     typeInto(screen.getByLabelText('Hashtags'), '#a, #b');
     await userEvent.click(screen.getByLabelText('Save changes'));
 

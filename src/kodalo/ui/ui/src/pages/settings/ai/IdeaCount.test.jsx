@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AiIdeaCount from './IdeaCount.jsx';
 import { mockApi, typeInto } from '../../../testing.js';
@@ -13,7 +13,7 @@ describe('AiIdeaCount', () => {
     const { container } = render(<AiIdeaCount />);
 
     const field = await screen.findByLabelText('Post ideas per request');
-    expect(field).toHaveValue('5');
+    await waitFor(() => expect(field).toHaveValue('5'));
     expect(screen.getByLabelText('Save post ideas')).toBeDisabled();
 
     typeInto(field, '12');

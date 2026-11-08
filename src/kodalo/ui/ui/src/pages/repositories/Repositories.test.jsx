@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import RepositoriesPage from './Repositories.jsx';
 import { createBackend, mockApi, typeInto } from '../../testing.js';
@@ -83,7 +83,9 @@ describe('RepositoriesPage', () => {
     await userEvent.click(screen.getByLabelText('Add'));
 
     expect(await screen.findByRole('heading', { name: 'About this repository' })).toBeVisible();
-    expect(await screen.findByLabelText('Repository name')).toHaveProperty('value', 'proj');
+    await waitFor(async () =>
+      expect(await screen.findByLabelText('Repository name')).toHaveProperty('value', 'proj'),
+    );
     expect(screen.getByLabelText('Add')).toHaveAttribute('disabled');
     typeInto(screen.getByLabelText('Owner'), 'me');
     typeInto(screen.getByLabelText('License'), 'MIT');

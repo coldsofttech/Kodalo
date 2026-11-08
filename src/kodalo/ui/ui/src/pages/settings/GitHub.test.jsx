@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import GitHub from './GitHub.jsx';
 import { createBackend, mockApi, typeInto } from '../../testing.js';
@@ -15,7 +15,7 @@ describe('GitHub', () => {
     const { container } = render(<GitHub />);
 
     const select = await screen.findByLabelText('Connect with');
-    expect(select).toHaveProperty('value', 'gh_cli');
+    await waitFor(() => expect(select).toHaveProperty('value', 'gh_cli'));
     await userEvent.selectOptions(select, 'web_fetch');
     await userEvent.click(screen.getByLabelText('Save connection'));
     expect(await screen.findByText('Saved.')).toBeInTheDocument();
@@ -49,8 +49,12 @@ describe('GitHub', () => {
     const calls = mockApi(createBackend([]).handler);
     render(<GitHub />);
 
-    expect(await screen.findByLabelText('Project files to read')).toHaveProperty('value', '10');
-    expect(screen.getByLabelText('Documents to read')).toHaveProperty('value', '10');
+    await waitFor(async () =>
+      expect(await screen.findByLabelText('Project files to read')).toHaveProperty('value', '10'),
+    );
+    await waitFor(() =>
+      expect(screen.getByLabelText('Documents to read')).toHaveProperty('value', '10'),
+    );
     expect(screen.getByLabelText('Most of each document to read (KB)')).toHaveProperty(
       'value',
       '200',

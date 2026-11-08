@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { axe } from 'vitest-axe';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Platforms from './Platforms.jsx';
 import { createBackend, mockApi, setChecked, typeInto } from '../../../testing.js';
@@ -12,11 +12,15 @@ describe('Platforms', () => {
     const calls = mockApi(createBackend([]).handler);
     const { container } = render(<Platforms />);
 
-    expect(await screen.findByLabelText('Platform')).toHaveProperty('value', 'instagram');
+    await waitFor(async () =>
+      expect(await screen.findByLabelText('Platform')).toHaveProperty('value', 'instagram'),
+    );
     expect(screen.getByLabelText('Hashtags per post')).toBeInTheDocument();
 
     typeInto(screen.getByLabelText('Default hashtags'), '#Sweepito, #tools');
-    expect(screen.getByLabelText('Use icons')).toHaveProperty('checked', false);
+    await waitFor(() =>
+      expect(screen.getByLabelText('Use icons')).toHaveProperty('checked', false),
+    );
     setChecked(screen.getByLabelText('Use social preview'), true);
     setChecked(screen.getByLabelText('Build custom images as needed'), true);
     await userEvent.click(screen.getByLabelText('Save'));
