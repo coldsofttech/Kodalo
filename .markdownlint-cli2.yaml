@@ -8,3 +8,4 @@ ignores:
   - .venv/**
   - build/**
   - .temp/** # local scratch files, not tracked
+  - src/kodalo/core/ai/prompts/** # text sent to the AI models, not documentation

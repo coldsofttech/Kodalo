@@ -158,7 +158,7 @@ def test_a_windows_connection_reset_is_not_logged_but_other_errors_are() -> None
         )
 
     reset = ConnectionResetError(10054, "forcibly closed")
-    reset.winerror = 10054
+    setattr(reset, "winerror", 10054)  # noqa: B010  # only exists on Windows; mypy differs by OS
     other = ConnectionResetError(104, "reset")
     assert not keep.filter(record(reset))
     assert keep.filter(record(other))

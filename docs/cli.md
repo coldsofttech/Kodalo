@@ -1276,9 +1276,9 @@ kodalo settings platforms instagram tunnel install [options]
 | `--json` |  |  | Output as JSON. |
 
 ```console
-$ kodalo brand create Main --palette paper
-$ kodalo brand logo set Main logo.svg
-$ kodalo brand check Main --strict
+kodalo brand create Main --palette paper
+kodalo brand logo set Main logo.svg
+kodalo brand check Main --strict
 ```
 
 ## Output conventions

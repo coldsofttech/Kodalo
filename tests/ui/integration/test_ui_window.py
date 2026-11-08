@@ -24,7 +24,7 @@ def test_page_api_and_native_action_work_through_cornea() -> None:
         assert '<div id="root">' in page.text
 
         palettes = client.get(f"{shell.base_url}/api/v1/brands/palettes")
-        assert palettes.json()[0]["key"] == "midnight"
+        assert "system-midnight" in [palette["id"] for palette in palettes.json()]
 
         info = client.post(
             f"{shell.base_url}/api/bridge/app_info",

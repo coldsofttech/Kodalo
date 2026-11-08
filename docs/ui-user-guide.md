@@ -41,7 +41,7 @@ Home explains the four steps above and gives you shortcuts:
 
 Repositories lists the projects your posts are made from.
 
-**Add a repository**
+### Add a repository
 
 1. Type the repository address, for example `https://github.com/owner/repo`.
 2. Select the **+** button.
